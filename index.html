@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameHelp Central | Pro Guides & Tips</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .game-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .game-card:hover {
+            transform: translateY(-8px);
+            border-color: #38bdf8;
+            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.3);
+            background: rgba(30, 41, 59, 1);
+        }
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+        }
+        /* Smooth fade for search results */
+        .game-card.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="glass-nav sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i data-lucide="gamepad-2" class="text-sky-400 w-8 h-8"></i>
+                <span class="text-2xl font-800 tracking-tighter uppercase">Game<span class="text-sky-400">Help</span></span>
+            </div>
+            <div class="hidden md:flex gap-8 font-semibold text-sm uppercase tracking-widest text-slate-400">
+                <a href="#" class="hover:text-sky-400 transition">Guides</a>
+                <a href="#" class="hover:text-sky-400 transition">Patch Notes</a>
+                <a href="#" class="hover:text-sky-400 transition">Community</a>
+                <a href="#" class="hover:text-sky-400 transition">Support</a>
+            </div>
+            <button class="bg-sky-500 hover:bg-sky-400 text-white px-5 py-2 rounded-full font-bold transition text-sm">
+                JOIN DISCORD
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero-gradient py-20 px-6 text-center border-b border-slate-800">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-800 mb-6 leading-tight">
+                Level Up Your <span class="text-sky-400">Gameplay.</span>
+            </h1>
+            <p class="text-slate-400 text-lg md:text-xl mb-10">
+                The ultimate destination for walkthroughs, meta builds, and secret tips for the world's most popular games.
+            </p>
+            <div class="relative max-w-xl mx-auto">
+                <input type="text" id="game-search" placeholder="Search for a game (e.g. Minecraft)..." 
+                       class="w-full bg-slate-800 border border-slate-700 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-sky-500 text-lg">
+                <button class="absolute right-3 top-3 bg-sky-500 p-2 rounded-xl">
+                    <i data-lucide="search" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Games Showcase -->
+    <main class="max-w-7xl mx-auto px-6 py-16">
+        <div class="flex justify-between items-end mb-12">
+            <div id="section-header">
+                <h2 class="text-3xl font-bold mb-2">Supported Games</h2>
+                <p class="text-slate-400">Select a game to see guides and resources.</p>
+            </div>
+            <button class="text-sky-400 font-semibold hover:underline">View All Games →</button>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results" class="hidden text-center py-20">
+            <i data-lucide="search-x" class="w-16 h-16 text-slate-600 mx-auto mb-4"></i>
+            <h3 class="text-2xl font-bold text-slate-400">No games found</h3>
+            <p class="text-slate-500">Try searching for something else!</p>
+        </div>
+
+        <!-- Grid of 20 Games -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6" id="game-grid">
+            <!-- Game items will be injected here -->
+        </div>
+    </main>
+
+    <footer class="border-t border-slate-800 py-12 px-6 mt-20">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-2 opacity-50">
+                <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                <span class="font-bold">GAMEHELP CENTRAL © 2024</span>
+            </div>
+            <div class="flex gap-6 text-slate-500 text-sm">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const games = [
+            { name: "Fortnite", icon: "crosshair" },
+            { name: "Minecraft", icon: "pickaxe" },
+            { name: "Roblox", icon: "blocks" },
+            { name: "Valorant", icon: "target" },
+            { name: "League of Legends", icon: "sword" },
+            { name: "Apex Legends", icon: "shield" },
+            { name: "Call of Duty", icon: "flame" },
+            { name: "Genshin Impact", icon: "sparkles" },
+            { name: "Among Us", icon: "ghost" },
+            { name: "Counter-Strike 2", icon: "zap" },
+            { name: "Overwatch 2", icon: "clover" },
+            { name: "Elden Ring", icon: "crown" },
+            { name: "Dota 2", icon: "map" },
+            { name: "Rocket League", icon: "car" },
+            { name: "Grand Theft Auto V", icon: "dollar-sign" },
+            { name: "Cyberpunk 2077", icon: "cpu" },
+            { name: "Terraria", icon: "trees" },
+            { name: "Destiny 2", icon: "star" },
+            { name: "Warframe", icon: "activity" },
+            { name: "Final Fantasy XIV", icon: "wand-2" }
+        ];
+
+        const grid = document.getElementById('game-grid');
+        const searchInput = document.getElementById('game-search');
+        const noResults = document.getElementById('no-results');
+
+        // Initial population of the grid
+        function renderGames(filter = "") {
+            grid.innerHTML = "";
+            const filteredGames = games.filter(game => 
+                game.name.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if (filteredGames.length === 0) {
+                noResults.classList.remove('hidden');
+                grid.classList.add('hidden');
+            } else {
+                noResults.classList.add('hidden');
+                grid.classList.remove('hidden');
+                
+                filteredGames.forEach(game => {
+                    const card = document.createElement('div');
+                    card.className = 'game-card p-8 rounded-3xl flex flex-col items-center justify-center cursor-pointer text-center';
+                    card.innerHTML = `
+                        <div class="w-16 h-16 bg-slate-700/50 rounded-2xl flex items-center justify-center mb-4 text-sky-400">
+                            <i data-lucide="${game.icon}" class="w-10 h-10"></i>
+                        </div>
+                        <h3 class="font-bold text-sm md:text-base">${game.name}</h3>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+            // Re-initialize icons for newly added elements
+            lucide.createIcons();
+        }
+
+        // Listen for typing
+        searchInput.addEventListener('input', (e) => {
+            renderGames(e.target.value);
+        });
+
+        // Initialize on load
+        renderGames();
+    </script>
+</body>
+</html>
