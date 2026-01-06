@@ -1,1 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodyChat | Join the Community</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .animate-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .auth-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+        }
+        input, select {
+            background-color: #f9fafb !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 overflow-hidden">
 
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4 fixed inset-0">
+        <div class="auth-card rounded-3xl shadow-2xl w-full max-w-md p-8 animate-pop">
+            <div class="flex flex-col items-center mb-6">
+                <div class="bg-indigo-600 p-4 rounded-full shadow-lg mb-4 text-white">
+                    <i class="fa-solid fa-comment-dots fa-2x"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800">CodyChat</h1>
+                <p id="auth-subtitle" class="text-gray-500 mt-2 text-center">Connecting to server...</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Email or Username</label>
+                    <input type="text" id="login-identifier" required class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Enter details...">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95">Log In</button>
+                <div class="pt-2 text-center">
+                    <p class="text-sm text-gray-500">Don't have an account? <button type="button" onclick="toggleAuthMode('signup')" class="text-indigo-600 font-bold hover:underline">Sign Up</button></p>
+                </div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="hidden space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Username</label>
+                        <input type="text" id="signup-username" required maxlength="15" class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" placeholder="User123">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Email</label>
+                        <input type="email" id="signup-email" required class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" placeholder="email@ext.com">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Password</label>
+                    <input type="password" id="signup-password" required minlength="6" class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" placeholder="Min. 6 characters">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Age (7-1000)</label>
+                        <input type="number" id="signup-age" required min="7" max="1000" class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Gender</label>
+                        <select id="signup-gender" required class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm cursor-pointer">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center gap-2 py-2">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase">Profile Picture</label>
+                    <div id="signup-pfp-preview" class="w-20 h-20 rounded-full bg-gray-100 border-4 border-white shadow-md flex items-center justify-center text-3xl overflow-hidden cursor-pointer hover:bg-gray-200 transition-colors" onclick="document.getElementById('signup-pfp-input').click()">👤</div>
+                    <input type="file" id="signup-pfp-input" accept="image/*" class="hidden" onchange="handlePfpSelect(event)">
+                    <button type="button" onclick="document.getElementById('signup-pfp-input').click()" class="text-xs text-indigo-600 font-bold underline">Change Photo</button>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95">Create Account</button>
+                <div class="text-center">
+                    <button type="button" onclick="toggleAuthMode('login')" class="text-sm text-gray-500 font-medium hover:text-indigo-600 transition-colors">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Back to Login
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Screen (Mock App Entry) -->
+    <div id="app-layout" class="hidden min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="text-center">
+            <h2 class="text-2xl font-bold text-gray-800">Welcome to CodyChat!</h2>
+            <p class="text-gray-500 mt-2">You are now logged in as <span id="display-name" class="font-bold text-indigo-600"></span></p>
+            <button onclick="location.reload()" class="mt-6 px-6 py-2 bg-white text-red-500 rounded-full shadow hover:bg-red-50 transition-all font-bold">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // REPLACE THIS with your Render Web Service URL after you deploy server.js
+        const SERVER_URL = "http://localhost:3000"; 
+        const socket = io(SERVER_URL);
+
+        let selectedPfp = "👤";
+
+        const authSubtitle = document.getElementById('auth-subtitle');
+        
+        socket.on('connect', () => { 
+            authSubtitle.innerText = "Welcome back!"; 
+            authSubtitle.classList.remove('text-red-500');
+        });
+        
+        socket.on('connect_error', () => { 
+            authSubtitle.innerText = "Connection failed. Check server URL."; 
+            authSubtitle.classList.add('text-red-500');
+        });
+
+        window.toggleAuthMode = (mode) => {
+            const isSignup = mode === 'signup';
+            document.getElementById('login-form').classList.toggle('hidden', isSignup);
+            document.getElementById('signup-form').classList.toggle('hidden', !isSignup);
+            authSubtitle.innerText = isSignup ? "Join the community!" : "Welcome back!";
+        };
+
+        window.handlePfpSelect = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                selectedPfp = event.target.result;
+                document.getElementById('signup-pfp-preview').innerHTML = `<img src="${selectedPfp}" class="w-full h-full object-cover">`;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('signup-form').onsubmit = (e) => {
+            e.preventDefault();
+            const userData = {
+                username: document.getElementById('signup-username').value.trim(),
+                email: document.getElementById('signup-email').value.trim().toLowerCase(),
+                password: document.getElementById('signup-password').value,
+                age: document.getElementById('signup-age').value,
+                gender: document.getElementById('signup-gender').value,
+                pfp: selectedPfp
+            };
+            socket.emit('signup', userData);
+        };
+
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            socket.emit('login', {
+                identifier: document.getElementById('login-identifier').value.trim(),
+                password: document.getElementById('login-password').value
+            });
+        };
+
+        socket.on('authSuccess', (data) => {
+            alert(data.message);
+            toggleAuthMode('login');
+        });
+
+        socket.on('authError', (err) => {
+            alert(err);
+        });
+
+        socket.on('loginSuccess', (user) => {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-layout').classList.remove('hidden');
+            document.getElementById('display-name').innerText = user.username;
+        });
+    </script>
+</body>
+</html>
