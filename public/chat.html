@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleChat - Live Global Lounge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dice-anim {
+            animation: diceShake 0.6s ease-in-out;
+        }
+
+        @keyframes diceShake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(15deg) scale(1.1); }
+            50% { transform: rotate(-15deg) scale(1.1); }
+            75% { transform: rotate(10deg) scale(1.05); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center p-0 sm:p-4">
+
+    <!-- Wallet Modal -->
+    <div id="wallet-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl border border-gray-100">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Your Wallet</h3>
+                <button onclick="toggleWallet(false)" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <img src="https://static.vecteezy.com/system/resources/previews/019/006/896/original/gold-coin-icon-png.png" class="w-12 h-12 object-contain" alt="Gold Icon">
+                        <span class="font-semibold text-gray-700">Gold</span>
+                    </div>
+                    <span id="wallet-gold" class="text-2xl font-black text-yellow-600">0</span>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <img src="https://tse4.mm.bing.net/th/id/OIP.nR2ssYc1SNYGlqyqxJOpigHaF2?rs=1&pid=ImgDetMain&o=7&rm=3" class="w-12 h-12 object-contain" alt="Ruby Icon">
+                        <span class="font-semibold text-gray-700">Rubies</span>
+                    </div>
+                    <span id="wallet-rubies" class="text-2xl font-black text-rose-600">0</span>
+                </div>
+            </div>
+            <button onclick="toggleWallet(false)" class="w-full mt-4 bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg">Close</button>
+        </div>
+    </div>
+
+    <!-- Main UI -->
+    <div id="main-ui" class="w-full max-w-6xl h-full sm:h-[90vh] flex bg-white rounded-3xl shadow-2xl overflow-hidden glass">
+        <!-- Sidebar -->
+        <div class="w-20 md:w-72 flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
+            <div class="p-4 md:p-6 border-b border-gray-100 flex items-center gap-4">
+                <div class="relative cursor-pointer" onclick="document.getElementById('pfp-upload').click()">
+                    <img id="user-pfp" src="" alt="Profile" class="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-500 ring-offset-2 hover:opacity-80 transition-all">
+                    <input type="file" id="pfp-upload" class="hidden" accept="image/*" onchange="handlePfpChange(event)">
+                </div>
+                <div class="hidden md:block overflow-hidden">
+                    <h3 id="display-name" class="font-bold text-gray-800 truncate">Username</h3>
+                    <div class="flex items-center gap-2">
+                         <span class="text-[10px] font-bold text-yellow-600" id="sidebar-gold">0 G</span>
+                         <span class="text-[10px] font-bold text-rose-600" id="sidebar-gems">0 R</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
+                <div id="users-list" class="space-y-1">
+                    <div class="p-3 text-xs text-gray-400 text-center">Global Chat Online</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="flex-grow flex flex-col bg-white">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-gray-800 text-lg">Global Lounge</h2>
+                    <p class="text-sm text-gray-400">Live Communication</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleWallet(true)" class="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                    </button>
+                    <button onclick="logout()" class="text-xs text-red-500 font-bold">Logout</button>
+                </div>
+            </div>
+            <div id="chat-messages" class="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar"></div>
+            <div class="p-4 bg-gray-50/50">
+                <form id="chat-form" onsubmit="handleFormSubmit(event)" class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-200">
+                    <input type="text" id="message-input" autocomplete="off" placeholder="Type a message..." class="flex-grow px-4 py-2 outline-none text-gray-700 bg-transparent">
+                    <button type="submit" class="bg-indigo-600 text-white p-2.5 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let currentUser = null;
+        const DEFAULT_PFP = "https://tse4.mm.bing.net/th/id/OIP.RzSDY3QeLinMNH2kcOduWQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3";
+
+        const DICE_SVGS = [
+            null,
+            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/></svg>`,
+            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 8a2 2 0 110-4 2 2 0 010 4zm8 8a2 2 0 110-4 2 2 0 010 4z"/></svg>`,
+            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M4 6a2 2 0 110-4 2 2 0 010 4zm6 6a2 2 0 110-4 2 2 0 010 4zm6 6a2 2 0 110-4 2 2 0 010 4z"/></svg>`,
+            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 8a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 16a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4z"/></svg>`,
+            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 8a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 16a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 100-4 2 2 0 000 4z"/></svg>`,
+            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 6a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 12a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 18a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4z"/></svg>`
+        ];
+
+        function nFormatter(num) {
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return num.toLocaleString();
+        }
+
+        function init() {
+            const username = localStorage.getItem('current_user_session');
+            if (!username) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const userData = JSON.parse(localStorage.getItem(`user_${username}`));
+            if (!userData) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = userData;
+            document.getElementById('display-name').innerText = currentUser.username;
+            document.getElementById('user-pfp').src = currentUser.pfp || DEFAULT_PFP;
+            updateWalletUI();
+
+            // Connect to Live Server
+            socket = io();
+
+            socket.on('connect', () => {
+                socket.emit('join', currentUser);
+            });
+
+            socket.on('history', (msgs) => {
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = '';
+                msgs.forEach(msg => renderIncoming(msg));
+            });
+
+            socket.on('chat_message', (msg) => {
+                renderIncoming(msg);
+            });
+
+            socket.on('system_message', (text) => {
+                addSystemMsg(text);
+            });
+
+            // Passive Income logic
+            setInterval(() => {
+                currentUser.gold += 100;
+                currentUser.rubies += 1;
+                saveAndSync();
+                addSystemMsg("Gained +100 Gold & +1 Ruby for staying active!");
+            }, 5 * 60 * 1000);
+        }
+
+        function renderIncoming(msg) {
+            if (msg.type === 'dice') renderDiceVisual(msg.user, msg.data);
+            else if (msg.type === 'bank') renderBankVisual(msg.user);
+            else addMessageUI(msg.user, msg.text, msg.pfp);
+        }
+
+        function addMessageUI(user, text, pfp) {
+            const container = document.getElementById('chat-messages');
+            const isMe = user === currentUser.username;
+            const div = document.createElement('div');
+            div.className = `flex gap-3 mb-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
+            div.innerHTML = `
+                <img src="${pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-xl object-cover shadow-sm">
+                <div class="max-w-[70%] flex flex-col ${isMe ? 'items-end' : ''}">
+                    <span class="text-[10px] font-bold text-gray-400">${user}</span>
+                    <div class="px-3 py-2 rounded-2xl text-sm ${isMe ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'} shadow-sm">
+                        ${text}
+                    </div>
+                </div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addSystemMsg(text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center my-2';
+            div.innerHTML = `<span class="bg-gray-100 text-gray-400 text-[10px] px-3 py-1 rounded-full uppercase font-bold">${text}</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (text === '/bank') {
+                socket.emit('chat_message', { type: 'bank', user: currentUser });
+            } else if (text.startsWith('/dice ')) {
+                handleDiceCmd(text);
+            } else {
+                socket.emit('chat_message', {
+                    type: 'chat',
+                    user: currentUser.username,
+                    pfp: currentUser.pfp,
+                    text: text
+                });
+            }
+            input.value = '';
+        }
+
+        function handleDiceCmd(text) {
+            const parts = text.split(' ');
+            const type = parts[1]?.toLowerCase();
+            const amount = parseInt(parts[2]);
+
+            if (isNaN(amount) || amount <= 0) return addSystemMsg("Invalid amount.");
+            
+            const isGold = type === 'gold';
+            if (isGold && currentUser.gold < amount) return addSystemMsg("Not enough gold!");
+            if (!isGold && currentUser.rubies < amount) return addSystemMsg("Not enough rubies!");
+
+            // Deduct immediately
+            if (isGold) currentUser.gold -= amount; else currentUser.rubies -= amount;
+            saveAndSync();
+
+            // Simulate Roll
+            setTimeout(() => {
+                const won = Math.random() < 0.4;
+                const roll = won ? Math.floor(Math.random() * 3) + 4 : Math.floor(Math.random() * 3) + 1;
+                const winAmt = amount * 2;
+                if (won) {
+                    if (isGold) currentUser.gold += winAmt; else currentUser.rubies += winAmt;
+                    saveAndSync();
+                }
+                socket.emit('chat_message', {
+                    type: 'dice',
+                    user: currentUser.username,
+                    data: { roll, won, amount, type, winAmt }
+                });
+            }, 600);
+        }
+
+        function renderDiceVisual(username, data) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center my-4';
+            const color = data.won ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-600';
+            div.innerHTML = `
+                <div class="${color} p-4 rounded-3xl flex flex-col items-center min-w-[200px] border border-current">
+                    <div class="dice-anim mb-2">${DICE_SVGS[data.roll]}</div>
+                    <p class="font-bold text-xs">${username} bet ${nFormatter(data.amount)} ${data.type}</p>
+                    <p class="font-black text-lg">${data.won ? 'WON!' : 'LOST'}</p>
+                    ${data.won ? `<p class="text-xs font-bold">+${nFormatter(data.winAmt)}</p>` : ''}
+                </div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderBankVisual(user) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center my-4';
+            div.innerHTML = `
+                <div class="bg-gray-900 text-white p-6 rounded-3xl shadow-2xl border border-gray-700 w-full max-w-[240px] flex flex-col items-center">
+                    <img src="${user.pfp || DEFAULT_PFP}" class="w-14 h-14 rounded-2xl border-2 border-indigo-500 mb-2 object-cover">
+                    <h4 class="font-bold text-sm mb-4">${user.username.toUpperCase()} BANK</h4>
+                    <div class="w-full space-y-2">
+                        <div class="flex justify-between bg-white/5 p-2 rounded-xl text-xs">
+                            <span class="text-gray-400">GOLD</span>
+                            <span class="text-yellow-400 font-bold">${nFormatter(user.gold)}</span>
+                        </div>
+                        <div class="flex justify-between bg-white/5 p-2 rounded-xl text-xs">
+                            <span class="text-gray-400">GEMS</span>
+                            <span class="text-rose-400 font-bold">${nFormatter(user.rubies)}</span>
+                        </div>
+                    </div>
+                </div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function saveAndSync() {
+            localStorage.setItem(`user_${currentUser.username}`, JSON.stringify(currentUser));
+            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            users[currentUser.username] = currentUser;
+            localStorage.setItem('registered_users', JSON.stringify(users));
+            updateWalletUI();
+            if (socket) socket.emit('update_user', currentUser);
+        }
+
+        function updateWalletUI() {
+            document.getElementById('wallet-gold').innerText = nFormatter(currentUser.gold);
+            document.getElementById('wallet-rubies').innerText = nFormatter(currentUser.rubies);
+            document.getElementById('sidebar-gold').innerText = nFormatter(currentUser.gold) + ' G';
+            document.getElementById('sidebar-gems').innerText = nFormatter(currentUser.rubies) + ' R';
+        }
+
+        function toggleWallet(show) {
+            document.getElementById('wallet-modal').classList.toggle('hidden', !show);
+        }
+
+        function handlePfpChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentUser.pfp = e.target.result;
+                    document.getElementById('user-pfp').src = currentUser.pfp;
+                    saveAndSync();
+                    addSystemMsg("Profile picture updated!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('current_user_session');
+            window.location.href = 'index.html';
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
