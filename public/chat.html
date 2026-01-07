@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Network | Authentication</title>
+    <title>Nexus Chat | Interactive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
+        :root {
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --bg-dark: #0f172a;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: #020617;
@@ -16,188 +23,316 @@
                 radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
             color: #f8fafc;
         }
 
-        .glass-card {
+        .glass-panel {
             background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 450px;
-            padding: 3rem;
-            border-radius: 2.5rem;
-            animation: fadeIn 0.8s ease-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .chat-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .chat-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
+        .message-bubble {
+            transition: all 0.2s ease;
+            max-width: 85%;
         }
 
-        .input-field {
-            width: 100%;
+        .message-anim {
+            animation: messageAppear 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes messageAppear {
+            from { opacity: 0; transform: translateY(8px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .rank-badge {
+            font-size: 0.6rem;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.075em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Rank Themes */
+        .rank-dev { background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+        .rank-owner { background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white; box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
+        .rank-site-helper { background: linear-gradient(135deg, #10b981, #3b82f6); color: white; }
+        .rank-vip { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; }
+        .rank-user { background: rgba(255, 255, 255, 0.1); color: #94a3b8; }
+
+        .currency-card {
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1.25rem 1.25rem 1.25rem 3.5rem;
-            border-radius: 1.25rem;
-            color: white;
-            transition: all 0.3s ease;
-            outline: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s ease;
         }
-
-        .input-field:focus {
-            background: rgba(255, 255, 255, 0.07);
-            border-color: #3b82f6;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1.25rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #64748b;
-            transition: color 0.3s ease;
-        }
-
-        .input-field:focus + .input-icon {
-            color: #3b82f6;
-        }
-
-        .login-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            padding: 1.25rem;
-            border-radius: 1.25rem;
-            font-weight: 700;
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .login-btn:hover {
+        .currency-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.5);
-            filter: brightness(1.1);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .login-btn:active {
-            transform: scale(0.98);
-        }
-
-        .brand-logo {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border-radius: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-            transform: rotate(-5deg);
+        .input-glow:focus-within {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
         }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-6 lg:p-10 flex items-center justify-center">
 
-    <div class="glass-card">
-        <div class="brand-logo">
-            <i class="fa-solid fa-bolt-lightning text-white"></i>
-        </div>
+    <div class="w-full h-full max-w-7xl flex flex-col md:flex-row gap-6">
         
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-black tracking-tight mb-2">Welcome Back</h1>
-            <p class="text-slate-400 font-medium">Access the Nexus Global Network</p>
+        <!-- Sidebar -->
+        <div class="w-full md:w-80 flex flex-col gap-6 shrink-0">
+            <!-- User Profile -->
+            <div class="glass-panel rounded-3xl p-8 flex flex-col items-center text-center">
+                <div class="relative mb-4">
+                    <div id="avatar-container" class="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-4xl font-black shadow-2xl rotate-3 transition-transform hover:rotate-0">
+                        <span id="p-avatar">?</span>
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 border-4 border-slate-900 rounded-full"></div>
+                </div>
+                
+                <h2 id="p-username" class="text-2xl font-bold tracking-tight">Loading...</h2>
+                <div id="p-rank" class="rank-badge mt-2">USER</div>
+                
+                <div class="w-full space-y-3 mt-8">
+                    <div class="currency-card p-4 rounded-2xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-coins text-yellow-500 text-xl"></i>
+                            <span class="text-xs font-bold text-slate-400">GOLD</span>
+                        </div>
+                        <span id="p-gold" class="text-lg font-black text-slate-100">0</span>
+                    </div>
+                    <div class="currency-card p-4 rounded-2xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-gem text-rose-500 text-xl"></i>
+                            <span class="text-xs font-bold text-slate-400">RUBIES</span>
+                        </div>
+                        <span id="p-rubies" class="text-lg font-black text-slate-100">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Online Status -->
+            <div class="glass-panel rounded-3xl flex-1 overflow-hidden flex flex-col">
+                <div class="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                        <h3 class="font-bold text-sm tracking-wide">ACTIVE NOW</h3>
+                    </span>
+                    <span id="user-count" class="text-xs font-mono bg-white/10 px-2 py-0.5 rounded text-blue-300">0</span>
+                </div>
+                <div id="online-list" class="flex-1 overflow-y-auto chat-scroll p-4 space-y-2">
+                    <!-- Users injected here -->
+                </div>
+            </div>
         </div>
 
-        <form id="login-form">
-            <div class="input-group">
-                <input 
-                    type="text" 
-                    id="username" 
-                    class="input-field" 
-                    placeholder="Enter Username" 
-                    required
-                    autocomplete="off"
-                >
-                <i class="fa-solid fa-user input-icon"></i>
+        <!-- Chat Main -->
+        <div class="flex-1 glass-panel rounded-3xl flex flex-col overflow-hidden">
+            <!-- Chat Header -->
+            <div class="px-8 py-5 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-comments text-blue-500 text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-black text-lg tracking-tight">NEXUS NETWORK</h1>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Global encrypted channel</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="location.reload()" class="w-10 h-10 rounded-xl hover:bg-white/10 transition-colors text-slate-400">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="input-group">
-                <input 
-                    type="password" 
-                    id="password" 
-                    class="input-field" 
-                    placeholder="Security Code" 
-                    required
-                >
-                <i class="fa-solid fa-lock input-icon"></i>
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto chat-scroll p-8 space-y-6">
+                <!-- Messages -->
             </div>
 
-            <button type="submit" class="login-btn">
-                <span>INITIALIZE SESSION</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </form>
-
-        <div class="mt-8 text-center">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-loose">
-                Authorized Access Only<br>
-                Terminal Encryption Active
-            </p>
+            <!-- Input Box -->
+            <div class="p-8">
+                <form id="chat-form" class="flex gap-4 items-center bg-white/5 p-2 rounded-[2rem] border border-white/5 input-glow transition-all">
+                    <input 
+                        type="text" 
+                        id="msg-input" 
+                        autocomplete="off"
+                        placeholder="Say something or use /commands..." 
+                        class="flex-1 bg-transparent border-none px-6 py-4 focus:outline-none text-slate-100 placeholder:text-slate-600 font-medium"
+                    >
+                    <button type="submit" class="w-14 h-14 bg-blue-600 hover:bg-blue-500 transition-all rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-900/20 active:scale-95">
+                        <i class="fa-solid fa-arrow-up text-xl"></i>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
     <script>
-        const loginForm = document.getElementById('login-form');
-
-        // Check if user is already logged in
-        if (localStorage.getItem('user')) {
-            window.location.href = 'chat.html';
+        const socket = io();
+        const localUser = JSON.parse(localStorage.getItem('user'));
+        
+        if (!localUser) {
+            window.location.href = 'index.html';
         }
 
-        loginForm.onsubmit = (e) => {
+        const userData = localUser || { username: 'Guest', gold: 0, rubies: 0, rank: 'USER' };
+        
+        const msgList = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const msgInput = document.getElementById('msg-input');
+        const onlineList = document.getElementById('online-list');
+
+        function getRankClass(rank) {
+            if (!rank) return 'rank-user';
+            const r = rank.toLowerCase().replace('-', '');
+            if (r.includes('dev')) return 'rank-dev';
+            if (r.includes('owner')) return 'rank-owner';
+            if (r.includes('sitehelper')) return 'rank-site-helper';
+            if (r.includes('vip')) return 'rank-vip';
+            return 'rank-user';
+        }
+
+        function updateProfileUI(data) {
+            document.getElementById('p-username').innerText = data.username;
+            document.getElementById('p-avatar').innerText = data.username.charAt(0).toUpperCase();
+            document.getElementById('p-gold').innerText = data.gold.toLocaleString();
+            document.getElementById('p-rubies').innerText = data.rubies.toLocaleString();
+            
+            const rankEl = document.getElementById('p-rank');
+            rankEl.innerText = data.rank || 'USER';
+            rankEl.className = 'rank-badge mt-2 ' + getRankClass(data.rank);
+        }
+
+        // Socket Actions
+        socket.emit('join', userData);
+
+        socket.on('force_wipe_client', () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        });
+
+        socket.on('history', (history) => {
+            msgList.innerHTML = '';
+            history.forEach(addMessage);
+            scrollToBottom();
+        });
+
+        socket.on('chat_message', (msg) => {
+            addMessage(msg);
+            scrollToBottom();
+        });
+
+        socket.on('user_list_update', (users) => {
+            document.getElementById('user-count').innerText = users.length;
+            onlineList.innerHTML = '';
+            users.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-white/[0.02] hover:bg-white/5 p-3 rounded-2xl transition-colors border border-transparent hover:border-white/5 group';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-black text-slate-400 group-hover:text-white transition-colors">
+                            ${u.username.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="text-sm font-semibold text-slate-300">${u.username}</span>
+                    </div>
+                    <span class="rank-badge ${getRankClass(u.rank)}">${u.rank || 'USER'}</span>
+                `;
+                onlineList.appendChild(div);
+                
+                if (u.username === userData.username) {
+                    updateProfileUI(u);
+                    localStorage.setItem('user', JSON.stringify(u));
+                }
+            });
+        });
+
+        socket.on('system_message', (text) => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-4 text-center my-4';
+            div.innerHTML = `
+                <div class="h-[1px] flex-1 bg-white/5"></div>
+                <span class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">${text}</span>
+                <div class="h-[1px] flex-1 bg-white/5"></div>
+            `;
+            msgList.appendChild(div);
+            scrollToBottom();
+        });
+
+        socket.on('force_update', (newData) => {
+            localStorage.setItem('user', JSON.stringify(newData));
+            updateProfileUI(newData);
+        });
+
+        function addMessage(msg) {
+            const isMe = msg.username === userData.username;
+            const div = document.createElement('div');
+            div.className = `message-anim flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+            
+            const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            div.innerHTML = `
+                <div class="flex items-center gap-2 mb-1.5 px-1">
+                    ${!isMe ? `<span class="rank-badge ${getRankClass(msg.rank)}">${msg.rank}</span>` : ''}
+                    <span class="text-[10px] font-bold text-slate-500">${msg.username} • ${time}</span>
+                    ${isMe ? `<span class="rank-badge ${getRankClass(msg.rank)}">${msg.rank}</span>` : ''}
+                </div>
+                <div class="message-bubble px-5 py-3 rounded-3xl ${
+                    isMe 
+                    ? 'bg-blue-600 text-white rounded-tr-sm shadow-lg shadow-blue-900/20' 
+                    : 'bg-white/5 text-slate-200 border border-white/5 rounded-tl-sm'
+                }">
+                    <p class="text-sm font-medium leading-relaxed">${msg.text}</p>
+                </div>
+            `;
+            
+            msgList.appendChild(div);
+        }
+
+        function scrollToBottom() {
+            msgList.scrollTo({ top: msgList.scrollHeight, behavior: 'smooth' });
+        }
+
+        chatForm.onsubmit = (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value.trim();
+            const text = msgInput.value.trim();
+            if (!text) return;
             
-            // Basic User Initialization
-            // In a real app, this would be an API call
-            const user = {
-                username: username,
-                gold: 0,
-                rubies: 0,
-                rank: username.toLowerCase() === 'dev' ? 'Developer' : 'USER'
-            };
-
-            localStorage.setItem('user', JSON.stringify(user));
+            socket.emit('chat_message', {
+                username: userData.username,
+                text: text
+            });
             
-            // Visual feedback before redirect
-            const btn = document.querySelector('.login-btn');
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> SYNCING...';
-            btn.style.opacity = '0.7';
-            btn.style.pointerEvents = 'none';
-
-            setTimeout(() => {
-                window.location.href = 'chat.html';
-            }, 800);
+            msgInput.value = '';
         };
+
+        // Initialize UI with storage values
+        updateProfileUI(userData);
+
     </script>
 </body>
 </html>
