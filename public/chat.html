@@ -142,11 +142,6 @@
             rank: 'VIP MEMBER'
         };
 
-        // Reset /o if not dev to make it "work again" for this session
-        if (currentUser.rank !== 'DEVELOPER') {
-            localStorage.removeItem('o_claimed');
-        }
-
         // UI Updates
         function updateUI() {
             document.getElementById('header-pfp').src = currentUser.pfp || DEFAULT_PFP;
@@ -176,7 +171,7 @@
                         <div class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-slate-950"></div>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="text-xs font-bold truncate ${u.rank === 'DEVELOPER' ? 'text-rose-400' : ''}">${u.username}</p>
+                        <p class="text-xs font-bold truncate ${u.rank === 'DEVELOPER' ? 'text-rose-400' : 'text-slate-200'}">${u.username}</p>
                         <p class="text-[9px] text-slate-500 uppercase font-black">${u.rank}</p>
                     </div>
                 </div>
@@ -220,22 +215,6 @@
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
             if (!text) return;
-
-            // /o Command (Developer Rank) - Works once until rank is changed
-            if (text.toLowerCase() === '/o') {
-                const claimed = localStorage.getItem('o_claimed');
-                if (!claimed) {
-                    localStorage.setItem('o_claimed', 'true');
-                    currentUser.rank = 'DEVELOPER';
-                    updateUI();
-                    socket.emit('join', currentUser);
-                    socket.emit('chat_message', { ...currentUser, text: "✨ I HAVE CLAIMED DEVELOPER STATUS!" });
-                } else {
-                    appendMessage({ username: 'SYSTEM', text: 'Command /o has already been claimed.', rank: 'BOT' });
-                }
-                input.value = '';
-                return;
-            }
 
             // /dice Command
             if (text.startsWith('/dice')) {
@@ -291,8 +270,7 @@
 
         function saveSettings() {
             updateUI();
-            // This emits the updated user data to the server, 
-            // which then broadcasts 'user_list_update' to everyone.
+            // Sync updated profile (PFP and Rank) with all online players
             socket.emit('join', currentUser); 
             toggleSettings();
         }
