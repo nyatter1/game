@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP Lounge | Chat</title>
+    <title>VIP Lounge | Live Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="n_formatter.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
@@ -38,12 +40,11 @@
             border-radius: 10px;
         }
 
-        .pfp-preview {
-            transition: transform 0.2s;
-        }
-
-        .pfp-preview:hover {
-            transform: scale(1.05);
+        .dice-face {
+            font-size: 2.5rem;
+            line-height: 1;
+            margin: 0.5rem 0;
+            display: inline-block;
         }
     </style>
 </head>
@@ -59,7 +60,6 @@
         </div>
 
         <div class="flex items-center gap-6">
-            <!-- Wallet Display -->
             <div class="hidden sm:flex items-center gap-2 bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-800">
                 <span class="text-amber-400 font-bold text-sm">₿</span>
                 <span id="wallet-balance" class="text-slate-200 font-mono text-sm font-bold">0</span>
@@ -67,10 +67,10 @@
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleSettings()">
-                    <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 object-cover" src="https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain" alt="User">
+                    <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 object-cover" src="" alt="User">
                     <div class="hidden sm:block text-left">
                         <p id="header-username" class="text-sm font-bold leading-none"></p>
-                        <span id="rank-badge" class="text-[10px] font-black text-amber-500 tracking-widest uppercase">VIP MEMBER</span>
+                        <span id="rank-badge" class="text-[10px] font-black tracking-widest uppercase">VIP MEMBER</span>
                     </div>
                 </div>
                 <button onclick="logout()" class="text-slate-500 hover:text-rose-500 transition-colors ml-2">
@@ -84,15 +84,14 @@
         <!-- Chat Area -->
         <section class="flex-1 flex flex-col relative">
             <div id="chat-feed" class="flex-1 overflow-y-auto p-6 space-y-4 chat-container">
-                <!-- Messages injected here -->
+                <!-- Messages arrive here via Socket.io -->
             </div>
 
-            <!-- Input Area -->
             <div class="p-4 glass">
                 <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
                     <input type="text" id="msg-input" autocomplete="off" 
                         class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-amber-500 transition-colors text-white"
-                        placeholder="Type your message, VIP... (Try /dice [amount])">
+                        placeholder="Type a message or /dice [amount]...">
                     <button type="submit" class="bg-amber-400 text-amber-950 font-bold px-6 py-3 rounded-2xl hover:bg-amber-300 transition-all active:scale-95">
                         SEND
                     </button>
@@ -100,14 +99,12 @@
             </div>
         </section>
 
-        <!-- Sidebar (Online Users) -->
+        <!-- Sidebar -->
         <aside class="hidden md:flex w-64 border-l border-slate-900 flex-col bg-slate-950/50">
             <div class="p-4 border-b border-slate-900">
-                <h2 class="text-[10px] font-black text-slate-500 tracking-widest uppercase">Members Online — <span id="online-count">1</span></h2>
+                <h2 class="text-[10px] font-black text-slate-500 tracking-widest uppercase">Members Online — <span id="online-count">0</span></h2>
             </div>
-            <div id="online-list" class="flex-1 p-4 space-y-3 overflow-y-auto chat-container">
-                <!-- Users injected here -->
-            </div>
+            <div id="online-list" class="flex-1 p-4 space-y-3 overflow-y-auto chat-container"></div>
         </aside>
     </main>
 
@@ -115,25 +112,18 @@
     <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
         <div class="bg-slate-900 w-full max-w-md rounded-[2rem] p-8 border border-slate-800">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">Edit Profile</h3>
+                <h3 class="text-xl font-bold">Profile Settings</h3>
                 <button onclick="toggleSettings()" class="text-slate-500 hover:text-white">✕</button>
             </div>
-
             <div class="flex flex-col items-center gap-6">
-                <div class="relative group cursor-pointer" onclick="triggerPfpUpload()">
-                    <img id="modal-pfp" class="w-32 h-32 rounded-full border-4 border-amber-400 shadow-2xl bg-slate-800 object-cover" src="https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain" alt="Profile">
+                <div class="relative group cursor-pointer" onclick="document.getElementById('pfp-input').click()">
+                    <img id="modal-pfp" class="w-32 h-32 rounded-full border-4 border-amber-400 object-cover bg-slate-800" src="" alt="PFP">
                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span class="text-xs font-bold uppercase tracking-tighter">Change PFP</span>
+                        <span class="text-xs font-bold uppercase">Upload</span>
                     </div>
                 </div>
-                
-                <input type="file" id="pfp-file-input" class="hidden" accept="image/*" onchange="handlePfpUpload(event)">
-
-                <div class="text-center">
-                    <p class="text-slate-400 text-sm">Click your profile picture to upload a new image.</p>
-                </div>
-
-                <button onclick="saveSettings()" class="w-full bg-amber-400 text-amber-950 font-bold py-4 rounded-xl shadow-lg hover:bg-amber-300 transition-all">
+                <input type="file" id="pfp-input" class="hidden" accept="image/*" onchange="handlePfpChange(event)">
+                <button onclick="saveSettings()" class="w-full bg-amber-400 text-amber-950 font-bold py-4 rounded-xl hover:bg-amber-300 transition-all">
                     SAVE CHANGES
                 </button>
             </div>
@@ -141,286 +131,171 @@
     </div>
 
     <script>
-        // --- State Management ---
-        const DEFAULT_PFP = "https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain";
+        const socket = io();
         const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-        
+        const DEFAULT_PFP = "https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain";
+
         let currentUser = JSON.parse(localStorage.getItem('current_user_session')) || {
-            username: 'GuestVIP',
+            username: 'Guest' + Math.floor(Math.random() * 9999),
             pfp: DEFAULT_PFP,
             balance: 1000,
             rank: 'VIP MEMBER'
         };
 
-        // Initialize balance if missing
-        if (currentUser.balance === undefined) currentUser.balance = 1000;
-        if (!currentUser.rank) currentUser.rank = 'VIP MEMBER';
-
-        let messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
-        let tempPfp = currentUser.pfp;
-
-        const chatFeed = document.getElementById('chat-feed');
-        const chatForm = document.getElementById('chat-form');
-        const msgInput = document.getElementById('msg-input');
-        const onlineList = document.getElementById('online-list');
-
-        // --- Initialization ---
-        function init() {
-            updateUserUI();
-            renderMessages();
-            renderOnlineUsers();
-            
-            setInterval(() => {
-                messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
-                renderMessages();
-                renderOnlineUsers();
-            }, 2000); 
-        }
-
-        function updateUserUI() {
+        // UI Updates
+        function updateUI() {
             document.getElementById('header-pfp').src = currentUser.pfp || DEFAULT_PFP;
             document.getElementById('header-username').innerText = currentUser.username;
-            document.getElementById('modal-pfp').src = currentUser.pfp || DEFAULT_PFP;
-            document.getElementById('wallet-balance').innerText = Math.floor(currentUser.balance).toLocaleString();
+            document.getElementById('wallet-balance').innerText = nFormatter(currentUser.balance, 1);
             
             const badge = document.getElementById('rank-badge');
             badge.innerText = currentUser.rank;
-            if (currentUser.rank === 'DEVELOPER') {
-                badge.className = "text-[10px] font-black text-rose-500 tracking-widest uppercase animate-pulse";
-            }
+            badge.className = currentUser.rank === 'DEVELOPER' 
+                ? "text-[10px] font-black text-rose-500 tracking-widest uppercase animate-pulse" 
+                : "text-[10px] font-black text-amber-500 tracking-widest uppercase";
+            
+            localStorage.setItem('current_user_session', JSON.stringify(currentUser));
         }
 
-        // --- Chat Functions ---
-        function renderMessages() {
-            const isAtBottom = chatFeed.scrollHeight - chatFeed.scrollTop <= chatFeed.clientHeight + 100;
-            
-            chatFeed.innerHTML = messages.map(msg => {
-                const isSystem = msg.username === 'SYSTEM';
-                const isDev = msg.rank === 'DEVELOPER';
-                
-                return `
-                <div class="flex gap-4 group ${msg.username === currentUser.username ? 'flex-row-reverse' : ''}">
-                    <img src="${msg.pfp || DEFAULT_PFP}" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 shrink-0 object-cover">
-                    <div class="${msg.username === currentUser.username ? 'items-end' : 'items-start'} flex flex-col max-w-[80%]">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs font-bold ${isDev ? 'text-rose-400' : (msg.username === currentUser.username ? 'text-amber-400' : 'text-slate-300')}">${msg.username}</span>
-                            <span class="text-[9px] ${isDev ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'} px-1.5 py-0.5 rounded border font-black">${msg.rank || 'VIP'}</span>
-                        </div>
-                        <div class="px-4 py-2.5 rounded-2xl text-sm ${
-                            isSystem ? 'bg-slate-900 italic text-slate-400 border border-slate-800' :
-                            msg.username === currentUser.username 
-                            ? 'bg-amber-400 text-amber-950 font-medium rounded-tr-none' 
-                            : 'bg-slate-800 text-slate-100 rounded-tl-none'
-                        }">
-                            ${msg.text}
-                        </div>
-                        <span class="text-[9px] text-slate-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                    </div>
-                </div>
-            `}).join('');
-
-            if (isAtBottom) chatFeed.scrollTop = chatFeed.scrollHeight;
-        }
-
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = msgInput.value.trim();
-            if (!text) return;
-
-            // --- Commands Handling ---
-            
-            // 1. One-time /o command for Dev rank
-            if (text.toLowerCase() === '/o') {
-                const oClaimed = localStorage.getItem('command_o_claimed');
-                if (!oClaimed) {
-                    localStorage.setItem('command_o_claimed', 'true');
-                    currentUser.rank = 'DEVELOPER';
-                    saveSettingsToStorage();
-                    pushSystemMessage(`✨ ${currentUser.username} has claimed the DEVELOPER rank!`);
-                    msgInput.value = '';
-                    return;
-                } else {
-                    pushSystemMessage(`The /o command has already been used and is gone forever.`);
-                    msgInput.value = '';
-                    return;
-                }
-            }
-
-            // 2. Dice Command (Rigged for Deve)
-            if (text.startsWith('/dice')) {
-                const parts = text.split(' ');
-                const amount = parseInt(parts[1]);
-
-                if (isNaN(amount) || amount <= 0) {
-                    pushSystemMessage("Usage: /dice [amount]");
-                } else if (amount > currentUser.balance) {
-                    pushSystemMessage("Insufficient funds for this bet!");
-                } else {
-                    let win;
-                    let roll = Math.floor(Math.random() * 6) + 1; // 1-6
-
-                    // Rigged for "Deve" (100% win rate)
-                    if (currentUser.username === 'Deve') {
-                        win = true;
-                        if (roll < 4) roll += 3; // Ensure a high-looking roll for Dev
-                    } else {
-                        win = Math.random() > 0.5;
-                    }
-
-                    const diceFace = DICE_FACES[roll - 1];
-                    const outcomeText = win ? 
-                        `<span class="text-emerald-400 font-bold">WON</span>` : 
-                        `<span class="text-rose-400 font-bold">LOST</span>`;
-                    
-                    const payout = win ? amount * 2 : 0;
-                    
-                    if (win) {
-                        currentUser.balance += amount; // +amount net profit (doubled the bet)
-                    } else {
-                        currentUser.balance -= amount;
-                    }
-
-                    const diceMsg = `
-                        <div class="flex flex-col gap-1 py-1">
-                            <div class="text-3xl mb-1">${diceFace}</div>
-                            <div>Result: ${outcomeText}</div>
-                            <div class="text-[11px] opacity-70">
-                                Bet: ₿${amount.toLocaleString()} | 
-                                Payout: ₿${payout.toLocaleString()}
-                            </div>
-                        </div>
-                    `;
-
-                    pushSystemMessage(diceMsg);
-                    saveSettingsToStorage();
-                }
-                msgInput.value = '';
-                return;
-            }
-
-            const newMsg = {
-                username: currentUser.username,
-                pfp: currentUser.pfp || DEFAULT_PFP,
-                rank: currentUser.rank,
-                text: escapeHtml(text),
-                timestamp: new Date().toISOString()
-            };
-
-            messages.push(newMsg);
-            if (messages.length > 100) messages.shift();
-            localStorage.setItem('vip_messages', JSON.stringify(messages));
-            
-            msgInput.value = '';
-            renderMessages();
-            chatFeed.scrollTop = chatFeed.scrollHeight;
+        // Socket Connection
+        socket.on('connect', () => {
+            socket.emit('join', currentUser);
         });
 
-        function pushSystemMessage(text) {
-            const sysMsg = {
-                username: 'SYSTEM',
-                pfp: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png',
-                rank: 'BOT',
-                text: text, // HTML allowed here for dice UI
-                timestamp: new Date().toISOString()
-            };
-            messages.push(sysMsg);
-            localStorage.setItem('vip_messages', JSON.stringify(messages));
-            renderMessages();
-        }
-
-        // --- Sidebar Logic ---
-        function renderOnlineUsers() {
-            const usersMap = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            
-            usersMap[currentUser.username] = {
-                username: currentUser.username,
-                pfp: currentUser.pfp,
-                rank: currentUser.rank
-            };
-            
-            const userList = Object.values(usersMap);
-            document.getElementById('online-count').innerText = userList.length;
-
-            onlineList.innerHTML = userList.map(u => renderUserBadge(u)).join('');
-        }
-
-        function renderUserBadge(u) {
-            const isDev = u.rank === 'DEVELOPER';
-            return `
-                <div class="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
-                    <div class="relative">
-                        <img src="${u.pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-full border border-slate-800 object-cover">
-                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></div>
+        socket.on('user_list_update', (users) => {
+            document.getElementById('online-count').innerText = users.length;
+            document.getElementById('online-list').innerHTML = users.map(u => `
+                <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                        <img src="${u.pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-full object-cover border border-slate-800">
+                        <div class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-slate-950"></div>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="text-xs font-bold truncate ${isDev ? 'text-rose-400' : ''}">${u.username}</p>
-                        <p class="text-[9px] text-slate-500">${u.rank || 'VIP Member'}</p>
+                        <p class="text-xs font-bold truncate ${u.rank === 'DEVELOPER' ? 'text-rose-400' : ''}">${u.username}</p>
+                        <p class="text-[9px] text-slate-500 uppercase font-black">${u.rank}</p>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        socket.on('chat_message', (msg) => {
+            appendMessage(msg);
+        });
+
+        socket.on('system_message', (text) => {
+            appendMessage({ username: 'SYSTEM', text: text, rank: 'BOT', pfp: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png' });
+        });
+
+        function appendMessage(msg) {
+            const feed = document.getElementById('chat-feed');
+            const isMe = msg.username === currentUser.username;
+            const isSystem = msg.username === 'SYSTEM';
+            
+            const div = document.createElement('div');
+            div.className = `flex gap-4 group ${isMe ? 'flex-row-reverse' : ''}`;
+            div.innerHTML = `
+                <img src="${msg.pfp || DEFAULT_PFP}" class="w-10 h-10 rounded-full object-cover border border-slate-800 shrink-0">
+                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%]">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs font-bold ${msg.rank === 'DEVELOPER' ? 'text-rose-400' : 'text-slate-300'}">${msg.username}</span>
+                        <span class="text-[9px] border px-1 rounded font-black ${msg.rank === 'DEVELOPER' ? 'border-rose-500 text-rose-500' : 'border-slate-700 text-slate-500'}">${msg.rank}</span>
+                    </div>
+                    <div class="px-4 py-2.5 rounded-2xl text-sm ${isSystem ? 'bg-slate-900 border border-slate-800 text-slate-400 italic' : (isMe ? 'bg-amber-400 text-amber-950 font-medium' : 'bg-slate-800 text-slate-100')}">
+                        ${msg.text}
                     </div>
                 </div>
             `;
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
         }
 
-        // --- Settings / PFP Logic ---
+        // Actions
+        document.getElementById('chat-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // /o Command (Developer Rank)
+            if (text.toLowerCase() === '/o') {
+                const claimed = localStorage.getItem('o_claimed');
+                if (!claimed) {
+                    localStorage.setItem('o_claimed', 'true');
+                    currentUser.rank = 'DEVELOPER';
+                    updateUI();
+                    socket.emit('join', currentUser);
+                    socket.emit('chat_message', { ...currentUser, text: "✨ I HAVE CLAIMED DEVELOPER STATUS!" });
+                } else {
+                    appendMessage({ username: 'SYSTEM', text: 'Command /o is already deleted.', rank: 'BOT' });
+                }
+                input.value = '';
+                return;
+            }
+
+            // /dice Command
+            if (text.startsWith('/dice')) {
+                const amount = parseInt(text.split(' ')[1]);
+                if (isNaN(amount) || amount <= 0) {
+                    appendMessage({ username: 'SYSTEM', text: 'Usage: /dice [amount]', rank: 'BOT' });
+                } else if (amount > currentUser.balance) {
+                    appendMessage({ username: 'SYSTEM', text: 'Insufficient balance!', rank: 'BOT' });
+                } else {
+                    let win = currentUser.username === 'Deve' ? true : Math.random() > 0.5;
+                    let roll = Math.floor(Math.random() * 6) + 1;
+                    if (win && roll < 4) roll += 2;
+                    
+                    const payout = win ? amount * 2 : 0;
+                    currentUser.balance += (win ? amount : -amount);
+                    updateUI();
+
+                    const diceHtml = `
+                        <div class="text-center">
+                            <span class="dice-face">${DICE_FACES[roll-1]}</span><br>
+                            Result: <span class="${win ? 'text-emerald-400' : 'text-rose-400'} font-bold">${win ? 'WON' : 'LOST'}</span><br>
+                            <span class="text-[10px] opacity-60">Bet: ${nFormatter(amount)} | Return: ${nFormatter(payout)}</span>
+                        </div>
+                    `;
+                    socket.emit('chat_message', { ...currentUser, text: diceHtml });
+                }
+                input.value = '';
+                return;
+            }
+
+            socket.emit('chat_message', { ...currentUser, text: text });
+            input.value = '';
+        });
+
+        // Settings
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
             modal.classList.toggle('hidden');
-            tempPfp = currentUser.pfp || DEFAULT_PFP;
-            document.getElementById('modal-pfp').src = tempPfp;
+            document.getElementById('modal-pfp').src = currentUser.pfp || DEFAULT_PFP;
         }
 
-        function triggerPfpUpload() {
-            document.getElementById('pfp-file-input').click();
-        }
-
-        function handlePfpUpload(event) {
-            const file = event.target.files[0];
+        function handlePfpChange(e) {
+            const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    tempPfp = e.target.result;
-                    document.getElementById('modal-pfp').src = tempPfp;
+                reader.onload = (event) => {
+                    currentUser.pfp = event.target.result;
+                    document.getElementById('modal-pfp').src = currentUser.pfp;
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function saveSettingsToStorage() {
-            localStorage.setItem('current_user_session', JSON.stringify(currentUser));
-            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            if (users[currentUser.username]) {
-                users[currentUser.username].pfp = currentUser.pfp;
-                users[currentUser.username].balance = currentUser.balance;
-                users[currentUser.username].rank = currentUser.rank;
-                localStorage.setItem('registered_users', JSON.stringify(users));
-            } else {
-                users[currentUser.username] = currentUser;
-                localStorage.setItem('registered_users', JSON.stringify(users));
-            }
-            updateUserUI();
-        }
-
         function saveSettings() {
-            currentUser.pfp = tempPfp;
-            saveSettingsToStorage();
+            updateUI();
+            socket.emit('join', currentUser); // Update info on server
             toggleSettings();
-            renderMessages();
-            renderOnlineUsers();
         }
 
         function logout() {
             localStorage.removeItem('current_user_session');
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        window.onload = init;
+        updateUI();
     </script>
 </body>
 </html>
