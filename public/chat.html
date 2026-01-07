@@ -58,17 +58,25 @@
             <h1 class="font-bold tracking-tight text-lg uppercase">VIP <span class="text-amber-400">Lounge</span></h1>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleSettings()">
-                <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 object-cover" src="https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain" alt="User">
-                <div class="hidden sm:block text-left">
-                    <p id="header-username" class="text-sm font-bold leading-none"></p>
-                    <span class="text-[10px] font-black text-amber-500 tracking-widest uppercase">VIP MEMBER</span>
-                </div>
+        <div class="flex items-center gap-6">
+            <!-- Wallet Display -->
+            <div class="hidden sm:flex items-center gap-2 bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-800">
+                <span class="text-amber-400 font-bold text-sm">₿</span>
+                <span id="wallet-balance" class="text-slate-200 font-mono text-sm font-bold">0</span>
             </div>
-            <button onclick="logout()" class="text-slate-500 hover:text-rose-500 transition-colors ml-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </button>
+
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleSettings()">
+                    <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 object-cover" src="https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain" alt="User">
+                    <div class="hidden sm:block text-left">
+                        <p id="header-username" class="text-sm font-bold leading-none"></p>
+                        <span id="rank-badge" class="text-[10px] font-black text-amber-500 tracking-widest uppercase">VIP MEMBER</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="text-slate-500 hover:text-rose-500 transition-colors ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -84,7 +92,7 @@
                 <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
                     <input type="text" id="msg-input" autocomplete="off" 
                         class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-amber-500 transition-colors text-white"
-                        placeholder="Type your message, VIP...">
+                        placeholder="Type your message, VIP... (Try /dice [amount])">
                     <button type="submit" class="bg-amber-400 text-amber-950 font-bold px-6 py-3 rounded-2xl hover:bg-amber-300 transition-all active:scale-95">
                         SEND
                     </button>
@@ -138,8 +146,14 @@
         
         let currentUser = JSON.parse(localStorage.getItem('current_user_session')) || {
             username: 'GuestVIP',
-            pfp: DEFAULT_PFP
+            pfp: DEFAULT_PFP,
+            balance: 1000,
+            rank: 'VIP MEMBER'
         };
+
+        // Initialize balance if missing
+        if (currentUser.balance === undefined) currentUser.balance = 1000;
+        if (!currentUser.rank) currentUser.rank = 'VIP MEMBER';
 
         let messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
         let tempPfp = currentUser.pfp;
@@ -166,33 +180,45 @@
             document.getElementById('header-pfp').src = currentUser.pfp || DEFAULT_PFP;
             document.getElementById('header-username').innerText = currentUser.username;
             document.getElementById('modal-pfp').src = currentUser.pfp || DEFAULT_PFP;
+            document.getElementById('wallet-balance').innerText = Math.floor(currentUser.balance).toLocaleString();
+            
+            const badge = document.getElementById('rank-badge');
+            badge.innerText = currentUser.rank;
+            if (currentUser.rank === 'DEVELOPER') {
+                badge.className = "text-[10px] font-black text-rose-500 tracking-widest uppercase animate-pulse";
+            }
         }
 
         // --- Chat Functions ---
         function renderMessages() {
             const isAtBottom = chatFeed.scrollHeight - chatFeed.scrollTop <= chatFeed.clientHeight + 100;
             
-            chatFeed.innerHTML = messages.map(msg => `
+            chatFeed.innerHTML = messages.map(msg => {
+                const isSystem = msg.username === 'SYSTEM';
+                const isDev = msg.rank === 'DEVELOPER';
+                
+                return `
                 <div class="flex gap-4 group ${msg.username === currentUser.username ? 'flex-row-reverse' : ''}">
                     <img src="${msg.pfp || DEFAULT_PFP}" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 shrink-0 object-cover">
                     <div class="${msg.username === currentUser.username ? 'items-end' : 'items-start'} flex flex-col max-w-[80%]">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs font-bold ${msg.username === currentUser.username ? 'text-amber-400' : 'text-slate-300'}">${msg.username}</span>
-                            <span class="text-[9px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 font-black">VIP</span>
+                            <span class="text-xs font-bold ${isDev ? 'text-rose-400' : (msg.username === currentUser.username ? 'text-amber-400' : 'text-slate-300')}">${msg.username}</span>
+                            <span class="text-[9px] ${isDev ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'} px-1.5 py-0.5 rounded border font-black">${msg.rank || 'VIP'}</span>
                         </div>
                         <div class="px-4 py-2.5 rounded-2xl text-sm ${
+                            isSystem ? 'bg-slate-900 italic text-slate-400 border border-slate-800' :
                             msg.username === currentUser.username 
                             ? 'bg-amber-400 text-amber-950 font-medium rounded-tr-none' 
                             : 'bg-slate-800 text-slate-100 rounded-tl-none'
                         }">
-                            ${escapeHtml(msg.text)}
+                            ${msg.text}
                         </div>
                         <span class="text-[9px] text-slate-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
             if (isAtBottom) chatFeed.scrollTop = chatFeed.scrollHeight;
         }
@@ -202,10 +228,61 @@
             const text = msgInput.value.trim();
             if (!text) return;
 
+            // --- Commands Handling ---
+            
+            // 1. One-time /o command for Dev rank
+            if (text.toLowerCase() === '/o') {
+                const oClaimed = localStorage.getItem('command_o_claimed');
+                if (!oClaimed) {
+                    localStorage.setItem('command_o_claimed', 'true');
+                    currentUser.rank = 'DEVELOPER';
+                    saveSettingsToStorage();
+                    pushSystemMessage(`✨ ${currentUser.username} has claimed the DEVELOPER rank!`);
+                    msgInput.value = '';
+                    return;
+                } else {
+                    pushSystemMessage(`The /o command has already been used and is gone forever.`);
+                    msgInput.value = '';
+                    return;
+                }
+            }
+
+            // 2. Dice Command (Rigged for Deve)
+            if (text.startsWith('/dice')) {
+                const parts = text.split(' ');
+                const amount = parseInt(parts[1]);
+
+                if (isNaN(amount) || amount <= 0) {
+                    pushSystemMessage("Usage: /dice [amount]");
+                } else if (amount > currentUser.balance) {
+                    pushSystemMessage("You don't have enough balance!");
+                } else {
+                    let win;
+                    // Rigged for "Deve" (100% win rate)
+                    if (currentUser.username === 'Deve') {
+                        win = true;
+                    } else {
+                        win = Math.random() > 0.5;
+                    }
+
+                    if (win) {
+                        currentUser.balance += amount;
+                        pushSystemMessage(`🎲 ${currentUser.username} rolled the dice and WON ${amount.toLocaleString()}!`);
+                    } else {
+                        currentUser.balance -= amount;
+                        pushSystemMessage(`🎲 ${currentUser.username} rolled the dice and LOST ${amount.toLocaleString()}!`);
+                    }
+                    saveSettingsToStorage();
+                }
+                msgInput.value = '';
+                return;
+            }
+
             const newMsg = {
                 username: currentUser.username,
                 pfp: currentUser.pfp || DEFAULT_PFP,
-                text: text,
+                rank: currentUser.rank,
+                text: escapeHtml(text),
                 timestamp: new Date().toISOString()
             };
 
@@ -218,6 +295,19 @@
             chatFeed.scrollTop = chatFeed.scrollHeight;
         });
 
+        function pushSystemMessage(text) {
+            const sysMsg = {
+                username: 'SYSTEM',
+                pfp: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png',
+                rank: 'BOT',
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+            messages.push(sysMsg);
+            localStorage.setItem('vip_messages', JSON.stringify(messages));
+            renderMessages();
+        }
+
         // --- Sidebar Logic ---
         function renderOnlineUsers() {
             const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
@@ -226,32 +316,27 @@
             document.getElementById('online-count').innerText = userList.length || 1;
             
             if (userList.length === 0) {
-                 onlineList.innerHTML = `
-                    <div class="flex items-center gap-3 opacity-80">
-                        <div class="relative">
-                            <img src="${currentUser.pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-full border border-slate-800 object-cover">
-                            <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></div>
-                        </div>
-                        <div class="overflow-hidden">
-                            <p class="text-xs font-bold truncate">${currentUser.username}</p>
-                            <p class="text-[9px] text-slate-500">In the lounge</p>
-                        </div>
-                    </div>`;
+                 onlineList.innerHTML = renderUserBadge(currentUser);
                  return;
             }
 
-            onlineList.innerHTML = userList.map(u => `
+            onlineList.innerHTML = userList.map(u => renderUserBadge(u)).join('');
+        }
+
+        function renderUserBadge(u) {
+            const isDev = u.rank === 'DEVELOPER';
+            return `
                 <div class="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
                     <div class="relative">
                         <img src="${u.pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-full border border-slate-800 object-cover">
                         <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></div>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="text-xs font-bold truncate">${u.username}</p>
-                        <p class="text-[9px] text-slate-500">In the lounge</p>
+                        <p class="text-xs font-bold truncate ${isDev ? 'text-rose-400' : ''}">${u.username}</p>
+                        <p class="text-[9px] text-slate-500">${u.rank || 'VIP Member'}</p>
                     </div>
                 </div>
-            `).join('');
+            `;
         }
 
         // --- Settings / PFP Logic ---
@@ -278,17 +363,21 @@
             }
         }
 
-        function saveSettings() {
-            currentUser.pfp = tempPfp;
+        function saveSettingsToStorage() {
             localStorage.setItem('current_user_session', JSON.stringify(currentUser));
-
             const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
             if (users[currentUser.username]) {
-                users[currentUser.username].pfp = tempPfp;
+                users[currentUser.username].pfp = currentUser.pfp;
+                users[currentUser.username].balance = currentUser.balance;
+                users[currentUser.username].rank = currentUser.rank;
                 localStorage.setItem('registered_users', JSON.stringify(users));
             }
-
             updateUserUI();
+        }
+
+        function saveSettings() {
+            currentUser.pfp = tempPfp;
+            saveSettingsToStorage();
             toggleSettings();
             renderMessages();
             renderOnlineUsers();
