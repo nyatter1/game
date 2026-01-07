@@ -10,6 +10,11 @@ const io = new Server(server);
 // Serve static files from the current directory
 app.use(express.static(__dirname));
 
+// Explicitly serve index.html on the root path to fix "Cannot GET /"
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Store active users in memory
 const activeUsers = new Map();
 
