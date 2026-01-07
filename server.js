@@ -24,15 +24,18 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHAT_FILE = path.join(DATA_DIR, 'chat.json');
 
 // Ensure data directory and files exist
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-if (!fs.existsSync(USERS_FILE)) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify({}));
-}
-if (!fs.existsSync(CHAT_FILE)) {
-    fs.writeFileSync(CHAT_FILE, JSON.stringify([]));
-}
+const initFiles = () => {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(USERS_FILE)) {
+        fs.writeFileSync(USERS_FILE, JSON.stringify({}));
+    }
+    if (!fs.existsSync(CHAT_FILE)) {
+        fs.writeFileSync(CHAT_FILE, JSON.stringify([]));
+    }
+};
+initFiles();
 
 /**
  * Utility to read JSON files
@@ -75,7 +78,11 @@ io.on('connection', (socket) => {
         // Assign Ranks
         if (username === 'dev') {
             persistentUser.rank = 'Developer';
-        } else {
+        } else if (username === 'rawrer') {
+            persistentUser.rank = 'Owner';
+        } else if (username === 'empty') {
+            persistentUser.rank = 'Site-helper';
+        } else if (!persistentUser.rank) {
             persistentUser.rank = 'VIP';
         }
 
@@ -98,44 +105,80 @@ io.on('connection', (socket) => {
         const sender = onlineUsers[socket.id];
         if (!sender) return;
 
-        // 1. Check for /give command (Developer only)
-        if (msg.text && msg.text.startsWith('/give ')) {
-            if (sender.username.toLowerCase() === 'dev') {
-                const parts = msg.text.split(' '); // /give {user} {type} {amount}
+        // 1. Check for commands
+        if (msg.text && msg.text.startsWith('/')) {
+            const parts = msg.text.split(' ');
+            const cmd = parts[0].toLowerCase();
+
+            // /wipe - Factory Reset (Dev Only)
+            if (cmd === '/wipe') {
+                if (sender.username.toLowerCase() === 'dev') {
+                    console.log("!!! DATABASE WIPE INITIATED BY DEV !!!");
+                    
+                    // Clear files on server
+                    saveData(USERS_FILE, {});
+                    saveData(CHAT_FILE, []);
+                    
+                    // Notify everyone and force them to reload
+                    io.emit('system_message', "⚠️ EMERGENCY: SERVER DATABASE WIPED BY DEV. REBOOTING...");
+                    io.emit('chat_message', { 
+                        type: 'chat', 
+                        user: 'SYSTEM', 
+                        text: 'Database wiped. All accounts deleted. Application will now reset.', 
+                        rank: 'Developer' 
+                    });
+
+                    // Force all sockets to disconnect and tell clients to clear local storage via custom event
+                    // We broadcast this so the frontend script can execute its wipe logic
+                    io.emit('force_wipe_client');
+                    
+                    // Reset internal state
+                    onlineUsers = {};
+                    return;
+                }
+            }
+
+            // /give {user} {g/r} {amount} (Dev Only)
+            if (cmd === '/give' && sender.username.toLowerCase() === 'dev') {
                 if (parts.length === 4) {
                     const targetName = parts[1].toLowerCase();
-                    const type = parts[2].toLowerCase();
+                    const typeInput = parts[2].toLowerCase();
                     const amount = parseInt(parts[3]);
 
                     if (!isNaN(amount)) {
                         const users = readData(USERS_FILE);
-                        
-                        // Update online user if they are here
-                        const targetSocketId = Object.keys(onlineUsers).find(
-                            id => onlineUsers[id].username.toLowerCase() === targetName
-                        );
+                        const isGold = typeInput === 'g' || typeInput === 'gold';
+                        const isRuby = typeInput === 'r' || typeInput === 'rubies' || typeInput === 'ruby';
+                        const typeLabel = isGold ? 'gold' : 'rubies';
 
-                        // Update Database first (Offline storage)
-                        if (users[targetName]) {
-                            if (type === 'gold') users[targetName].gold += amount;
-                            if (type === 'rubies' || type === 'ruby') users[targetName].rubies += amount;
-                            saveData(USERS_FILE, users);
+                        if (isGold || isRuby) {
+                            // Update Database first
+                            if (users[targetName]) {
+                                if (isGold) users[targetName].gold += amount;
+                                else users[targetName].rubies += amount;
+                                saveData(USERS_FILE, users);
+                            }
+
+                            // Update online user if they are here
+                            const targetSocketId = Object.keys(onlineUsers).find(
+                                id => onlineUsers[id].username.toLowerCase() === targetName
+                            );
+
+                            if (targetSocketId) {
+                                if (isGold) onlineUsers[targetSocketId].gold += amount;
+                                else onlineUsers[targetSocketId].rubies += amount;
+                                io.to(targetSocketId).emit('force_update', onlineUsers[targetSocketId]);
+                            }
+
+                            io.emit('system_message', `DEV granted ${amount} ${typeLabel} to ${targetName}!`);
+                            return;
                         }
-
-                        if (targetSocketId) {
-                            if (type === 'gold') onlineUsers[targetSocketId].gold += amount;
-                            if (type === 'rubies' || type === 'ruby') onlineUsers[targetSocketId].rubies += amount;
-                            io.to(targetSocketId).emit('force_update', onlineUsers[targetSocketId]);
-                        }
-
-                        io.emit('system_message', `DEV granted ${amount} ${type} to ${targetName}!`);
-                        return; 
                     }
                 }
             }
         }
 
-        // Standard message processing
+        // Standard message processing for non-command chat or handled visuals
         const messageObj = {
             ...msg,
             rank: sender.rank || 'VIP',
