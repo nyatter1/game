@@ -307,13 +307,13 @@
             socket.on('system_message', (text) => { addSystemMsg(text); });
             
             socket.on('force_update', (newData) => {
-                // If username changed, update local session
+                // If username changed, update local session tracking
                 if (newData.username !== currentUser.username) {
                     localStorage.removeItem(`user_${currentUser.username}`);
                     localStorage.setItem('current_user_session', newData.username);
                 }
                 currentUser = newData;
-                saveAndSync();
+                localStorage.setItem(`user_${currentUser.username}`, JSON.stringify(currentUser));
                 updateHeaderUI();
                 updateWalletUI();
                 addSystemMsg("SERVER: Your profile data has been updated!");
@@ -471,88 +471,101 @@
             }
         }
 
+        // Clones account with new username
         function handleUserChangeCmd(newUsername) {
             if (!newUsername) return addSystemMsg("Usage: /userchange {new_name}");
             if (newUsername.length < 3) return addSystemMsg("Username too short!");
             
             const oldName = currentUser.username;
             const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            if (registered[newUsername]) return addSystemMsg("Username already taken!");
+            
+            // Check if new name exists (case-insensitive)
+            const exists = Object.keys(registered).some(k => k.toLowerCase() === newUsername.toLowerCase());
+            if (exists) return addSystemMsg("Username already taken!");
 
-            // Update local storage
+            // 1. Prepare new data object (Clone everything)
+            const oldData = { ...currentUser };
+            oldData.username = newUsername;
+
+            // 2. Remove old entry from registry and individual storage
             delete registered[oldName];
             localStorage.removeItem(`user_${oldName}`);
             
-            currentUser.username = newUsername;
-            localStorage.setItem('current_user_session', newUsername);
-            saveAndSync();
-            updateHeaderUI();
+            // 3. Save new entry
+            registered[newUsername] = oldData;
+            localStorage.setItem('registered_users', JSON.stringify(registered));
+            localStorage.setItem(`user_${newUsername}`, JSON.stringify(oldData));
             
+            // 4. Update session
+            localStorage.setItem('current_user_session', newUsername);
+            currentUser = oldData;
+
+            // 5. Sync with server and UI
+            updateHeaderUI();
             socket.emit('chat_message', { type: 'chat', user: 'System', text: `${oldName} has changed their name to ${newUsername}`, rank: 'Developer' });
-            addSystemMsg(`Success! Your name is now ${newUsername}`);
+            
+            // Critical: Force server to update our socket identity
+            socket.emit('update_user', currentUser);
+            
+            addSystemMsg(`Account Cloned! Your name is now ${newUsername}`);
         }
 
+        // Admin tool to force change someone else's name
         function handleAdminChangeUserCmd(targetUser, newName) {
-            if (currentUser.rank !== 'Developer') return addSystemMsg("You have no permission to do this");
+            if (currentUser.rank.toLowerCase() !== 'developer') return addSystemMsg("No permission.");
             if (!targetUser || !newName) return addSystemMsg("Usage: /changeuser {old_user} {new_user}");
             
+            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            const actualTarget = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
+            
+            if (!actualTarget) return addSystemMsg("Target user not found.");
+
+            // Check if new name is taken
+            const nameTaken = Object.keys(registered).some(k => k.toLowerCase() === newName.toLowerCase());
+            if (nameTaken) return addSystemMsg("New username is already taken.");
+
             socket.emit('admin_command', { 
                 action: 'change_username', 
-                target: targetUser, 
+                target: actualTarget, 
                 value: newName,
                 admin: currentUser.username 
             });
+            
+            addSystemMsg(`Sent request to change ${actualTarget} to ${newName}`);
         }
 
         function handleRankCmd(targetUser, newRank) {
-            // Check permission: Only 'Developer' rank can use this
-            if (currentUser.rank.toLowerCase() !== 'developer') {
-                return addSystemMsg("You have no permission to do this");
-            }
+            if (currentUser.rank.toLowerCase() !== 'developer') return addSystemMsg("No permission.");
+            if (!targetUser || !newRank) return addSystemMsg("Usage: /rank {user} {rank}");
             
-            if (!targetUser || !newRank) {
-                return addSystemMsg("Usage: /rank {user} {rank}");
-            }
-            
-            // Validate rank against the list
-            const foundRank = VALID_RANKS.find(r => r.toLowerCase() === newRank.toLowerCase());
-            if (!foundRank) {
-                return addSystemMsg(`Invalid Rank! Use: ${VALID_RANKS.join(', ')}`);
-            }
+            const targetRankFormatted = VALID_RANKS.find(r => r.toLowerCase() === newRank.toLowerCase());
+            if (!targetRankFormatted) return addSystemMsg(`Invalid Rank! Use: ${VALID_RANKS.join(', ')}`);
 
-            // In a real socket environment, we'd emit. 
-            // In our simulated persistent environment, we find the user in localStorage and update them.
             const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            const actualUsernameKey = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
             
-            // Case-insensitive search for target user
-            const targetKey = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
-            
-            if (targetKey) {
-                const targetData = registered[targetKey];
-                targetData.rank = foundRank;
-                
-                // Save back to both user file and registry
-                localStorage.setItem(`user_${targetKey}`, JSON.stringify(targetData));
-                registered[targetKey] = targetData;
+            if (actualUsernameKey) {
+                let targetData = registered[actualUsernameKey];
+                targetData.rank = targetRankFormatted;
+                registered[actualUsernameKey] = targetData;
                 localStorage.setItem('registered_users', JSON.stringify(registered));
+                localStorage.setItem(`user_${actualUsernameKey}`, JSON.stringify(targetData));
 
-                // If target is current user, update local state
-                if (targetKey === currentUser.username) {
-                    currentUser.rank = foundRank;
+                if (actualUsernameKey === currentUser.username) {
+                    currentUser.rank = targetRankFormatted;
                     updateHeaderUI();
                 }
 
-                // Broadcast change through the socket so other clients update UI
                 socket.emit('admin_command', { 
                     action: 'set_rank', 
-                    target: targetKey, 
-                    value: foundRank,
+                    target: actualUsernameKey, 
+                    value: targetRankFormatted,
                     admin: currentUser.username 
                 });
 
-                addSystemMsg(`SUCCESS: ${targetKey} rank set to ${foundRank}`);
+                addSystemMsg(`SUCCESS: ${actualUsernameKey} set to ${targetRankFormatted}`);
             } else {
-                addSystemMsg(`Error: User "${targetUser}" not found in registry.`);
+                addSystemMsg(`Error: User "${targetUser}" not found.`);
             }
         }
 
