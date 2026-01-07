@@ -39,19 +39,14 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .rank-dev {
-            background: linear-gradient(to right, #ef4444, #f59e0b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
-
-        .rank-vip {
-            background: linear-gradient(to right, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
+        /* Rank Colors */
+        .rank-dev { background: linear-gradient(to right, #ef4444, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        .rank-ceo { background: linear-gradient(to right, #7e22ce, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        .rank-owner { background: linear-gradient(to right, #b91c1c, #f87171); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        .rank-admin { background: linear-gradient(to right, #1d4ed8, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .rank-mod { background: linear-gradient(to right, #047857, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .rank-vip { background: linear-gradient(to right, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .rank-default { color: #6b7280; font-weight: 600; }
 
         .dice-anim {
             animation: diceShake 0.6s ease-in-out;
@@ -215,6 +210,11 @@
         let currentUser = null;
         const DEFAULT_PFP = "https://tse4.mm.bing.net/th/id/OIP.RzSDY3QeLinMNH2kcOduWQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3";
 
+        const VALID_RANKS = [
+            "CEO", "Site-helper", "owner", "co-owner", "head-owner",
+            "super-admin", "admin", "mod", "trial-mod", "VIP", "Developer"
+        ];
+
         const THEMES = [
             { name: "Indigo Night", primary: "#4f46e5", bg: "#f3f4f6" },
             { name: "Emerald Forest", primary: "#10b981", bg: "#f0fdf4" },
@@ -248,7 +248,18 @@
             `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 6a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 12a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 18a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4z"/></svg>`
         ];
 
-        function nFormatter(num, digits = 1) {
+        function getRankClass(rank) {
+            const r = rank?.toLowerCase();
+            if (r === 'developer') return 'rank-dev';
+            if (r === 'ceo') return 'rank-ceo';
+            if (r?.includes('owner')) return 'rank-owner';
+            if (r?.includes('admin')) return 'rank-admin';
+            if (r?.includes('mod')) return 'rank-mod';
+            if (r === 'vip') return 'rank-vip';
+            return 'rank-default';
+        }
+
+         function nFormatter(num, digits = 1) {
             if (num === 0) return "0";
             const lookup = [
                 { value: 1e3, symbol: "K" },
@@ -312,32 +323,21 @@
                 : num.toLocaleString();
         }
 
-
         function init() {
             const username = localStorage.getItem('current_user_session');
-            if (!username) {
-                window.location.href = 'index.html';
-                return;
-            }
+            if (!username) { window.location.href = 'index.html'; return; }
 
             const userData = JSON.parse(localStorage.getItem(`user_${username}`));
-            if (!userData) {
-                window.location.href = 'index.html';
-                return;
-            }
+            if (!userData) { window.location.href = 'index.html'; return; }
 
             currentUser = userData;
             
-            // Set Rank styling
-            const rankLabel = document.getElementById('display-rank');
-            currentUser.rank = currentUser.username.toLowerCase() === 'dev' ? 'Developer' : 'VIP';
-            rankLabel.innerText = currentUser.rank;
-            rankLabel.className = `text-[10px] uppercase tracking-wider font-black ${currentUser.rank === 'Developer' ? 'rank-dev' : 'rank-vip'}`;
+            // Set Initial Rank if not exists
+            if (!currentUser.rank) {
+                currentUser.rank = currentUser.username.toLowerCase() === 'dev' ? 'Developer' : 'VIP';
+            }
             
-            document.getElementById('display-name').innerText = currentUser.username;
-            document.getElementById('user-pfp').src = currentUser.pfp || DEFAULT_PFP;
-            
-            // Apply saved theme
+            updateHeaderUI();
             if (typeof currentUser.theme !== 'undefined') applyTheme(currentUser.theme);
             
             updateWalletUI();
@@ -353,19 +353,35 @@
             socket.on('user_list_update', (users) => { updateSidebar(users); });
             socket.on('chat_message', (msg) => { renderIncoming(msg); });
             socket.on('system_message', (text) => { addSystemMsg(text); });
+            
             socket.on('force_update', (newData) => {
+                // If username changed, update local session
+                if (newData.username !== currentUser.username) {
+                    localStorage.removeItem(`user_${currentUser.username}`);
+                    localStorage.setItem('current_user_session', newData.username);
+                }
                 currentUser = newData;
                 saveAndSync();
+                updateHeaderUI();
                 updateWalletUI();
-                addSystemMsg("SERVER: Your balance has been updated by the Developer!");
+                addSystemMsg("SERVER: Your profile data has been updated!");
             });
 
             setInterval(() => {
                 currentUser.gold += 100;
                 currentUser.rubies += 1;
                 saveAndSync();
+                updateWalletUI();
                 addSystemMsg("Activity Reward: +100 Gold & +1 Ruby!");
             }, 5 * 60 * 1000);
+        }
+
+        function updateHeaderUI() {
+            const rankLabel = document.getElementById('display-rank');
+            rankLabel.innerText = currentUser.rank;
+            rankLabel.className = `text-[10px] uppercase tracking-wider font-black ${getRankClass(currentUser.rank)}`;
+            document.getElementById('display-name').innerText = currentUser.username;
+            document.getElementById('user-pfp').src = currentUser.pfp || DEFAULT_PFP;
         }
 
         function updateSidebar(onlineUsers) {
@@ -385,7 +401,7 @@
 
         function userItemTemplate(user, isOnline) {
             if (!user) return '';
-            const rankClass = user.rank === 'Developer' ? 'rank-dev' : 'rank-vip';
+            const rClass = getRankClass(user.rank);
             return `
                 <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/50 transition-all border border-transparent">
                     <div class="relative">
@@ -394,7 +410,7 @@
                     </div>
                     <div class="hidden md:block overflow-hidden">
                         <p class="text-[11px] font-bold text-gray-800 truncate leading-tight">${user.username}</p>
-                        <p class="text-[9px] font-black uppercase ${rankClass}">${user.rank}</p>
+                        <p class="text-[9px] font-black uppercase ${rClass}">${user.rank || 'Member'}</p>
                     </div>
                 </div>
             `;
@@ -414,21 +430,13 @@
         function applyTheme(index) {
             const theme = THEMES[index];
             if (!theme) return;
-            
             document.documentElement.style.setProperty('--primary', theme.primary);
             document.documentElement.style.setProperty('--primary-hover', theme.primary + 'dd');
             document.documentElement.style.setProperty('--bg-main', theme.bg);
-            
             const sendBtn = document.getElementById('send-btn');
             if (sendBtn) sendBtn.style.backgroundColor = theme.primary;
-            
-            const pfp = document.getElementById('user-pfp');
-            if (pfp) pfp.style.boxShadow = `0 0 0 2px white, 0 0 0 4px ${theme.primary}`;
-
             currentUser.theme = index;
             saveAndSync();
-
-            // Visual update for the grid
             document.querySelectorAll('.theme-card').forEach(card => card.classList.remove('theme-card-active'));
             const selectedCard = document.getElementById(`theme-card-${index}`);
             if (selectedCard) selectedCard.classList.add('theme-card-active');
@@ -443,16 +451,15 @@
         function addMessageUI(msg) {
             const container = document.getElementById('chat-messages');
             const isMe = msg.user === currentUser.username;
-            const rankClass = msg.rank === 'Developer' ? 'rank-dev' : 'rank-vip';
+            const rClass = getRankClass(msg.rank);
             const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            
             const div = document.createElement('div');
             div.className = `flex gap-3 mb-2 animate-in slide-in-from-bottom-2 duration-300 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
             div.innerHTML = `
                 <img src="${msg.pfp || DEFAULT_PFP}" class="w-10 h-10 rounded-2xl object-cover shadow-md border-2 border-white">
                 <div class="max-w-[75%] flex flex-col ${isMe ? 'items-end' : ''}">
                     <div class="flex items-center gap-1.5 mb-0.5">
-                        <span class="text-[9px] font-black uppercase tracking-tighter ${rankClass}">${msg.rank}</span>
+                        <span class="text-[9px] font-black uppercase tracking-tighter ${rClass}">${msg.rank || 'Member'}</span>
                         <span class="text-[10px] font-bold text-gray-500">${msg.user}</span>
                     </div>
                     <div class="px-4 py-2.5 rounded-2xl text-sm shadow-sm ${isMe ? 'text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'}" 
@@ -479,14 +486,86 @@
             const text = input.value.trim();
             if (!text) return;
 
-            if (text === '/bank') {
-                socket.emit('chat_message', { type: 'bank', user: currentUser.username, pfp: currentUser.pfp, gold: currentUser.gold, rubies: currentUser.rubies, rank: currentUser.rank });
-            } else if (text.startsWith('/dice ')) {
-                handleDiceCmd(text);
+            if (text.startsWith('/')) {
+                handleCommand(text);
             } else {
                 socket.emit('chat_message', { type: 'chat', user: currentUser.username, pfp: currentUser.pfp, text: text, rank: currentUser.rank });
             }
             input.value = '';
+        }
+
+        function handleCommand(text) {
+            const parts = text.split(' ');
+            const cmd = parts[0].toLowerCase();
+
+            switch(cmd) {
+                case '/bank':
+                    socket.emit('chat_message', { type: 'bank', user: currentUser.username, pfp: currentUser.pfp, gold: currentUser.gold, rubies: currentUser.rubies, rank: currentUser.rank });
+                    break;
+                case '/dice':
+                    handleDiceCmd(text);
+                    break;
+                case '/userchange':
+                    handleUserChangeCmd(parts[1]);
+                    break;
+                case '/changeuser':
+                    handleAdminChangeUserCmd(parts[1], parts[2]);
+                    break;
+                case '/rank':
+                    handleRankCmd(parts[1], parts[2]);
+                    break;
+                default:
+                    addSystemMsg(`Not a command: ${cmd}`);
+            }
+        }
+
+        function handleUserChangeCmd(newUsername) {
+            if (!newUsername) return addSystemMsg("Usage: /userchange {new_name}");
+            if (newUsername.length < 3) return addSystemMsg("Username too short!");
+            
+            const oldName = currentUser.username;
+            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            if (registered[newUsername]) return addSystemMsg("Username already taken!");
+
+            // Update local storage
+            delete registered[oldName];
+            localStorage.removeItem(`user_${oldName}`);
+            
+            currentUser.username = newUsername;
+            localStorage.setItem('current_user_session', newUsername);
+            saveAndSync();
+            updateHeaderUI();
+            
+            socket.emit('chat_message', { type: 'chat', user: 'System', text: `${oldName} has changed their name to ${newUsername}`, rank: 'Developer' });
+            addSystemMsg(`Success! Your name is now ${newUsername}`);
+        }
+
+        function handleAdminChangeUserCmd(targetUser, newName) {
+            if (currentUser.rank !== 'Developer') return addSystemMsg("You have no permission to do this");
+            if (!targetUser || !newName) return addSystemMsg("Usage: /changeuser {old_user} {new_user}");
+            
+            socket.emit('admin_command', { 
+                action: 'change_username', 
+                target: targetUser, 
+                value: newName,
+                admin: currentUser.username 
+            });
+        }
+
+        function handleRankCmd(targetUser, newRank) {
+            if (currentUser.rank !== 'Developer') return addSystemMsg("You have no permission to do this");
+            if (!targetUser || !newRank) return addSystemMsg("Usage: /rank {user} {rank}");
+            
+            // Validate rank against the requested list
+            const foundRank = VALID_RANKS.find(r => r.toLowerCase() === newRank.toLowerCase());
+            if (!foundRank) return addSystemMsg(`Invalid Rank! Use: ${VALID_RANKS.join(', ')}`);
+
+            socket.emit('admin_command', { 
+                action: 'set_rank', 
+                target: targetUser, 
+                value: foundRank,
+                admin: currentUser.username 
+            });
         }
 
         function handleDiceCmd(text) {
@@ -509,6 +588,7 @@
                 const winAmt = amount * 2;
                 if (won) { if (isGold) currentUser.gold += winAmt; else currentUser.rubies += winAmt; saveAndSync(); }
                 socket.emit('chat_message', { type: 'dice', user: currentUser.username, data: { roll, won, amount, type: realType, winAmt } });
+                updateWalletUI();
             }, 600);
         }
 
@@ -561,6 +641,7 @@
         }
 
         function updateWalletUI() {
+            if (!currentUser) return;
             document.getElementById('wallet-gold').innerText = nFormatter(currentUser.gold);
             document.getElementById('wallet-rubies').innerText = nFormatter(currentUser.rubies);
             document.getElementById('sidebar-gold').innerText = nFormatter(currentUser.gold);
