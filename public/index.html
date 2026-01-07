@@ -3,215 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimpleChat - Login & Signup</title>
+    <title>Nexus Chat | Interactive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            min-height: 100vh;
+            background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
+            height: 100vh;
+            overflow: hidden;
+            color: #e9ecef;
         }
-        .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
         }
-        .custom-error {
-            display: none;
-            color: #ef4444;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-            font-weight: 600;
+
+        .chat-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .message-anim {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .rank-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .rank-dev { background: linear-gradient(90deg, #ff4d4d, #f9ca24); color: #000; }
+        .rank-owner { background: #6c5ce7; color: #fff; }
+        .rank-vip { background: #00cec9; color: #000; }
+        .rank-user { background: #636e72; color: #fff; }
+
+        .currency-pill {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4">
+<body class="p-4 md:p-8 flex items-center justify-center">
 
-    <div class="glass w-full max-w-md p-8 rounded-3xl shadow-2xl transition-all duration-300">
-        <div class="text-center mb-6">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+    <div class="w-full h-full max-w-6xl flex flex-col md:flex-row gap-6">
+        
+        <!-- Sidebar: User Info & Online List -->
+        <div class="w-full md:w-80 flex flex-col gap-6">
+            <!-- Profile Card -->
+            <div class="glass-panel p-6 flex flex-col items-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-3xl font-bold mb-4 border-4 border-white/10 shadow-xl">
+                    <span id="p-avatar">?</span>
+                </div>
+                <h2 id="p-username" class="text-xl font-bold">Loading...</h2>
+                <div id="p-rank" class="rank-badge mt-2">USER</div>
+                
+                <div class="grid grid-cols-2 gap-3 w-full mt-6">
+                    <div class="currency-pill p-3 rounded-xl flex flex-col items-center">
+                        <span class="text-yellow-400 text-xs font-semibold">GOLD</span>
+                        <span id="p-gold" class="text-lg font-bold">0</span>
+                    </div>
+                    <div class="currency-pill p-3 rounded-xl flex flex-col items-center">
+                        <span class="text-red-400 text-xs font-semibold">RUBIES</span>
+                        <span id="p-rubies" class="text-lg font-bold">0</span>
+                    </div>
+                </div>
             </div>
-            <h1 id="form-title" class="text-3xl font-bold text-gray-800">Welcome Back</h1>
-            <p id="form-subtitle" class="text-gray-500 mt-2">Log in to access your chat account</p>
+
+            <!-- Online List -->
+            <div class="glass-panel flex-1 overflow-hidden flex flex-col">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 class="font-bold">Online Users</h3>
+                    <span id="user-count" class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs">0</span>
+                </div>
+                <div id="online-list" class="flex-1 overflow-y-auto chat-scroll p-4 space-y-3">
+                    <!-- Users injected here -->
+                </div>
+            </div>
         </div>
 
-        <form onsubmit="handleAuth(event)" class="space-y-4">
-            <!-- Universal Identification (Username or Email for Login) -->
-            <div>
-                <label id="id-label" class="block text-sm font-semibold text-gray-700 mb-1">Username or Email</label>
-                <input type="text" id="identifier" required placeholder="Enter username or email..." 
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+        <!-- Main Chat Area -->
+        <div class="flex-1 glass-panel flex flex-col overflow-hidden relative">
+            <!-- Header -->
+            <div class="p-4 border-b border-white/10 flex items-center gap-4 bg-white/5">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <h1 class="font-bold tracking-tight">GLOBAL CHAT</h1>
             </div>
 
-            <!-- Signup Specific Fields -->
-            <div id="signup-fields" class="hidden space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
-                    <input type="email" id="email" placeholder="example@mail.com" 
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Age (7-1000)</label>
-                        <input type="number" id="age" min="7" max="1000" placeholder="Age" 
-                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Gender</label>
-                        <select id="gender" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all appearance-none bg-white">
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                </div>
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto chat-scroll p-6 space-y-4">
+                <!-- Messages injected here -->
             </div>
 
-            <!-- Password (Always Required) -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                <input type="password" id="password" required placeholder="••••••••" 
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+            <!-- Input Area -->
+            <div class="p-6 bg-white/5 border-t border-white/10">
+                <form id="chat-form" class="flex gap-4">
+                    <input 
+                        type="text" 
+                        id="msg-input" 
+                        autocomplete="off"
+                        placeholder="Type a message or command..." 
+                        class="flex-1 bg-white/10 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-white/30"
+                    >
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 transition-colors px-8 rounded-2xl font-bold flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
             </div>
-
-            <div id="error-box" class="custom-error">Invalid credentials. Please try again.</div>
-
-            <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-[0.98]">
-                Sign In
-            </button>
-        </form>
-
-        <div class="mt-6 text-center">
-            <button onclick="toggleMode()" id="toggle-btn" class="text-sm text-indigo-600 font-semibold hover:underline">
-                Don't have an account? Create one
-            </button>
         </div>
     </div>
 
     <script>
-        let isLogin = true;
+        const socket = io();
+        const userData = JSON.parse(localStorage.getItem('user')) || { username: 'Guest', gold: 0, rubies: 0 };
+        
+        // DOM Elements
+        const msgList = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const msgInput = document.getElementById('msg-input');
+        const onlineList = document.getElementById('online-list');
 
-        function toggleMode() {
-            isLogin = !isLogin;
-            const title = document.getElementById('form-title');
-            const subtitle = document.getElementById('form-subtitle');
-            const submitBtn = document.getElementById('submit-btn');
-            const toggleBtn = document.getElementById('toggle-btn');
-            const signupFields = document.getElementById('signup-fields');
-            const idLabel = document.getElementById('id-label');
-            const identifierInput = document.getElementById('identifier');
-
-            document.getElementById('error-box').style.display = 'none';
-
-            if (isLogin) {
-                title.innerText = "Welcome Back";
-                subtitle.innerText = "Log in to access your chat account";
-                submitBtn.innerText = "Sign In";
-                toggleBtn.innerText = "Don't have an account? Create one";
-                idLabel.innerText = "Username or Email";
-                identifierInput.placeholder = "Enter username or email...";
-                signupFields.classList.add('hidden');
-                document.getElementById('email').required = false;
-                document.getElementById('age').required = false;
-            } else {
-                title.innerText = "Join SimpleChat";
-                subtitle.innerText = "Start earning coins and chatting live";
-                submitBtn.innerText = "Create Account";
-                toggleBtn.innerText = "Already have an account? Log in";
-                idLabel.innerText = "Choose Username";
-                identifierInput.placeholder = "Pick a unique username...";
-                signupFields.classList.remove('hidden');
-                document.getElementById('email').required = true;
-                document.getElementById('age').required = true;
-            }
-        }
-
-        function handleAuth(e) {
-            e.preventDefault();
-            const identifier = document.getElementById('identifier').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-            const errorBox = document.getElementById('error-box');
+        // Initialize UI
+        function updateProfileUI(data) {
+            document.getElementById('p-username').innerText = data.username;
+            document.getElementById('p-avatar').innerText = data.username.charAt(0).toUpperCase();
+            document.getElementById('p-gold').innerText = data.gold.toLocaleString();
+            document.getElementById('p-rubies').innerText = data.rubies.toLocaleString();
             
-            errorBox.style.display = 'none';
-
-            // Get all stored users
-            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
-
-            if (isLogin) {
-                // Find user by username or email
-                let foundUser = null;
-                
-                // Check if identifier is username
-                if (users[identifier]) {
-                    foundUser = users[identifier];
-                } else {
-                    // Search by email
-                    foundUser = Object.values(users).find(u => u.email === identifier);
-                }
-
-                if (foundUser && foundUser.password === password) {
-                    localStorage.setItem('current_user_session', foundUser.username);
-                    window.location.href = 'chat.html';
-                } else {
-                    errorBox.innerText = "Invalid username/email or password.";
-                    errorBox.style.display = 'block';
-                }
-            } else {
-                // Signup Logic
-                const email = document.getElementById('email').value.trim().toLowerCase();
-                const age = parseInt(document.getElementById('age').value);
-                const gender = document.getElementById('gender').value;
-
-                // Validations
-                if (users[identifier]) {
-                    errorBox.innerText = "Username is already taken.";
-                    errorBox.style.display = 'block';
-                    return;
-                }
-                if (Object.values(users).some(u => u.email === email)) {
-                    errorBox.innerText = "Email is already registered.";
-                    errorBox.style.display = 'block';
-                    return;
-                }
-                if (age < 7 || age > 1000 || isNaN(age)) {
-                    errorBox.innerText = "Age must be between 7 and 1000.";
-                    errorBox.style.display = 'block';
-                    return;
-                }
-
-                // Create new user record
-                const newUser = {
-                    username: identifier,
-                    email: email,
-                    password: password,
-                    age: age,
-                    gender: gender,
-                    pfp: "https://tse4.mm.bing.net/th/id/OIP.RzSDY3QeLinMNH2kcOduWQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3",
-                    gold: identifier === 'dev' ? 1000000000 : 100,
-                    rubies: identifier === 'dev' ? 1000000 : 10,
-                    joinedAt: new Date().toISOString()
-                };
-
-                users[identifier] = newUser;
-                localStorage.setItem('registered_users', JSON.stringify(users));
-                
-                // Save legacy key for chat.html compatibility
-                localStorage.setItem(`user_${identifier}`, JSON.stringify(newUser));
-                
-                localStorage.setItem('current_user_session', identifier);
-                window.location.href = 'chat.html';
-            }
+            const rankEl = document.getElementById('p-rank');
+            rankEl.innerText = data.rank || 'USER';
+            rankEl.className = 'rank-badge mt-2 ' + getRankClass(data.rank);
         }
 
-        window.onload = () => {
-            if (localStorage.getItem('current_user_session')) {
-                window.location.href = 'chat.html';
-            }
+        function getRankClass(rank) {
+            if (!rank) return 'rank-user';
+            const r = rank.toLowerCase();
+            if (r.includes('dev')) return 'rank-dev';
+            if (r.includes('owner')) return 'rank-owner';
+            if (r.includes('vip')) return 'rank-vip';
+            return 'rank-user';
         }
+
+        // Join Server
+        socket.emit('join', userData);
+
+        // Global Wipe Listener (The Nuclear command from server)
+        socket.on('force_wipe_client', () => {
+            console.warn("Global wipe command received.");
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'index.html'; // Redirect to login/landing
+        });
+
+        socket.on('history', (history) => {
+            msgList.innerHTML = '';
+            history.forEach(addMessage);
+        });
+
+        socket.on('chat_message', addMessage);
+
+        socket.on('user_list_update', (users) => {
+            document.getElementById('user-count').innerText = users.length;
+            onlineList.innerHTML = '';
+            users.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">${u.username.charAt(0).toUpperCase()}</div>
+                        <span class="text-sm font-medium">${u.username}</span>
+                    </div>
+                    <span class="rank-badge ${getRankClass(u.rank)}">${u.rank || 'USER'}</span>
+                `;
+                onlineList.appendChild(div);
+                
+                if (u.username === userData.username) {
+                    updateProfileUI(u);
+                    localStorage.setItem('user', JSON.stringify(u));
+                }
+            });
+        });
+
+        socket.on('system_message', (text) => {
+            const div = document.createElement('div');
+            div.className = 'text-center text-xs font-semibold text-white/30 uppercase tracking-widest py-2';
+            div.innerText = text;
+            msgList.appendChild(div);
+            msgList.scrollTop = msgList.scrollHeight;
+        });
+
+        socket.on('force_update', (newData) => {
+            localStorage.setItem('user', JSON.stringify(newData));
+            updateProfileUI(newData);
+        });
+
+        function addMessage(msg) {
+            const isMe = msg.username === userData.username;
+            const div = document.createElement('div');
+            div.className = `message-anim flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+            
+            div.innerHTML = `
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="rank-badge ${getRankClass(msg.rank)}">${msg.rank}</span>
+                    <span class="text-xs font-bold text-white/40">${msg.username}</span>
+                </div>
+                <div class="px-4 py-2 rounded-2xl max-w-md ${isMe ? 'bg-blue-600 rounded-tr-none' : 'bg-white/10 rounded-tl-none border border-white/10'}">
+                    <p class="text-sm leading-relaxed">${msg.text}</p>
+                </div>
+            `;
+            
+            msgList.appendChild(div);
+            msgList.scrollTop = msgList.scrollHeight;
+        }
+
+        chatForm.onsubmit = (e) => {
+            e.preventDefault();
+            const text = msgInput.value.trim();
+            if (!text) return;
+            
+            socket.emit('chat_message', {
+                username: userData.username,
+                text: text
+            });
+            
+            msgInput.value = '';
+        };
+
+        // Initial UI check
+        updateProfileUI(userData);
+
     </script>
 </body>
 </html>
