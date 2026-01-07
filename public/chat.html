@@ -68,7 +68,7 @@
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleSettings()">
                     <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 object-cover" src="" alt="User">
-                    <div class="hidden sm:block text-left">
+                    <div class="text-left">
                         <p id="header-username" class="text-sm font-bold leading-none"></p>
                         <span id="rank-badge" class="text-[10px] font-black tracking-widest uppercase">VIP MEMBER</span>
                     </div>
@@ -80,7 +80,7 @@
         </div>
     </header>
 
-    <main class="flex flex-1 overflow-hidden">
+    <main class="flex-1 flex overflow-hidden">
         <!-- Chat Area -->
         <section class="flex-1 flex flex-col relative">
             <div id="chat-feed" class="flex-1 overflow-y-auto p-6 space-y-4 chat-container">
@@ -138,9 +138,14 @@
         let currentUser = JSON.parse(localStorage.getItem('current_user_session')) || {
             username: 'Guest' + Math.floor(Math.random() * 9999),
             pfp: DEFAULT_PFP,
-            balance: 1000,
+            balance: 100,
             rank: 'VIP MEMBER'
         };
+
+        // Ensure users always start with 100 if balance is missing or from older sessions
+        if (currentUser.balance === undefined || currentUser.balance === 1000) {
+            currentUser.balance = 100;
+        }
 
         // UI Updates
         function updateUI() {
@@ -270,7 +275,7 @@
 
         function saveSettings() {
             updateUI();
-            // Sync updated profile (PFP and Rank) with all online players
+            // Broadcast the profile change to everyone immediately so the sidebar updates
             socket.emit('join', currentUser); 
             toggleSettings();
         }
