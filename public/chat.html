@@ -3,336 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Chat | Interactive</title>
+    <title>VIP Lounge | Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
-        :root {
-            --accent-primary: #3b82f6;
-            --accent-secondary: #8b5cf6;
-            --bg-dark: #0f172a;
-        }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background: #020617;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f172a;
+            color: white;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            color: #f8fafc;
         }
 
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        .glass {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .chat-scroll::-webkit-scrollbar {
+        .chat-container {
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
+        }
+
+        .chat-container::-webkit-scrollbar {
             width: 5px;
         }
-        .chat-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .chat-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: #334155;
             border-radius: 10px;
         }
-        .chat-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+
+        .vip-gradient {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .message-bubble {
-            transition: all 0.2s ease;
-            max-width: 85%;
+        .pfp-preview {
+            transition: transform 0.2s;
         }
 
-        .message-anim {
-            animation: messageAppear 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
-
-        @keyframes messageAppear {
-            from { opacity: 0; transform: translateY(8px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .rank-badge {
-            font-size: 0.6rem;
-            padding: 2px 10px;
-            border-radius: 9999px;
-            text-transform: uppercase;
-            font-weight: 800;
-            letter-spacing: 0.075em;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Rank Themes */
-        .rank-dev { background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
-        .rank-owner { background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white; box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
-        .rank-site-helper { background: linear-gradient(135deg, #10b981, #3b82f6); color: white; }
-        .rank-vip { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; }
-        .rank-user { background: rgba(255, 255, 255, 0.1); color: #94a3b8; }
-
-        .currency-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: transform 0.2s ease;
-        }
-        .currency-card:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .input-glow:focus-within {
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-            border-color: rgba(59, 130, 246, 0.4);
+        .pfp-preview:hover {
+            transform: scale(1.1) rotate(5deg);
         }
     </style>
 </head>
-<body class="p-4 md:p-6 lg:p-10 flex items-center justify-center">
+<body class="bg-slate-950">
 
-    <div class="w-full h-full max-w-7xl flex flex-col md:flex-row gap-6">
-        
-        <!-- Sidebar -->
-        <div class="w-full md:w-80 flex flex-col gap-6 shrink-0">
-            <!-- User Profile -->
-            <div class="glass-panel rounded-3xl p-8 flex flex-col items-center text-center">
-                <div class="relative mb-4">
-                    <div id="avatar-container" class="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-4xl font-black shadow-2xl rotate-3 transition-transform hover:rotate-0">
-                        <span id="p-avatar">?</span>
-                    </div>
-                    <div class="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 border-4 border-slate-900 rounded-full"></div>
-                </div>
-                
-                <h2 id="p-username" class="text-2xl font-bold tracking-tight">Loading...</h2>
-                <div id="p-rank" class="rank-badge mt-2">USER</div>
-                
-                <div class="w-full space-y-3 mt-8">
-                    <div class="currency-card p-4 rounded-2xl flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-coins text-yellow-500 text-xl"></i>
-                            <span class="text-xs font-bold text-slate-400">GOLD</span>
-                        </div>
-                        <span id="p-gold" class="text-lg font-black text-slate-100">0</span>
-                    </div>
-                    <div class="currency-card p-4 rounded-2xl flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-gem text-rose-500 text-xl"></i>
-                            <span class="text-xs font-bold text-slate-400">RUBIES</span>
-                        </div>
-                        <span id="p-rubies" class="text-lg font-black text-slate-100">0</span>
-                    </div>
-                </div>
+    <!-- Header -->
+    <header class="glass h-16 flex items-center justify-between px-6 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center shadow-lg shadow-amber-400/20">
+                <span class="text-sm">✨</span>
             </div>
-
-            <!-- Online Status -->
-            <div class="glass-panel rounded-3xl flex-1 overflow-hidden flex flex-col">
-                <div class="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
-                    <span class="flex items-center gap-2">
-                        <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                        <h3 class="font-bold text-sm tracking-wide">ACTIVE NOW</h3>
-                    </span>
-                    <span id="user-count" class="text-xs font-mono bg-white/10 px-2 py-0.5 rounded text-blue-300">0</span>
-                </div>
-                <div id="online-list" class="flex-1 overflow-y-auto chat-scroll p-4 space-y-2">
-                    <!-- Users injected here -->
-                </div>
-            </div>
+            <h1 class="font-bold tracking-tight text-lg uppercase">VIP <span class="text-amber-400">Lounge</span></h1>
         </div>
 
-        <!-- Chat Main -->
-        <div class="flex-1 glass-panel rounded-3xl flex flex-col overflow-hidden">
-            <!-- Chat Header -->
-            <div class="px-8 py-5 border-b border-white/5 flex justify-between items-center bg-white/5">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                        <i class="fa-solid fa-comments text-blue-500 text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-black text-lg tracking-tight">NEXUS NETWORK</h1>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Global encrypted channel</p>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="location.reload()" class="w-10 h-10 rounded-xl hover:bg-white/10 transition-colors text-slate-400">
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleSettings()">
+                <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700" src="" alt="User">
+                <div class="hidden sm:block">
+                    <p id="header-username" class="text-sm font-bold leading-none"></p>
+                    <span class="text-[10px] font-black text-amber-500 tracking-widest">VIP MEMBER</span>
                 </div>
             </div>
+            <button onclick="logout()" class="text-slate-500 hover:text-rose-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+        </div>
+    </header>
 
-            <!-- Messages Area -->
-            <div id="chat-messages" class="flex-1 overflow-y-auto chat-scroll p-8 space-y-6">
-                <!-- Messages -->
+    <main class="flex flex-1 overflow-hidden">
+        <!-- Chat Area -->
+        <section class="flex-1 flex flex-col relative">
+            <div id="chat-feed" class="flex-1 overflow-y-auto p-6 space-y-4 chat-container">
+                <!-- Messages injected here -->
             </div>
 
-            <!-- Input Box -->
-            <div class="p-8">
-                <form id="chat-form" class="flex gap-4 items-center bg-white/5 p-2 rounded-[2rem] border border-white/5 input-glow transition-all">
-                    <input 
-                        type="text" 
-                        id="msg-input" 
-                        autocomplete="off"
-                        placeholder="Say something or use /commands..." 
-                        class="flex-1 bg-transparent border-none px-6 py-4 focus:outline-none text-slate-100 placeholder:text-slate-600 font-medium"
-                    >
-                    <button type="submit" class="w-14 h-14 bg-blue-600 hover:bg-blue-500 transition-all rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-900/20 active:scale-95">
-                        <i class="fa-solid fa-arrow-up text-xl"></i>
+            <!-- Input Area -->
+            <div class="p-4 glass">
+                <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
+                    <input type="text" id="msg-input" autocomplete="off" 
+                        class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                        placeholder="Type your message, VIP...">
+                    <button type="submit" class="bg-amber-400 text-amber-950 font-bold px-6 py-3 rounded-2xl hover:bg-amber-300 transition-all active:scale-95">
+                        SEND
                     </button>
                 </form>
+            </div>
+        </section>
+
+        <!-- Sidebar (Online Users) -->
+        <aside class="hidden md:flex w-64 border-l border-slate-900 flex-col bg-slate-950/50">
+            <div class="p-4 border-b border-slate-900">
+                <h2 class="text-[10px] font-black text-slate-500 tracking-widest uppercase">Members Online — <span id="online-count">1</span></h2>
+            </div>
+            <div id="online-list" class="flex-1 p-4 space-y-3 overflow-y-auto chat-container">
+                <!-- Users injected here -->
+            </div>
+        </aside>
+    </main>
+
+    <!-- PFP / Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-[2rem] p-8 border border-slate-800">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">VIP Identity</h3>
+                <button onclick="toggleSettings()" class="text-slate-500 hover:text-white">✕</button>
+            </div>
+
+            <div class="flex flex-col items-center gap-6">
+                <div class="relative group cursor-pointer" onclick="randomizePFP()">
+                    <img id="modal-pfp" class="w-32 h-32 rounded-full border-4 border-amber-400 shadow-2xl bg-slate-800" src="" alt="Profile">
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="text-xs font-bold uppercase tracking-tighter">Randomize</span>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <p class="text-slate-400 text-sm mb-4">Click the avatar to randomize your look or choose a seed name below:</p>
+                    <input type="text" id="seed-input" oninput="updatePFPBySeed(this.value)" 
+                        class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-center text-sm w-full"
+                        placeholder="Avatar seed...">
+                </div>
+
+                <button onclick="saveSettings()" class="w-full bg-amber-400 text-amber-950 font-bold py-4 rounded-xl shadow-lg hover:bg-amber-300 transition-all">
+                    SAVE CHANGES
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        const socket = io();
-        const localUser = JSON.parse(localStorage.getItem('user'));
-        
-        if (!localUser) {
-            window.location.href = 'index.html';
-        }
+        // --- State Management ---
+        let currentUser = JSON.parse(localStorage.getItem('current_user_session'));
+        if (!currentUser) window.location.href = 'index.html';
 
-        const userData = localUser || { username: 'Guest', gold: 0, rubies: 0, rank: 'USER' };
-        
-        const msgList = document.getElementById('chat-messages');
+        let messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
+        let tempPfp = currentUser.pfp;
+
+        const chatFeed = document.getElementById('chat-feed');
         const chatForm = document.getElementById('chat-form');
         const msgInput = document.getElementById('msg-input');
         const onlineList = document.getElementById('online-list');
 
-        function getRankClass(rank) {
-            if (!rank) return 'rank-user';
-            const r = rank.toLowerCase().replace('-', '');
-            if (r.includes('dev')) return 'rank-dev';
-            if (r.includes('owner')) return 'rank-owner';
-            if (r.includes('sitehelper')) return 'rank-site-helper';
-            if (r.includes('vip')) return 'rank-vip';
-            return 'rank-user';
-        }
-
-        function updateProfileUI(data) {
-            document.getElementById('p-username').innerText = data.username;
-            document.getElementById('p-avatar').innerText = data.username.charAt(0).toUpperCase();
-            document.getElementById('p-gold').innerText = data.gold.toLocaleString();
-            document.getElementById('p-rubies').innerText = data.rubies.toLocaleString();
+        // --- Initialization ---
+        function init() {
+            updateUserUI();
+            renderMessages();
+            renderOnlineUsers();
             
-            const rankEl = document.getElementById('p-rank');
-            rankEl.innerText = data.rank || 'USER';
-            rankEl.className = 'rank-badge mt-2 ' + getRankClass(data.rank);
+            // Simulation: Every 5 seconds, "refresh" data
+            setInterval(() => {
+                messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
+                renderMessages();
+                renderOnlineUsers();
+            }, 3000);
         }
 
-        // Socket Actions
-        socket.emit('join', userData);
+        function updateUserUI() {
+            document.getElementById('header-pfp').src = currentUser.pfp;
+            document.getElementById('header-username').innerText = currentUser.username;
+            document.getElementById('modal-pfp').src = currentUser.pfp;
+        }
 
-        socket.on('force_wipe_client', () => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = 'index.html';
-        });
-
-        socket.on('history', (history) => {
-            msgList.innerHTML = '';
-            history.forEach(addMessage);
-            scrollToBottom();
-        });
-
-        socket.on('chat_message', (msg) => {
-            addMessage(msg);
-            scrollToBottom();
-        });
-
-        socket.on('user_list_update', (users) => {
-            document.getElementById('user-count').innerText = users.length;
-            onlineList.innerHTML = '';
-            users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center justify-between bg-white/[0.02] hover:bg-white/5 p-3 rounded-2xl transition-colors border border-transparent hover:border-white/5 group';
-                div.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-black text-slate-400 group-hover:text-white transition-colors">
-                            ${u.username.charAt(0).toUpperCase()}
+        // --- Chat Functions ---
+        function renderMessages() {
+            const isAtBottom = chatFeed.scrollHeight - chatFeed.scrollTop <= chatFeed.clientHeight + 100;
+            
+            chatFeed.innerHTML = messages.map(msg => `
+                <div class="flex gap-4 group ${msg.username === currentUser.username ? 'flex-row-reverse' : ''}">
+                    <img src="${msg.pfp}" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 shrink-0">
+                    <div class="${msg.username === currentUser.username ? 'items-end' : 'items-start'} flex flex-col max-w-[80%]">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold ${msg.username === currentUser.username ? 'text-amber-400' : 'text-slate-300'}">${msg.username}</span>
+                            <span class="text-[9px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 font-black">VIP</span>
                         </div>
-                        <span class="text-sm font-semibold text-slate-300">${u.username}</span>
+                        <div class="px-4 py-2.5 rounded-2xl text-sm ${
+                            msg.username === currentUser.username 
+                            ? 'bg-amber-400 text-amber-950 font-medium rounded-tr-none' 
+                            : 'bg-slate-800 text-slate-100 rounded-tl-none'
+                        }">
+                            ${escapeHtml(msg.text)}
+                        </div>
+                        <span class="text-[9px] text-slate-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </span>
                     </div>
-                    <span class="rank-badge ${getRankClass(u.rank)}">${u.rank || 'USER'}</span>
-                `;
-                onlineList.appendChild(div);
-                
-                if (u.username === userData.username) {
-                    updateProfileUI(u);
-                    localStorage.setItem('user', JSON.stringify(u));
-                }
-            });
-        });
-
-        socket.on('system_message', (text) => {
-            const div = document.createElement('div');
-            div.className = 'flex items-center gap-4 text-center my-4';
-            div.innerHTML = `
-                <div class="h-[1px] flex-1 bg-white/5"></div>
-                <span class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">${text}</span>
-                <div class="h-[1px] flex-1 bg-white/5"></div>
-            `;
-            msgList.appendChild(div);
-            scrollToBottom();
-        });
-
-        socket.on('force_update', (newData) => {
-            localStorage.setItem('user', JSON.stringify(newData));
-            updateProfileUI(newData);
-        });
-
-        function addMessage(msg) {
-            const isMe = msg.username === userData.username;
-            const div = document.createElement('div');
-            div.className = `message-anim flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-            
-            const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            div.innerHTML = `
-                <div class="flex items-center gap-2 mb-1.5 px-1">
-                    ${!isMe ? `<span class="rank-badge ${getRankClass(msg.rank)}">${msg.rank}</span>` : ''}
-                    <span class="text-[10px] font-bold text-slate-500">${msg.username} • ${time}</span>
-                    ${isMe ? `<span class="rank-badge ${getRankClass(msg.rank)}">${msg.rank}</span>` : ''}
                 </div>
-                <div class="message-bubble px-5 py-3 rounded-3xl ${
-                    isMe 
-                    ? 'bg-blue-600 text-white rounded-tr-sm shadow-lg shadow-blue-900/20' 
-                    : 'bg-white/5 text-slate-200 border border-white/5 rounded-tl-sm'
-                }">
-                    <p class="text-sm font-medium leading-relaxed">${msg.text}</p>
-                </div>
-            `;
-            
-            msgList.appendChild(div);
+            `).join('');
+
+            if (isAtBottom) chatFeed.scrollTop = chatFeed.scrollHeight;
         }
 
-        function scrollToBottom() {
-            msgList.scrollTo({ top: msgList.scrollHeight, behavior: 'smooth' });
-        }
-
-        chatForm.onsubmit = (e) => {
+        chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const text = msgInput.value.trim();
             if (!text) return;
-            
-            socket.emit('chat_message', {
-                username: userData.username,
-                text: text
-            });
+
+            const newMsg = {
+                username: currentUser.username,
+                pfp: currentUser.pfp,
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+
+            messages.push(newMsg);
+            if (messages.length > 100) messages.shift(); // Keep last 100
+            localStorage.setItem('vip_messages', JSON.stringify(messages));
             
             msgInput.value = '';
-        };
+            renderMessages();
+            chatFeed.scrollTop = chatFeed.scrollHeight;
+        });
 
-        // Initialize UI with storage values
-        updateProfileUI(userData);
+        // --- Sidebar Logic (Mock) ---
+        function renderOnlineUsers() {
+            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            const userList = Object.values(users);
+            
+            document.getElementById('online-count').innerText = userList.length;
+            onlineList.innerHTML = userList.map(u => `
+                <div class="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
+                    <div class="relative">
+                        <img src="${u.pfp}" class="w-8 h-8 rounded-full border border-slate-800">
+                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></div>
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-bold truncate">${u.username}</p>
+                        <p class="text-[9px] text-slate-500">Watching the lobby</p>
+                    </div>
+                </div>
+            `).join('');
+        }
 
+        // --- Settings / PFP Logic ---
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('hidden');
+            tempPfp = currentUser.pfp;
+            document.getElementById('modal-pfp').src = tempPfp;
+        }
+
+        function randomizePFP() {
+            const randomSeed = Math.random().toString(36).substring(7);
+            updatePFPBySeed(randomSeed);
+        }
+
+        function updatePFPBySeed(seed) {
+            tempPfp = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed || 'vip'}`;
+            document.getElementById('modal-pfp').src = tempPfp;
+        }
+
+        function saveSettings() {
+            // Update Session
+            currentUser.pfp = tempPfp;
+            localStorage.setItem('current_user_session', JSON.stringify(currentUser));
+
+            // Update Registry
+            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            if (users[currentUser.username]) {
+                users[currentUser.username].pfp = tempPfp;
+                localStorage.setItem('registered_users', JSON.stringify(users));
+            }
+
+            updateUserUI();
+            toggleSettings();
+            
+            // Post a system message (optional)
+            const systemMsg = {
+                username: currentUser.username,
+                pfp: tempPfp,
+                text: "✨ Just updated my VIP look!",
+                timestamp: new Date().toISOString()
+            };
+            messages.push(systemMsg);
+            localStorage.setItem('vip_messages', JSON.stringify(messages));
+            renderMessages();
+        }
+
+        function logout() {
+            localStorage.removeItem('current_user_session');
+            window.location.href = 'index.html';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
