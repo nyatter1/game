@@ -1,45 +1,55 @@
+/**
+ * Aura | The Sovereign Hub - Node.js Server
+ * * This server handles static file delivery for index.html and chat.html.
+ * It is designed to be lightweight, serving the frontend while the
+ * client-side code manages real-time state via Firebase.
+ */
+
 const express = require('express');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/**
- * Aura | Sovereign Network Server
- * * This server handles the delivery of the minimalist Aura interface.
- * It serves the landing page (login), user setup, and the encrypted chat hub.
- */
+// Middleware for parsing and logging
+app.use(express.json());
 
-// Middleware to serve static files if you have separate assets
+// Serve static assets (CSS, Images, JS) if you split them later
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route: Entry Point (Login/Landing)
+/**
+ * Route: Root
+ * Delivers the initialization wizard / landing page.
+ */
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Route: Identity Setup (The Wizard)
-app.get('/setup', (req, res) => {
-    res.sendFile(path.join(__dirname, 'setup.html'));
-});
-
-// Route: Unified Chat Hub
+/**
+ * Route: Chat Hub
+ * Delivers the main Aura social interface.
+ */
 app.get('/chat', (req, res) => {
     res.sendFile(path.join(__dirname, 'chat.html'));
 });
 
-// Fallback: Redirect unknown routes to home
-app.get('*', (req, res) => {
-    res.redirect('/');
+/**
+ * Error Handling for 404s
+ * Maintains the aesthetic by redirecting unknown paths to the hub.
+ */
+app.use((req, res) => {
+    res.status(404).redirect('/');
 });
 
-// Start the transmission
+/**
+ * Server Activation
+ */
 app.listen(PORT, () => {
     console.log(`
     -------------------------------------------
-    AURA NETWORK ONLINE
-    Protocol: HTTP
-    Encryption: UI-Simulated
-    Access Point: http://localhost:${PORT}
+    AURA | THE SOVEREIGN HUB
+    Status: Online
+    Port: ${PORT}
+    Environment: Production-Stable
     -------------------------------------------
     `);
 });
