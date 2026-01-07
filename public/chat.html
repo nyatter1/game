@@ -3,822 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimpleChat - Live Global Lounge</title>
+    <title>Nexus Network | Authentication</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
-        :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-main: #f3f4f6;
-            --glass-bg: rgba(255, 255, 255, 0.95);
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-main);
-            transition: background-color 0.3s ease;
+            background: #020617;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #f8fafc;
         }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 10px;
-        }
-
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 450px;
+            padding: 3rem;
+            border-radius: 2.5rem;
+            animation: fadeIn 0.8s ease-out;
         }
 
-        /* Rank Colors */
-        .rank-dev { background: linear-gradient(to right, #ef4444, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-        .rank-ceo { background: linear-gradient(to right, #7e22ce, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-        .rank-owner { background: linear-gradient(to right, #b91c1c, #f87171); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-        .rank-admin { background: linear-gradient(to right, #1d4ed8, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-        .rank-mod { background: linear-gradient(to right, #047857, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-        .rank-vip { background: linear-gradient(to right, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-        .rank-default { color: #6b7280; font-weight: 600; }
-
-        .dice-anim {
-            animation: diceShake 0.6s ease-in-out;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes diceShake {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(15deg) scale(1.1); }
-            50% { transform: rotate(-15deg) scale(1.1); }
-            75% { transform: rotate(10deg) scale(1.05); }
-            100% { transform: rotate(0deg) scale(1); }
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
         }
 
-        .theme-card-active {
-            border-color: var(--primary) !important;
-            background-color: #f8fafc;
-            box-shadow: 0 0 0 2px var(--primary);
+        .input-field {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.25rem 1.25rem 1.25rem 3.5rem;
+            border-radius: 1.25rem;
+            color: white;
+            transition: all 0.3s ease;
+            outline: none;
         }
 
-        .allin-win {
-            animation: pulse-gold 2s infinite;
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
         }
 
-        @keyframes pulse-gold {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
-            50% { box-shadow: 0 0 20px 10px rgba(234, 179, 8, 0.2); }
+        .input-icon {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            transition: color 0.3s ease;
+        }
+
+        .input-field:focus + .input-icon {
+            color: #3b82f6;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            padding: 1.25rem;
+            border-radius: 1.25rem;
+            font-weight: 700;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        .brand-logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+            transform: rotate(-5deg);
         }
     </style>
 </head>
-<body class="h-screen flex items-center justify-center p-0 sm:p-4">
+<body>
 
-    <!-- Wallet Modal -->
-    <div id="wallet-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl border border-gray-100">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-800">Your Wallet</h3>
-                <button onclick="toggleWallet(false)" class="text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div class="flex items-center gap-4">
-                        <img src="https://static.vecteezy.com/system/resources/previews/019/006/896/original/gold-coin-icon-png.png" class="w-12 h-12 object-contain" alt="Gold Icon">
-                        <span class="font-semibold text-gray-700">Gold</span>
-                    </div>
-                    <span id="wallet-gold" class="text-2xl font-black text-yellow-600">0</span>
-                </div>
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div class="flex items-center gap-4">
-                        <img src="https://tse4.mm.bing.net/th/id/OIP.nR2ssYc1SNYGlqyqxJOpigHaF2?rs=1&pid=ImgDetMain&o=7&rm=3" class="w-12 h-12 object-contain" alt="Ruby Icon">
-                        <span class="font-semibold text-gray-700">Rubies</span>
-                    </div>
-                    <span id="wallet-rubies" class="text-2xl font-black text-rose-600">0</span>
-                </div>
-            </div>
-            <button onclick="toggleWallet(false)" class="w-full mt-4 bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg">Close</button>
+    <div class="glass-card">
+        <div class="brand-logo">
+            <i class="fa-solid fa-bolt-lightning text-white"></i>
         </div>
-    </div>
-
-    <!-- Theme Modal -->
-    <div id="theme-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-gray-100 max-h-[80vh] overflow-y-auto custom-scrollbar">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-800">Customize Theme</h3>
-                <button onclick="toggleThemeModal(false)" class="text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="theme-grid">
-                <!-- 20 Themes injected here -->
-            </div>
-            <button onclick="toggleThemeModal(false)" class="w-full mt-8 bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors">Apply & Close</button>
-        </div>
-    </div>
-
-    <!-- Main UI -->
-    <div id="main-ui" class="w-full max-w-6xl h-full sm:h-[90vh] flex bg-white rounded-3xl shadow-2xl overflow-hidden glass">
         
-        <!-- Sidebar: Online/Offline Players -->
-        <div class="w-20 md:w-72 flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50">
-            <div class="p-4 md:p-6 border-b border-gray-100 flex items-center gap-4">
-                <div class="relative cursor-pointer group" onclick="document.getElementById('pfp-upload').click()">
-                    <img id="user-pfp" src="" alt="Profile" class="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-500 ring-offset-2 hover:opacity-80 transition-all">
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 rounded-2xl transition-opacity">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    </div>
-                    <input type="file" id="pfp-upload" class="hidden" accept="image/*" onchange="handlePfpChange(event)">
-                </div>
-                <div class="hidden md:block overflow-hidden">
-                    <h3 id="display-name" class="font-bold text-gray-800 truncate">Username</h3>
-                    <p id="display-rank" class="text-[10px] uppercase tracking-wider font-black">RANK</p>
-                </div>
-            </div>
-            
-            <div class="flex-grow overflow-y-auto custom-scrollbar">
-                <div class="p-3">
-                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-widest px-2 mb-2 flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        Online Players
-                    </p>
-                    <div id="online-users-list" class="space-y-1 mb-6">
-                        <!-- Online users injected here -->
-                    </div>
-
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-2">Offline Players</p>
-                    <div id="offline-users-list" class="space-y-1 opacity-60">
-                        <!-- Offline users injected here -->
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-4 md:p-6 border-t border-gray-100 hidden md:block">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-bold text-yellow-600">Gold</span>
-                    <span class="text-xs font-black text-gray-700" id="sidebar-gold">0</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-rose-600">Rubies</span>
-                    <span class="text-xs font-black text-gray-700" id="sidebar-gems">0</span>
-                </div>
-            </div>
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-black tracking-tight mb-2">Welcome Back</h1>
+            <p class="text-slate-400 font-medium">Access the Nexus Global Network</p>
         </div>
 
-        <!-- Chat Area -->
-        <div class="flex-grow flex flex-col bg-white">
-            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/80 sticky top-0 z-10">
-                <div>
-                    <h2 class="font-bold text-gray-800 text-lg">Global Lounge</h2>
-                    <p class="text-xs text-gray-400" id="online-count">0 Players Online</p>
-                </div>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button onclick="toggleThemeModal(true)" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors border border-gray-100" title="Themes">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.828 2.828a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                        </svg>
-                        <span class="text-xs font-bold hidden sm:inline">Themes</span>
-                    </button>
-                    <button onclick="toggleWallet(true)" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 text-indigo-600 transition-colors border border-indigo-100/50" title="Wallet">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3-3v8a3 3 0 003 3z" />
-                        </svg>
-                        <span class="text-xs font-bold hidden sm:inline">Wallet</span>
-                    </button>
-                    <button onclick="logout()" class="px-4 py-2 rounded-xl text-xs bg-red-50 text-red-500 font-bold hover:bg-red-100 transition-colors">Logout</button>
-                </div>
+        <form id="login-form">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="input-field" 
+                    placeholder="Enter Username" 
+                    required
+                    autocomplete="off"
+                >
+                <i class="fa-solid fa-user input-icon"></i>
             </div>
 
-            <div id="chat-messages" class="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed">
-                <!-- Messages injected here -->
+            <div class="input-group">
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="input-field" 
+                    placeholder="Security Code" 
+                    required
+                >
+                <i class="fa-solid fa-lock input-icon"></i>
             </div>
 
-            <div class="p-4 bg-gray-50/80 border-t border-gray-100">
-                <form id="chat-form" onsubmit="handleFormSubmit(event)" class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-                    <input type="text" id="message-input" autocomplete="off" placeholder="Type a message or command..." class="flex-grow px-4 py-2 outline-none text-gray-700 bg-transparent text-sm">
-                    <button type="submit" id="send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-xl transition-all shadow-md active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
-                    </button>
-                </form>
-            </div>
+            <button type="submit" class="login-btn">
+                <span>INITIALIZE SESSION</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-loose">
+                Authorized Access Only<br>
+                Terminal Encryption Active
+            </p>
         </div>
     </div>
 
     <script>
-        let socket;
-        let currentUser = null;
-        const DEFAULT_PFP = "https://tse4.mm.bing.net/th/id/OIP.RzSDY3QeLinMNH2kcOduWQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3";
+        const loginForm = document.getElementById('login-form');
 
-        const VALID_RANKS = [
-            "CEO", "Site-helper", "owner", "co-owner", "head-owner",
-            "super-admin", "admin", "mod", "trial-mod", "VIP", "Developer"
-        ];
-
-        const THEMES = [
-            { name: "Indigo Night", primary: "#4f46e5", bg: "#f3f4f6" },
-            { name: "Emerald Forest", primary: "#10b981", bg: "#f0fdf4" },
-            { name: "Rose Petal", primary: "#f43f5e", bg: "#fff1f2" },
-            { name: "Amber Glow", primary: "#f59e0b", bg: "#fffbeb" },
-            { name: "Midnight", primary: "#1e293b", bg: "#f8fafc" },
-            { name: "Ocean Breeze", primary: "#0ea5e9", bg: "#f0f9ff" },
-            { name: "Violet Dream", primary: "#8b5cf6", bg: "#f5f3ff" },
-            { name: "Cyberpunk", primary: "#d946ef", bg: "#fdf4ff" },
-            { name: "Slate Blue", primary: "#64748b", bg: "#f1f5f9" },
-            { name: "Deep Orange", primary: "#f97316", bg: "#fff7ed" },
-            { name: "Mint Fresh", primary: "#059669", bg: "#ecfdf5" },
-            { name: "Crimson Red", primary: "#dc2626", bg: "#fef2f2" },
-            { name: "Golden Sand", primary: "#d97706", bg: "#fef3c7" },
-            { name: "Sky High", primary: "#38bdf8", bg: "#e0f2fe" },
-            { name: "Lavender", primary: "#a855f7", bg: "#faf5ff" },
-            { name: "Teal Modern", primary: "#0d9488", bg: "#f0fdfa" },
-            { name: "Lime Punch", primary: "#84cc16", bg: "#f7fee7" },
-            { name: "Cool Gray", primary: "#4b5563", bg: "#f9fafb" },
-            { name: "Pink Candy", primary: "#ec4899", bg: "#fdf2f8" },
-            { name: "Rich Brown", primary: "#92400e", bg: "#fffbeb" }
-        ];
-
-        const DICE_SVGS = [
-            null,
-            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/></svg>`,
-            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 8a2 2 0 110-4 2 2 0 010 4zm8 8a2 2 0 110-4 2 2 0 010 4z"/></svg>`,
-            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M4 6a2 2 0 110-4 2 2 0 010 4zm6 6a2 2 0 110-4 2 2 0 010 4zm6 6a2 2 0 110-4 2 2 0 010 4z"/></svg>`,
-            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 8a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 16a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4z"/></svg>`,
-            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 8a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 16a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 100-4 2 2 0 000 4z"/></svg>`,
-            `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 6a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 12a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 18a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4z"/></svg>`
-        ];
-
-        function getRankClass(rank) {
-            const r = rank?.toLowerCase();
-            if (r === 'developer') return 'rank-dev';
-            if (r === 'ceo') return 'rank-ceo';
-            if (r?.includes('owner')) return 'rank-owner';
-            if (r?.includes('admin')) return 'rank-admin';
-            if (r?.includes('mod')) return 'rank-mod';
-            if (r === 'vip') return 'rank-vip';
-            return 'rank-default';
+        // Check if user is already logged in
+        if (localStorage.getItem('user')) {
+            window.location.href = 'chat.html';
         }
 
-        function nFormatter(num, digits = 1) {
-            if (num === 0) return "0";
-            const lookup = [
-                { value: 1e3, symbol: "K" }, { value: 1e6, symbol: "M" }, { value: 1e9, symbol: "B" },
-                { value: 1e12, symbol: "T" }, { value: 1e15, symbol: "Qa" }, { value: 1e18, symbol: "Qi" },
-                { value: 1e21, symbol: "Sx" }, { value: 1e24, symbol: "Sp" }, { value: 1e27, symbol: "Oc" },
-                { value: 1e30, symbol: "No" }, { value: 1e33, symbol: "Dc" }, { value: 1e36, symbol: "Ud" },
-                { value: 1e39, symbol: "Dd" }, { value: 1e42, symbol: "Td" }, { value: 1e45, symbol: "Qad" },
-                { value: 1e48, symbol: "Qid" }, { value: 1e51, symbol: "Sxd" }, { value: 1e54, symbol: "Spd" },
-                { value: 1e57, symbol: "Ocd" }, { value: 1e60, symbol: "Nod" }, { value: 1e63, symbol: "Vg" }
-            ];
-            const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-            var item = lookup.slice().reverse().find(i => num >= i.value);
-            return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : num.toLocaleString();
-        }
-
-        function init() {
-            const username = localStorage.getItem('current_user_session');
-            if (!username) { window.location.href = 'index.html'; return; }
-
-            const userData = JSON.parse(localStorage.getItem(`user_${username}`));
-            if (!userData) { window.location.href = 'index.html'; return; }
-
-            currentUser = userData;
-            
-            // Set Initial Rank if not exists
-            if (!currentUser.rank) {
-                currentUser.rank = currentUser.username.toLowerCase() === 'dev' ? 'Developer' : 'VIP';
-                currentUser.rank = currentUser.username.toLowerCase() === 'rawrer' ? 'Owner' : 'VIP';
-                currentUser.rank = currentUser.username.toLowerCase() === 'empty' ? 'Site-helper' : 'VIP';
-            }
-            
-            updateHeaderUI();
-            if (typeof currentUser.theme !== 'undefined') applyTheme(currentUser.theme);
-            
-            updateWalletUI();
-            renderThemeGrid();
-
-            socket = io();
-            socket.on('connect', () => { socket.emit('join', currentUser); });
-            socket.on('history', (msgs) => {
-                const container = document.getElementById('chat-messages');
-                container.innerHTML = '';
-                msgs.forEach(msg => renderIncoming(msg));
-            });
-            socket.on('user_list_update', (users) => { updateSidebar(users); });
-            socket.on('chat_message', (msg) => { renderIncoming(msg); });
-            socket.on('system_message', (text) => { addSystemMsg(text); });
-            
-            socket.on('force_update', (newData) => {
-                // If username changed, update local session tracking
-                if (newData.username !== currentUser.username) {
-                    localStorage.removeItem(`user_${currentUser.username}`);
-                    localStorage.setItem('current_user_session', newData.username);
-                }
-                currentUser = newData;
-                localStorage.setItem(`user_${currentUser.username}`, JSON.stringify(currentUser));
-                updateHeaderUI();
-                updateWalletUI();
-                addSystemMsg("SERVER: Your profile data has been updated!");
-            });
-
-            setInterval(() => {
-                currentUser.gold += 100;
-                currentUser.rubies += 1;
-                saveAndSync();
-                updateWalletUI();
-                addSystemMsg("Activity Reward: +100 Gold & +1 Ruby!");
-            }, 5 * 60 * 1000);
-        }
-
-        function updateHeaderUI() {
-            const rankLabel = document.getElementById('display-rank');
-            rankLabel.innerText = currentUser.rank;
-            rankLabel.className = `text-[10px] uppercase tracking-wider font-black ${getRankClass(currentUser.rank)}`;
-            document.getElementById('display-name').innerText = currentUser.username;
-            document.getElementById('user-pfp').src = currentUser.pfp || DEFAULT_PFP;
-        }
-
-        function updateSidebar(onlineUsers) {
-            const onlineList = document.getElementById('online-users-list');
-            const offlineList = document.getElementById('offline-users-list');
-            const countLabel = document.getElementById('online-count');
-            
-            const allUsersObj = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            const allUsernames = Object.keys(allUsersObj);
-            const onlineUsernames = onlineUsers.map(u => u.username);
-            const offlineUsernames = allUsernames.filter(name => !onlineUsernames.includes(name));
-
-            countLabel.innerText = `${onlineUsers.length} Player${onlineUsers.length === 1 ? '' : 's'} Online`;
-            onlineList.innerHTML = onlineUsers.map(user => userItemTemplate(user, true)).join('');
-            offlineList.innerHTML = offlineUsernames.map(name => userItemTemplate(allUsersObj[name], false)).join('');
-        }
-
-        function userItemTemplate(user, isOnline) {
-            if (!user) return '';
-            const rClass = getRankClass(user.rank);
-            return `
-                <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/50 transition-all border border-transparent">
-                    <div class="relative">
-                        <img src="${user.pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-lg object-cover shadow-sm ${!isOnline ? 'grayscale' : ''}">
-                        ${isOnline ? '<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>' : ''}
-                    </div>
-                    <div class="hidden md:block overflow-hidden">
-                        <p class="text-[11px] font-bold text-gray-800 truncate leading-tight">${user.username}</p>
-                        <p class="text-[9px] font-black uppercase ${rClass}">${user.rank || 'Member'}</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderThemeGrid() {
-            const grid = document.getElementById('theme-grid');
-            const activeIdx = currentUser.theme || 0;
-            grid.innerHTML = THEMES.map((t, idx) => `
-                <button onclick="applyTheme(${idx})" id="theme-card-${idx}" class="theme-card flex flex-col items-center gap-2 p-3 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-gray-50 transition-all group ${idx === activeIdx ? 'theme-card-active' : ''}">
-                    <div class="w-full h-12 rounded-xl shadow-inner border border-gray-200" style="background: linear-gradient(135deg, ${t.primary} 50%, ${t.bg} 50%)"></div>
-                    <span class="text-[10px] font-bold text-gray-600 truncate w-full text-center">${t.name}</span>
-                </button>
-            `).join('');
-        }
-
-        function applyTheme(index) {
-            const theme = THEMES[index];
-            if (!theme) return;
-            document.documentElement.style.setProperty('--primary', theme.primary);
-            document.documentElement.style.setProperty('--primary-hover', theme.primary + 'dd');
-            document.documentElement.style.setProperty('--bg-main', theme.bg);
-            const sendBtn = document.getElementById('send-btn');
-            if (sendBtn) sendBtn.style.backgroundColor = theme.primary;
-            currentUser.theme = index;
-            saveAndSync();
-            document.querySelectorAll('.theme-card').forEach(card => card.classList.remove('theme-card-active'));
-            const selectedCard = document.getElementById(`theme-card-${index}`);
-            if (selectedCard) selectedCard.classList.add('theme-card-active');
-        }
-
-        function renderIncoming(msg) {
-            if (msg.type === 'dice') renderDiceVisual(msg.user, msg.data);
-            else if (msg.type === 'bank') renderBankVisual(msg);
-            else if (msg.type === 'allin') renderAllInVisual(msg.user, msg.data);
-            else addMessageUI(msg);
-        }
-
-        function addMessageUI(msg) {
-            const container = document.getElementById('chat-messages');
-            const isMe = msg.user === currentUser.username;
-            const rClass = getRankClass(msg.rank);
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            const div = document.createElement('div');
-            div.className = `flex gap-3 mb-2 animate-in slide-in-from-bottom-2 duration-300 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
-            div.innerHTML = `
-                <img src="${msg.pfp || DEFAULT_PFP}" class="w-10 h-10 rounded-2xl object-cover shadow-md border-2 border-white">
-                <div class="max-w-[75%] flex flex-col ${isMe ? 'items-end' : ''}">
-                    <div class="flex items-center gap-1.5 mb-0.5">
-                        <span class="text-[9px] font-black uppercase tracking-tighter ${rClass}">${msg.rank || 'Member'}</span>
-                        <span class="text-[10px] font-bold text-gray-500">${msg.user}</span>
-                    </div>
-                    <div class="px-4 py-2.5 rounded-2xl text-sm shadow-sm ${isMe ? 'text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'}" 
-                         style="${isMe ? `background-color: ${primaryColor}` : ''}">
-                        ${msg.text}
-                    </div>
-                </div>`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function addSystemMsg(text) {
-            const container = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = 'flex justify-center my-3';
-            div.innerHTML = `<span class="bg-gray-100/80 backdrop-blur-sm text-gray-500 text-[9px] px-4 py-1.5 rounded-full uppercase font-black tracking-widest border border-gray-200">${text}</span>`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function handleFormSubmit(e) {
+        loginForm.onsubmit = (e) => {
             e.preventDefault();
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            if (text.startsWith('/')) {
-                handleCommand(text);
-            } else {
-                socket.emit('chat_message', { type: 'chat', user: currentUser.username, pfp: currentUser.pfp, text: text, rank: currentUser.rank });
-            }
-            input.value = '';
-        }
-
-        function handleCommand(text) {
-            const parts = text.split(' ');
-            const cmd = parts[0].toLowerCase();
-
-            switch(cmd) {
-                case '/bank':
-                    socket.emit('chat_message', { type: 'bank', user: currentUser.username, pfp: currentUser.pfp, gold: currentUser.gold, rubies: currentUser.rubies, rank: currentUser.rank });
-                    break;
-                case '/dice':
-                    handleDiceCmd(text);
-                    break;
-                case '/allin':
-                    handleAllInCmd(parts[1]);
-                    break;
-                case '/userchange':
-                    handleUserChangeCmd(parts[1]);
-                    break;
-                case '/changeuser':
-                    handleAdminChangeUserCmd(parts[1], parts[2]);
-                    break;
-                case '/rank':
-                    handleRankCmd(parts[1], parts[2]);
-                    break;
-                case '/give':
-                    handleGiveCmd(parts[1], parts[2], parts[3]);
-                    break;
-                case '/wipe':
-                    handleWipeCmd();
-                    break;
-                default:
-                    addSystemMsg(`Not a command: ${cmd}`);
-            }
-        }
-
-        function handleWipeCmd() {
-            if (currentUser.username.toLowerCase() !== 'dev') return addSystemMsg("Error: Only dev can wipe the database.");
+            const username = document.getElementById('username').value.trim();
             
-            // System-wide broadcast simulation
-            socket.emit('chat_message', { type: 'chat', user: 'SYSTEM', text: '⚠️ DATABASE WIPE INITIATED BY DEV. ALL ACCOUNTS DELETED.', rank: 'Developer' });
+            // Basic User Initialization
+            // In a real app, this would be an API call
+            const user = {
+                username: username,
+                gold: 0,
+                rubies: 0,
+                rank: username.toLowerCase() === 'dev' ? 'Developer' : 'USER'
+            };
+
+            localStorage.setItem('user', JSON.stringify(user));
             
-            setTimeout(() => {
-                localStorage.clear();
-                window.location.href = 'index.html';
-            }, 2000);
-        }
-
-        function handleGiveCmd(targetUser, type, amount) {
-            if (currentUser.username.toLowerCase() !== 'dev') return addSystemMsg("No permission.");
-            if (!targetUser || !type || !amount) return addSystemMsg("Usage: /give {user} {g/r} {amount}");
-            
-            const isGold = type.toLowerCase() === 'g' || type.toLowerCase() === 'gold';
-            const isRuby = type.toLowerCase() === 'r' || type.toLowerCase() === 'rubies';
-            if (!isGold && !isRuby) return addSystemMsg("Invalid type. Use g or r.");
-            
-            const amt = parseInt(amount);
-            if (isNaN(amt)) return addSystemMsg("Invalid amount.");
-
-            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            const actualTarget = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
-
-            if (!actualTarget) return addSystemMsg(`User ${targetUser} not found.`);
-
-            let targetData = registered[actualTarget];
-            if (isGold) targetData.gold += amt;
-            else targetData.rubies += amt;
-
-            registered[actualTarget] = targetData;
-            localStorage.setItem('registered_users', JSON.stringify(registered));
-            localStorage.setItem(`user_${actualTarget}`, JSON.stringify(targetData));
-
-            // Sync if giving to self
-            if (actualTarget === currentUser.username) {
-                currentUser = targetData;
-                updateWalletUI();
-            }
-
-            // Inform server to update the specific client if they are online
-            socket.emit('admin_command', { 
-                action: 'force_update', 
-                target: actualTarget, 
-                data: targetData,
-                admin: currentUser.username 
-            });
-
-            addSystemMsg(`Successfully gave ${nFormatter(amt)} ${isGold ? 'Gold' : 'Rubies'} to ${actualTarget}`);
-        }
-
-        function handleAllInCmd(type) {
-            if (!type) return addSystemMsg("Usage: /allin {gold/rubies}");
-            const isGold = type.toLowerCase() === 'g' || type.toLowerCase() === 'gold';
-            const isRuby = type.toLowerCase() === 'r' || type.toLowerCase() === 'rubies';
-            if (!isGold && !isRuby) return addSystemMsg("Use g or r.");
-
-            const amount = isGold ? currentUser.gold : currentUser.rubies;
-            if (amount <= 0) return addSystemMsg("You have nothing to bet!");
-
-            // Deduct immediately
-            if (isGold) currentUser.gold = 0; else currentUser.rubies = 0;
-            saveAndSync();
-
-            addSystemMsg(`🎰 Pushing everything into the pot... GOOD LUCK.`);
+            // Visual feedback before redirect
+            const btn = document.querySelector('.login-btn');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> SYNCING...';
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
 
             setTimeout(() => {
-                const won = Math.random() < 0.10; // 10% win rate
-                let winAmt = 0;
-                let multiplier = 1;
-
-                if (won) {
-                    // Weighted multiplier selection
-                    const rand = Math.random();
-                    if (rand < 0.5) multiplier = 1; // 50% chance for 1x (2x total)
-                    else if (rand < 0.75) multiplier = 2;
-                    else if (rand < 0.85) multiplier = 3;
-                    else if (rand < 0.92) multiplier = 4;
-                    else if (rand < 0.97) multiplier = 5;
-                    else multiplier = Math.floor(Math.random() * 5) + 6; // 6x to 10x
-
-                    winAmt = amount + (amount * multiplier);
-                    if (isGold) currentUser.gold += winAmt; else currentUser.rubies += winAmt;
-                    saveAndSync();
-                }
-
-                socket.emit('chat_message', { 
-                    type: 'allin', 
-                    user: currentUser.username, 
-                    data: { 
-                        won, 
-                        amount, 
-                        type: isGold ? 'gold' : 'rubies', 
-                        winAmt, 
-                        multiplier: multiplier + 1 
-                    } 
-                });
-                updateWalletUI();
-            }, 1500);
-        }
-
-        function renderAllInVisual(username, data) {
-            const container = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = 'flex justify-center my-6';
-            const color = data.won ? 'bg-yellow-400 text-yellow-950 border-yellow-500 allin-win' : 'bg-gray-800 text-gray-400 border-gray-700';
-            div.innerHTML = `
-                <div class="${color} p-8 rounded-[3rem] flex flex-col items-center min-w-[280px] border-4 shadow-2xl text-center">
-                    <p class="font-black text-[10px] uppercase tracking-[0.3em] mb-2">${username} ALL-IN</p>
-                    <p class="font-black text-4xl italic mb-2 tracking-tighter">${data.won ? 'VICTORY!' : 'BANKRUPT'}</p>
-                    <div class="h-px w-full bg-current opacity-20 my-3"></div>
-                    ${data.won ? `
-                        <p class="text-xs font-bold">LUCKY MULTIPLIER</p>
-                        <p class="text-5xl font-black mb-2">${data.multiplier}x</p>
-                        <p class="text-lg font-black">+${nFormatter(data.winAmt)} ${data.type.toUpperCase()}</p>
-                    ` : `
-                        <p class="text-sm font-medium">Lost ${nFormatter(data.amount)} ${data.type}</p>
-                        <p class="text-[10px] mt-4 uppercase font-bold opacity-50">Better luck next time...</p>
-                    `}
-                </div>`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // Clones account with new username
-        function handleUserChangeCmd(newUsername) {
-            if (!newUsername) return addSystemMsg("Usage: /userchange {new_name}");
-            if (newUsername.length < 3) return addSystemMsg("Username too short!");
-            
-            const oldName = currentUser.username;
-            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            
-            // Check if new name exists (case-insensitive)
-            const exists = Object.keys(registered).some(k => k.toLowerCase() === newUsername.toLowerCase());
-            if (exists) return addSystemMsg("Username already taken!");
-
-            // 1. Prepare new data object (Clone everything)
-            const oldData = { ...currentUser };
-            oldData.username = newUsername;
-
-            // 2. Remove old entry from registry and individual storage
-            delete registered[oldName];
-            localStorage.removeItem(`user_${oldName}`);
-            
-            // 3. Save new entry
-            registered[newUsername] = oldData;
-            localStorage.setItem('registered_users', JSON.stringify(registered));
-            localStorage.setItem(`user_${newUsername}`, JSON.stringify(oldData));
-            
-            // 4. Update session
-            localStorage.setItem('current_user_session', newUsername);
-            currentUser = oldData;
-
-            // 5. Sync with server and UI
-            updateHeaderUI();
-            socket.emit('chat_message', { type: 'chat', user: 'System', text: `${oldName} has changed their name to ${newUsername}`, rank: 'Developer' });
-            
-            // Critical: Force server to update our socket identity
-            socket.emit('update_user', currentUser);
-            
-            addSystemMsg(`Account Cloned! Your name is now ${newUsername}`);
-        }
-
-        // Admin tool to force change someone else's name
-        function handleAdminChangeUserCmd(targetUser, newName) {
-            if (currentUser.rank.toLowerCase() !== 'developer') return addSystemMsg("No permission.");
-            if (!targetUser || !newName) return addSystemMsg("Usage: /changeuser {old_user} {new_user}");
-            
-            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            const actualTarget = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
-            
-            if (!actualTarget) return addSystemMsg("Target user not found.");
-
-            // Check if new name is taken
-            const nameTaken = Object.keys(registered).some(k => k.toLowerCase() === newName.toLowerCase());
-            if (nameTaken) return addSystemMsg("New username is already taken.");
-
-            socket.emit('admin_command', { 
-                action: 'change_username', 
-                target: actualTarget, 
-                value: newName,
-                admin: currentUser.username 
-            });
-            
-            addSystemMsg(`Sent request to change ${actualTarget} to ${newName}`);
-        }
-
-        function handleRankCmd(targetUser, newRank) {
-            if (currentUser.rank.toLowerCase() !== 'developer') return addSystemMsg("No permission.");
-            if (!targetUser || !newRank) return addSystemMsg("Usage: /rank {user} {rank}");
-            
-            const targetRankFormatted = VALID_RANKS.find(r => r.toLowerCase() === newRank.toLowerCase());
-            if (!targetRankFormatted) return addSystemMsg(`Invalid Rank! Use: ${VALID_RANKS.join(', ')}`);
-
-            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            const actualUsernameKey = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
-            
-            if (actualUsernameKey) {
-                let targetData = registered[actualUsernameKey];
-                targetData.rank = targetRankFormatted;
-                registered[actualUsernameKey] = targetData;
-                localStorage.setItem('registered_users', JSON.stringify(registered));
-                localStorage.setItem(`user_${actualUsernameKey}`, JSON.stringify(targetData));
-
-                if (actualUsernameKey === currentUser.username) {
-                    currentUser.rank = targetRankFormatted;
-                    updateHeaderUI();
-                }
-
-                socket.emit('admin_command', { 
-                    action: 'set_rank', 
-                    target: actualUsernameKey, 
-                    value: targetRankFormatted,
-                    admin: currentUser.username 
-                });
-
-                addSystemMsg(`SUCCESS: ${actualUsernameKey} set to ${targetRankFormatted}`);
-            } else {
-                addSystemMsg(`Error: User "${targetUser}" not found.`);
-            }
-        }
-
-        function handleDiceCmd(text) {
-            const parts = text.split(' ');
-            const type = parts[1]?.toLowerCase();
-            const amount = parseInt(parts[2]);
-            if (isNaN(amount) || amount <= 0) return addSystemMsg("Usage: /dice gold 500");
-            
-            const isGold = type === 'gold' || type === 'g';
-            const realType = isGold ? 'gold' : 'rubies';
-            if (isGold && currentUser.gold < amount) return addSystemMsg("Insufficient Gold!");
-            if (!isGold && (type === 'rubies' || type === 'r') && currentUser.rubies < amount) return addSystemMsg("Insufficient Rubies!");
-            
-            if (isGold) currentUser.gold -= amount; else currentUser.rubies -= amount;
-            saveAndSync();
-
-            setTimeout(() => {
-                const won = Math.random() < 0.45;
-                const roll = won ? Math.floor(Math.random() * 3) + 4 : Math.floor(Math.random() * 3) + 1;
-                const winAmt = amount * 2;
-                if (won) { if (isGold) currentUser.gold += winAmt; else currentUser.rubies += winAmt; saveAndSync(); }
-                socket.emit('chat_message', { type: 'dice', user: currentUser.username, data: { roll, won, amount, type: realType, winAmt } });
-                updateWalletUI();
-            }, 600);
-        }
-
-        function renderDiceVisual(username, data) {
-            const container = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = 'flex justify-center my-4';
-            const color = data.won ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-100';
-            div.innerHTML = `
-                <div class="${color} p-5 rounded-[2.5rem] flex flex-col items-center min-w-[240px] border-2 shadow-xl">
-                    <div class="dice-anim mb-3 p-3 bg-white/50 rounded-2xl">${DICE_SVGS[data.roll]}</div>
-                    <p class="font-bold text-[10px] uppercase tracking-widest opacity-70">${username} Bet ${nFormatter(data.amount)} ${data.type}</p>
-                    <p class="font-black text-2xl tracking-tight">${data.won ? 'JACKPOT!' : 'BUSTED'}</p>
-                    ${data.won ? `<p class="text-sm font-black mt-1">+${nFormatter(data.winAmt)} Received</p>` : ''}
-                </div>`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function renderBankVisual(msg) {
-            const container = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = 'flex justify-center my-4';
-            div.innerHTML = `
-                <div class="bg-gray-900 text-white p-6 rounded-[2.5rem] shadow-2xl border border-gray-700 w-full max-w-[260px] flex flex-col items-center relative overflow-hidden">
-                    <img src="${msg.pfp || DEFAULT_PFP}" class="w-16 h-16 rounded-2xl border-2 border-indigo-500 mb-2 object-cover relative z-10">
-                    <h4 class="font-black text-xs tracking-widest mb-4 z-10">${msg.user.toUpperCase()}'S VAULT</h4>
-                    <div class="w-full space-y-2 relative z-10">
-                        <div class="flex justify-between bg-white/5 p-3 rounded-2xl">
-                            <span class="text-[10px] font-bold text-gray-400">GOLD</span>
-                            <span class="text-sm font-black text-yellow-400">${nFormatter(msg.gold)}</span>
-                        </div>
-                        <div class="flex justify-between bg-white/5 p-3 rounded-2xl">
-                            <span class="text-[10px] font-bold text-gray-400">RUBIES</span>
-                            <span class="text-sm font-black text-rose-400">${nFormatter(msg.rubies)}</span>
-                        </div>
-                    </div>
-                </div>`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function saveAndSync() {
-            localStorage.setItem(`user_${currentUser.username}`, JSON.stringify(currentUser));
-            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            users[currentUser.username] = currentUser;
-            localStorage.setItem('registered_users', JSON.stringify(users));
-            updateWalletUI();
-            if (socket) socket.emit('update_user', currentUser);
-        }
-
-        function updateWalletUI() {
-            if (!currentUser) return;
-            document.getElementById('wallet-gold').innerText = nFormatter(currentUser.gold);
-            document.getElementById('wallet-rubies').innerText = nFormatter(currentUser.rubies);
-            document.getElementById('sidebar-gold').innerText = nFormatter(currentUser.gold);
-            document.getElementById('sidebar-gems').innerText = nFormatter(currentUser.rubies);
-        }
-
-        function toggleWallet(show) { document.getElementById('wallet-modal').classList.toggle('hidden', !show); }
-        function toggleThemeModal(show) { document.getElementById('theme-modal').classList.toggle('hidden', !show); }
-        
-        function handlePfpChange(event) {
-            const file = event.target.files[0];
-            if (file) {
-                if (file.size > 1024 * 1024) return addSystemMsg("Error: Image must be under 1MB");
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    currentUser.pfp = e.target.result;
-                    document.getElementById('user-pfp').src = currentUser.pfp;
-                    saveAndSync();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('current_user_session');
-            window.location.href = 'index.html';
-        }
-
-        window.onload = init;
+                window.location.href = 'chat.html';
+            }, 800);
+        };
     </script>
 </body>
 </html>
