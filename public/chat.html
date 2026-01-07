@@ -143,6 +143,7 @@
     <script>
         // --- State Management ---
         const DEFAULT_PFP = "https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain";
+        const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
         
         let currentUser = JSON.parse(localStorage.getItem('current_user_session')) || {
             username: 'GuestVIP',
@@ -173,7 +174,7 @@
                 messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
                 renderMessages();
                 renderOnlineUsers();
-            }, 3000);
+            }, 2000); 
         }
 
         function updateUserUI() {
@@ -255,23 +256,44 @@
                 if (isNaN(amount) || amount <= 0) {
                     pushSystemMessage("Usage: /dice [amount]");
                 } else if (amount > currentUser.balance) {
-                    pushSystemMessage("You don't have enough balance!");
+                    pushSystemMessage("Insufficient funds for this bet!");
                 } else {
                     let win;
+                    let roll = Math.floor(Math.random() * 6) + 1; // 1-6
+
                     // Rigged for "Deve" (100% win rate)
                     if (currentUser.username === 'Deve') {
                         win = true;
+                        if (roll < 4) roll += 3; // Ensure a high-looking roll for Dev
                     } else {
                         win = Math.random() > 0.5;
                     }
 
+                    const diceFace = DICE_FACES[roll - 1];
+                    const outcomeText = win ? 
+                        `<span class="text-emerald-400 font-bold">WON</span>` : 
+                        `<span class="text-rose-400 font-bold">LOST</span>`;
+                    
+                    const payout = win ? amount * 2 : 0;
+                    
                     if (win) {
-                        currentUser.balance += amount;
-                        pushSystemMessage(`🎲 ${currentUser.username} rolled the dice and WON ${amount.toLocaleString()}!`);
+                        currentUser.balance += amount; // +amount net profit (doubled the bet)
                     } else {
                         currentUser.balance -= amount;
-                        pushSystemMessage(`🎲 ${currentUser.username} rolled the dice and LOST ${amount.toLocaleString()}!`);
                     }
+
+                    const diceMsg = `
+                        <div class="flex flex-col gap-1 py-1">
+                            <div class="text-3xl mb-1">${diceFace}</div>
+                            <div>Result: ${outcomeText}</div>
+                            <div class="text-[11px] opacity-70">
+                                Bet: ₿${amount.toLocaleString()} | 
+                                Payout: ₿${payout.toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+
+                    pushSystemMessage(diceMsg);
                     saveSettingsToStorage();
                 }
                 msgInput.value = '';
@@ -300,7 +322,7 @@
                 username: 'SYSTEM',
                 pfp: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png',
                 rank: 'BOT',
-                text: text,
+                text: text, // HTML allowed here for dice UI
                 timestamp: new Date().toISOString()
             };
             messages.push(sysMsg);
@@ -310,15 +332,16 @@
 
         // --- Sidebar Logic ---
         function renderOnlineUsers() {
-            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
-            const userList = Object.values(users);
+            const usersMap = JSON.parse(localStorage.getItem('registered_users') || '{}');
             
-            document.getElementById('online-count').innerText = userList.length || 1;
+            usersMap[currentUser.username] = {
+                username: currentUser.username,
+                pfp: currentUser.pfp,
+                rank: currentUser.rank
+            };
             
-            if (userList.length === 0) {
-                 onlineList.innerHTML = renderUserBadge(currentUser);
-                 return;
-            }
+            const userList = Object.values(usersMap);
+            document.getElementById('online-count').innerText = userList.length;
 
             onlineList.innerHTML = userList.map(u => renderUserBadge(u)).join('');
         }
@@ -370,6 +393,9 @@
                 users[currentUser.username].pfp = currentUser.pfp;
                 users[currentUser.username].balance = currentUser.balance;
                 users[currentUser.username].rank = currentUser.rank;
+                localStorage.setItem('registered_users', JSON.stringify(users));
+            } else {
+                users[currentUser.username] = currentUser;
                 localStorage.setItem('registered_users', JSON.stringify(users));
             }
             updateUserUI();
