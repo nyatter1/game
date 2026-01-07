@@ -5,7 +5,12 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -20,24 +25,33 @@ app.get('/chat.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
-// Store active users in memory
+// Store active users in memory (Key: Socket ID, Value: User Profile)
 const activeUsers = new Map();
 
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+    console.log('User attempting connection:', socket.id);
+
+    // Immediately send the current user list to the newcomer
+    socket.emit('user_list_update', Array.from(activeUsers.values()));
 
     // When a user joins, store their profile info
     socket.on('join', (userData) => {
+        // Validation to prevent empty users
+        if (!userData || !userData.username) return;
+
         activeUsers.set(socket.id, {
             ...userData,
-            id: socket.id
+            socketId: socket.id,
+            lastSeen: Date.now()
         });
         
-        // Broadcast updated user list to everyone
-        io.emit('user_list_update', Array.from(activeUsers.values()));
+        // Broadcast updated user list to EVERYONE (including the sender)
+        const updatedList = Array.from(activeUsers.values());
+        io.emit('user_list_update', updatedList);
         
         // Notify others
         socket.broadcast.emit('system_message', `✨ ${userData.username} joined the lounge.`);
+        console.log(`User ${userData.username} registered with ID ${socket.id}`);
     });
 
     // Handle chat messages
@@ -61,14 +75,20 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         const user = activeUsers.get(socket.id);
         if (user) {
-            activeUsers.delete(socket.id);
-            io.emit('user_list_update', Array.from(activeUsers.values()));
             console.log(`${user.username} disconnected`);
+            activeUsers.delete(socket.id);
+            // Update everyone that the user is gone
+            io.emit('user_list_update', Array.from(activeUsers.values()));
         }
+    });
+
+    // Error handling
+    socket.on('error', (err) => {
+        console.error('Socket error:', err);
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`VIP Lounge Server running on port ${PORT}`);
 });
