@@ -259,68 +259,20 @@
             return 'rank-default';
         }
 
-         function nFormatter(num, digits = 1) {
+        function nFormatter(num, digits = 1) {
             if (num === 0) return "0";
             const lookup = [
-                { value: 1e3, symbol: "K" },
-                { value: 1e6, symbol: "M" },
-                { value: 1e9, symbol: "B" },
-                { value: 1e12, symbol: "T" },
-                { value: 1e15, symbol: "Qa" },
-                { value: 1e18, symbol: "Qi" },
-                { value: 1e21, symbol: "Sx" },
-                { value: 1e24, symbol: "Sp" },
-                { value: 1e27, symbol: "Oc" },
-                { value: 1e30, symbol: "No" },
-                { value: 1e33, symbol: "Dc" },
-                { value: 1e36, symbol: "Ud" },
-                { value: 1e39, symbol: "Dd" },
-                { value: 1e42, symbol: "Td" },
-                { value: 1e45, symbol: "Qad" },
-                { value: 1e48, symbol: "Qid" },
-                { value: 1e51, symbol: "Sxd" },
-                { value: 1e54, symbol: "Spd" },
-                { value: 1e57, symbol: "Ocd" },
-                { value: 1e60, symbol: "Nod" },
-                { value: 1e63, symbol: "Vg" },
-                { value: 1e66, symbol: "Uvg" },
-                { value: 1e69, symbol: "Dvg" },
-                { value: 1e72, symbol: "Tvg" },
-                { value: 1e75, symbol: "Qavg" },
-                { value: 1e78, symbol: "Qivg" },
-                { value: 1e81, symbol: "Sxvg" },
-                { value: 1e84, symbol: "Spvg" },
-                { value: 1e87, symbol: "Ocvg" },
-                { value: 1e90, symbol: "Novg" },
-                { value: 1e93, symbol: "Tg" },
-                { value: 1e96, symbol: "Utg" },
-                { value: 1e99, symbol: "Dtg" },
-                { value: 1e102, symbol: "Ttg" },
-                { value: 1e105, symbol: "Qatg" },
-                { value: 1e108, symbol: "Qitg" },
-                { value: 1e111, symbol: "Sxtg" },
-                { value: 1e114, symbol: "Sptg" },
-                { value: 1e117, symbol: "Octg" },
-                { value: 1e120, symbol: "Notg" },
-                { value: 1e123, symbol: "Qdg" },
-                { value: 1e126, symbol: "Uqdg" },
-                { value: 1e129, symbol: "Dqdg" },
-                { value: 1e132, symbol: "Tqdg" },
-                { value: 1e135, symbol: "Qaqdg" },
-                { value: 1e138, symbol: "Qiqdg" },
-                { value: 1e141, symbol: "Sxqdg" },
-                { value: 1e144, symbol: "Spqdg" },
-                { value: 1e147, symbol: "Ocqdg" },
-                { value: 1e150, symbol: "Noqdg" },
-                { value: 1e153, symbol: "Qig" }
+                { value: 1e3, symbol: "K" }, { value: 1e6, symbol: "M" }, { value: 1e9, symbol: "B" },
+                { value: 1e12, symbol: "T" }, { value: 1e15, symbol: "Qa" }, { value: 1e18, symbol: "Qi" },
+                { value: 1e21, symbol: "Sx" }, { value: 1e24, symbol: "Sp" }, { value: 1e27, symbol: "Oc" },
+                { value: 1e30, symbol: "No" }, { value: 1e33, symbol: "Dc" }, { value: 1e36, symbol: "Ud" },
+                { value: 1e39, symbol: "Dd" }, { value: 1e42, symbol: "Td" }, { value: 1e45, symbol: "Qad" },
+                { value: 1e48, symbol: "Qid" }, { value: 1e51, symbol: "Sxd" }, { value: 1e54, symbol: "Spd" },
+                { value: 1e57, symbol: "Ocd" }, { value: 1e60, symbol: "Nod" }, { value: 1e63, symbol: "Vg" }
             ];
             const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-            var item = lookup.slice().reverse().find(function(item) {
-                return num >= item.value;
-            });
-            return item 
-                ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol 
-                : num.toLocaleString();
+            var item = lookup.slice().reverse().find(i => num >= i.value);
+            return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : num.toLocaleString();
         }
 
         function init() {
@@ -553,19 +505,55 @@
         }
 
         function handleRankCmd(targetUser, newRank) {
-            if (currentUser.rank !== 'Developer') return addSystemMsg("You have no permission to do this");
-            if (!targetUser || !newRank) return addSystemMsg("Usage: /rank {user} {rank}");
+            // Check permission: Only 'Developer' rank can use this
+            if (currentUser.rank.toLowerCase() !== 'developer') {
+                return addSystemMsg("You have no permission to do this");
+            }
             
-            // Validate rank against the requested list
+            if (!targetUser || !newRank) {
+                return addSystemMsg("Usage: /rank {user} {rank}");
+            }
+            
+            // Validate rank against the list
             const foundRank = VALID_RANKS.find(r => r.toLowerCase() === newRank.toLowerCase());
-            if (!foundRank) return addSystemMsg(`Invalid Rank! Use: ${VALID_RANKS.join(', ')}`);
+            if (!foundRank) {
+                return addSystemMsg(`Invalid Rank! Use: ${VALID_RANKS.join(', ')}`);
+            }
 
-            socket.emit('admin_command', { 
-                action: 'set_rank', 
-                target: targetUser, 
-                value: foundRank,
-                admin: currentUser.username 
-            });
+            // In a real socket environment, we'd emit. 
+            // In our simulated persistent environment, we find the user in localStorage and update them.
+            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            
+            // Case-insensitive search for target user
+            const targetKey = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
+            
+            if (targetKey) {
+                const targetData = registered[targetKey];
+                targetData.rank = foundRank;
+                
+                // Save back to both user file and registry
+                localStorage.setItem(`user_${targetKey}`, JSON.stringify(targetData));
+                registered[targetKey] = targetData;
+                localStorage.setItem('registered_users', JSON.stringify(registered));
+
+                // If target is current user, update local state
+                if (targetKey === currentUser.username) {
+                    currentUser.rank = foundRank;
+                    updateHeaderUI();
+                }
+
+                // Broadcast change through the socket so other clients update UI
+                socket.emit('admin_command', { 
+                    action: 'set_rank', 
+                    target: targetKey, 
+                    value: foundRank,
+                    admin: currentUser.username 
+                });
+
+                addSystemMsg(`SUCCESS: ${targetKey} rank set to ${foundRank}`);
+            } else {
+                addSystemMsg(`Error: User "${targetUser}" not found in registry.`);
+            }
         }
 
         function handleDiceCmd(text) {
