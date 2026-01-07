@@ -1,94 +1,55 @@
+/**
+ * Aura | The Sovereign Hub - Node.js Server
+ * * This server handles static file delivery for index.html and chat.html.
+ * It is designed to be lightweight, serving the frontend while the
+ * client-side code manages real-time state via Firebase.
+ */
+
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const path = require('path');
-
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+const PORT = process.env.PORT || 3000;
 
-// Serve static files from the 'public' directory
+// Middleware for parsing and logging
+app.use(express.json());
+
+// Serve static assets (CSS, Images, JS) if you split them later
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fallback for root to public/index.html
+/**
+ * Route: Root
+ * Delivers the initialization wizard / landing page.
+ */
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Explicit route for chat.html if it's inside public/
-app.get('/chat.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+/**
+ * Route: Chat Hub
+ * Delivers the main Aura social interface.
+ */
+app.get('/chat', (req, res) => {
+    res.sendFile(path.join(__dirname, 'chat.html'));
 });
 
-// Store active users in memory (Key: Socket ID, Value: User Profile)
-const activeUsers = new Map();
-
-io.on('connection', (socket) => {
-    console.log('User attempting connection:', socket.id);
-
-    // Immediately send the current user list to the newcomer
-    socket.emit('user_list_update', Array.from(activeUsers.values()));
-
-    // When a user joins, store their profile info
-    socket.on('join', (userData) => {
-        // Validation to prevent empty users
-        if (!userData || !userData.username) return;
-
-        activeUsers.set(socket.id, {
-            ...userData,
-            socketId: socket.id,
-            lastSeen: Date.now()
-        });
-        
-        // Broadcast updated user list to EVERYONE (including the sender)
-        const updatedList = Array.from(activeUsers.values());
-        io.emit('user_list_update', updatedList);
-        
-        // Notify others
-        socket.broadcast.emit('system_message', `✨ ${userData.username} joined the lounge.`);
-        console.log(`User ${userData.username} registered with ID ${socket.id}`);
-    });
-
-    // Handle chat messages
-    socket.on('chat_message', (msgData) => {
-        // Broadcast message to all connected clients
-        io.emit('chat_message', {
-            ...msgData,
-            timestamp: new Date().toISOString()
-        });
-    });
-
-    // Handle dice rolls specifically to sync results
-    socket.on('dice_roll', (diceData) => {
-        io.emit('dice_result', {
-            ...diceData,
-            timestamp: new Date().toISOString()
-        });
-    });
-
-    // Handle disconnects
-    socket.on('disconnect', () => {
-        const user = activeUsers.get(socket.id);
-        if (user) {
-            console.log(`${user.username} disconnected`);
-            activeUsers.delete(socket.id);
-            // Update everyone that the user is gone
-            io.emit('user_list_update', Array.from(activeUsers.values()));
-        }
-    });
-
-    // Error handling
-    socket.on('error', (err) => {
-        console.error('Socket error:', err);
-    });
+/**
+ * Error Handling for 404s
+ * Maintains the aesthetic by redirecting unknown paths to the hub.
+ */
+app.use((req, res) => {
+    res.status(404).redirect('/');
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`VIP Lounge Server running on port ${PORT}`);
+/**
+ * Server Activation
+ */
+app.listen(PORT, () => {
+    console.log(`
+    -------------------------------------------
+    AURA | THE SOVEREIGN HUB
+    Status: Online
+    Port: ${PORT}
+    Environment: Production-Stable
+    -------------------------------------------
+    `);
 });
