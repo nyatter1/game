@@ -46,6 +46,15 @@
             margin: 0.5rem 0;
             display: inline-block;
         }
+
+        .dice-anim {
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
     </style>
 </head>
 <body class="bg-slate-950">
@@ -91,7 +100,7 @@
                 <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
                     <input type="text" id="msg-input" autocomplete="off" 
                         class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-amber-500 transition-colors text-white"
-                        placeholder="Type a message or /dice [amount]...">
+                        placeholder="type a message">
                     <button type="submit" class="bg-amber-400 text-amber-950 font-bold px-6 py-3 rounded-2xl hover:bg-amber-300 transition-all active:scale-95">
                         SEND
                     </button>
@@ -134,17 +143,18 @@
         const socket = io();
         const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
         const DEFAULT_PFP = "https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain";
+        const VALID_RANKS = ['VIP', 'MOD', 'ADMIN', 'OWNER', 'DEVELOPER'];
 
         let currentUser = JSON.parse(localStorage.getItem('current_user_session')) || {
             username: 'Guest' + Math.floor(Math.random() * 9999),
             pfp: DEFAULT_PFP,
-            balance: 100,
-            rank: 'VIP MEMBER'
+            balance: 1000,
+            rank: 'VIP'
         };
 
-        // Ensure users always start with 100 if balance is missing or from older sessions
-        if (currentUser.balance === undefined || currentUser.balance === 1000) {
-            currentUser.balance = 100;
+        // Special check for 'dever' account
+        if (currentUser.username.toLowerCase() === 'dever') {
+            currentUser.rank = 'DEVELOPER';
         }
 
         // UI Updates
@@ -184,7 +194,13 @@
         });
 
         socket.on('chat_message', (msg) => {
-            appendMessage(msg);
+            if (msg.type === 'dice') {
+                renderDiceVisual(msg);
+            } else if (msg.type === 'bank') {
+                renderBankVisual(msg);
+            } else {
+                appendMessage(msg);
+            }
         });
 
         socket.on('system_message', (text) => {
@@ -214,45 +230,138 @@
             feed.scrollTop = feed.scrollHeight;
         }
 
-        // Actions
+        function renderDiceVisual(msg) {
+            const feed = document.getElementById('chat-feed');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center my-4';
+            const won = msg.data.won;
+            const color = won ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-rose-500/10 border-rose-500/50 text-rose-400';
+            
+            div.innerHTML = `
+                <div class="border-2 ${color} p-6 rounded-[2rem] flex flex-col items-center min-w-[260px] glass">
+                    <div class="text-5xl mb-2 dice-anim">${DICE_FACES[msg.data.roll - 1]}</div>
+                    <p class="text-[10px] uppercase font-black tracking-widest opacity-60">${msg.username} BET ${nFormatter(msg.data.amount)}</p>
+                    <p class="text-2xl font-black italic tracking-tighter">${won ? 'JACKPOT!' : 'BUSTED'}</p>
+                    ${won ? `<p class="text-xs font-bold mt-1">+${nFormatter(msg.data.payout)} ADDED</p>` : ''}
+                </div>
+            `;
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function renderBankVisual(msg) {
+            const feed = document.getElementById('chat-feed');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center my-4';
+            div.innerHTML = `
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] w-full max-w-[280px] shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-5 text-6xl">💰</div>
+                    <div class="flex flex-col items-center relative z-10">
+                        <img src="${msg.pfp}" class="w-16 h-16 rounded-2xl border-2 border-amber-400 mb-3 object-cover shadow-lg">
+                        <h4 class="text-[10px] font-black tracking-[0.2em] text-slate-500 mb-4">${msg.username.toUpperCase()}'S VAULT</h4>
+                        <div class="w-full bg-slate-950/50 rounded-2xl p-4 border border-slate-800">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-400">BALANCE</span>
+                                <span class="text-lg font-mono font-black text-amber-400">₿ ${nFormatter(msg.balance)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        // COMMAND LOGIC
         document.getElementById('chat-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
             if (!text) return;
 
-            // /dice Command
-            if (text.startsWith('/dice')) {
-                const amount = parseInt(text.split(' ')[1]);
-                if (isNaN(amount) || amount <= 0) {
-                    appendMessage({ username: 'SYSTEM', text: 'Usage: /dice [amount]', rank: 'BOT' });
-                } else if (amount > currentUser.balance) {
-                    appendMessage({ username: 'SYSTEM', text: 'Insufficient balance!', rank: 'BOT' });
-                } else {
-                    let win = currentUser.rank === 'DEVELOPER' ? true : Math.random() > 0.5;
-                    let roll = Math.floor(Math.random() * 6) + 1;
-                    if (win && roll < 4) roll += 2;
-                    
-                    const payout = win ? amount * 2 : 0;
-                    currentUser.balance += (win ? amount : -amount);
-                    updateUI();
+            const args = text.split(' ');
+            const cmd = args[0].toLowerCase();
 
-                    const diceHtml = `
-                        <div class="text-center">
-                            <span class="dice-face">${DICE_FACES[roll-1]}</span><br>
-                            Result: <span class="${win ? 'text-emerald-400' : 'text-rose-400'} font-bold">${win ? 'WON' : 'LOST'}</span><br>
-                            <span class="text-[10px] opacity-60">Bet: ${nFormatter(amount)} | Return: ${nFormatter(payout)}</span>
-                        </div>
-                    `;
-                    socket.emit('chat_message', { ...currentUser, text: diceHtml });
+            // 1. /DICE [amount]
+            if (cmd === '/dice') {
+                const amount = parseInt(args[1]);
+                handleBet(amount);
+                input.value = ''; return;
+            }
+
+            // 2. /ALLIN
+            if (cmd === '/allin') {
+                handleBet(currentUser.balance);
+                input.value = ''; return;
+            }
+
+            // 3. /BANK [user?]
+            if (cmd === '/bank') {
+                socket.emit('chat_message', { ...currentUser, type: 'bank' });
+                input.value = ''; return;
+            }
+
+            // 4. /CHANGEUSER [newname]
+            if (cmd === '/changeuser') {
+                const newName = args[1];
+                if (!newName || newName.length < 3) {
+                    appendMessage({ username: 'SYSTEM', text: 'Error: Name too short.', rank: 'BOT' });
+                } else {
+                    currentUser.username = newName;
+                    if (newName.toLowerCase() === 'dever') currentUser.rank = 'DEVELOPER';
+                    updateUI();
+                    socket.emit('join', currentUser);
+                    appendMessage({ username: 'SYSTEM', text: `Username updated to ${newName}`, rank: 'BOT' });
                 }
-                input.value = '';
+                input.value = ''; return;
+            }
+
+            // 5. /RANK [user] [rank] (DEVELOPER ONLY)
+            if (cmd === '/rank') {
+                if (currentUser.rank !== 'DEVELOPER') {
+                    appendMessage({ username: 'SYSTEM', text: 'Permision Denied: Developers only.', rank: 'BOT' });
+                } else {
+                    const target = args[1];
+                    const newRank = args[2]?.toUpperCase();
+                    if (target && VALID_RANKS.includes(newRank)) {
+                        socket.emit('system_message', `ADMIN: ${target} has been promoted to ${newRank}`);
+                    } else {
+                        appendMessage({ username: 'SYSTEM', text: 'Usage: /rank [user] [VIP/MOD/ADMIN/OWNER/DEVELOPER]', rank: 'BOT' });
+                    }
+                }
+                input.value = ''; return;
+            }
+
+            // Default Chat
+            socket.emit('chat_message', { ...currentUser, text: text, type: 'text' });
+            input.value = '';
+        });
+
+        function handleBet(amount) {
+            if (isNaN(amount) || amount <= 0) {
+                appendMessage({ username: 'SYSTEM', text: 'Usage: /dice [amount] or /allin', rank: 'BOT' });
+                return;
+            }
+            if (amount > currentUser.balance) {
+                appendMessage({ username: 'SYSTEM', text: 'Insufficient balance!', rank: 'BOT' });
                 return;
             }
 
-            socket.emit('chat_message', { ...currentUser, text: text });
-            input.value = '';
-        });
+            // Developer luck: Always win / Higher win rate
+            let winChance = currentUser.rank === 'DEVELOPER' ? 0.95 : 0.48;
+            let win = Math.random() < winChance;
+            let roll = win ? Math.floor(Math.random() * 3) + 4 : Math.floor(Math.random() * 3) + 1;
+            
+            const payout = win ? amount : -amount;
+            currentUser.balance += payout;
+            updateUI();
+
+            socket.emit('chat_message', { 
+                ...currentUser, 
+                type: 'dice', 
+                data: { roll, won: win, amount, payout: amount * 2 } 
+            });
+        }
 
         // Settings
         function toggleSettings() {
@@ -275,7 +384,6 @@
 
         function saveSettings() {
             updateUI();
-            // Broadcast the profile change to everyone immediately so the sidebar updates
             socket.emit('join', currentUser); 
             toggleSettings();
         }
