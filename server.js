@@ -1,118 +1,123 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const path = require('path');
-
+const fs = require('fs');
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Data Persistence Paths
+const DATA_DIR = path.join(__dirname, 'data');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const CHAT_FILE = path.join(DATA_DIR, 'chat.json');
+
+// Ensure data directory and files exist
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, JSON.stringify({}));
+if (!fs.existsSync(CHAT_FILE)) fs.writeFileSync(CHAT_FILE, JSON.stringify([]));
+
+/**
+ * Utility to read JSON files
+ */
+const readData = (filePath) => {
+    try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        return JSON.parse(content);
+    } catch (err) {
+        return filePath === CHAT_FILE ? [] : {};
+    }
+};
+
+/**
+ * Utility to write JSON files
+ */
+const saveData = (filePath, data) => {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+};
+
+// --- API ROUTES ---
+
+// Registration/Login Route
+app.post('/api/auth', (req, res) => {
+    const { identifier, password, isLogin, email, age, gender } = req.body;
+    const users = readData(USERS_FILE);
+
+    if (isLogin) {
+        // Login Logic
+        let user = users[identifier.toLowerCase()];
+        if (!user) {
+            user = Object.values(users).find(u => u.email === identifier.toLowerCase());
+        }
+
+        if (user && user.password === password) {
+            const { password, ...safeUser } = user;
+            return res.json({ success: true, user: safeUser });
+        }
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    } else {
+        // Signup Logic
+        const username = identifier.toLowerCase();
+        if (users[username]) return res.status(400).json({ success: false, message: "Username taken" });
+        
+        const newUser = {
+            username,
+            email: email.toLowerCase(),
+            password,
+            age,
+            gender,
+            pfp: "https://tse4.mm.bing.net/th/id/OIP.RzSDY3QeLinMNH2kcOduWQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3",
+            gold: username === 'dev' ? 1000000000 : 100,
+            rubies: username === 'dev' ? 1000000 : 10,
+            joinedAt: new Date().toISOString()
+        };
+
+        users[username] = newUser;
+        saveData(USERS_FILE, users);
+        
+        const { password: pw, ...safeUser } = newUser;
+        res.json({ success: true, user: safeUser });
     }
 });
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-
-// In-memory state (resets on server restart)
-let messages = [];
-let onlineUsers = {}; // Key: socket.id, Value: user data object
-
-io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
-
-    // When a user joins
-    socket.on('join', (userData) => {
-        // Assign Ranks
-        if (userData.username.toLowerCase() === 'dev') {
-            userData.rank = 'Developer';
-        } else {
-            userData.rank = 'VIP';
-        }
-
-        // Add to online tracking
-        onlineUsers[socket.id] = userData;
-        
-        // Broadcast updated user list to everyone
-        io.emit('user_list_update', Object.values(onlineUsers));
-        
-        // Send history to the joiner
-        socket.emit('history', messages);
-        
-        // System message
-        io.emit('system_message', `${userData.username} (${userData.rank}) joined the chat`);
-    });
-
-    // Handle new chat messages
-    socket.on('chat_message', (msg) => {
-        // 1. Check for /give command (Developer only)
-        if (msg.text && msg.text.startsWith('/give ')) {
-            const sender = onlineUsers[socket.id];
-            
-            if (sender && sender.username.toLowerCase() === 'dev') {
-                const parts = msg.text.split(' '); // /give {user} {type} {amount}
-                if (parts.length === 4) {
-                    const targetName = parts[1].toLowerCase();
-                    const type = parts[2].toLowerCase(); // gold or rubies
-                    const amount = parseInt(parts[3]);
-
-                    if (!isNaN(amount)) {
-                        // Find target socket
-                        const targetSocketId = Object.keys(onlineUsers).find(
-                            id => onlineUsers[id].username.toLowerCase() === targetName
-                        );
-
-                        if (targetSocketId) {
-                            // Update the target's data on the server
-                            if (type === 'gold') onlineUsers[targetSocketId].gold += amount;
-                            if (type === 'rubies' || type === 'ruby') onlineUsers[targetSocketId].rubies += amount;
-
-                            // Send private update to the target user
-                            io.to(targetSocketId).emit('force_update', onlineUsers[targetSocketId]);
-                            
-                            // Broadcast the event
-                            io.emit('system_message', `DEV granted ${amount} ${type} to ${targetName}!`);
-                            return; // Don't post the command as a chat message
-                        }
-                    }
-                }
-            }
-        }
-
-        // Standard message processing
-        const messageObj = {
-            ...msg,
-            rank: onlineUsers[socket.id]?.rank || 'VIP',
-            id: Date.now() + Math.random(),
-            timestamp: new Date()
-        };
-        
-        messages.push(messageObj);
-        if (messages.length > 100) messages.shift();
-        
-        io.emit('chat_message', messageObj);
-    });
-
-    // Sync state changes from client (e.g., gambling results)
-    socket.on('update_user', (userData) => {
-        if (onlineUsers[socket.id]) {
-            onlineUsers[socket.id] = { ...onlineUsers[socket.id], ...userData };
-            io.emit('user_list_update', Object.values(onlineUsers));
-        }
-    });
-
-    socket.on('disconnect', () => {
-        if (onlineUsers[socket.id]) {
-            const username = onlineUsers[socket.id].username;
-            delete onlineUsers[socket.id];
-            io.emit('user_list_update', Object.values(onlineUsers));
-            console.log('User disconnected:', username);
-        }
-    });
+// Get Chat History
+app.get('/api/chat', (req, res) => {
+    const history = readData(CHAT_FILE);
+    res.json(history);
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Save Chat Message
+app.post('/api/chat', (req, res) => {
+    const msgObj = req.body;
+    const history = readData(CHAT_FILE);
+    
+    history.push(msgObj);
+    if (history.length > 100) history.shift();
+    
+    saveData(CHAT_FILE, history);
+    res.json({ success: true });
+});
+
+// Update User Stats (Gold/Gems/PFP)
+app.post('/api/user/update', (req, res) => {
+    const { username, updates } = req.body;
+    const users = readData(USERS_FILE);
+    
+    if (users[username]) {
+        users[username] = { ...users[username], ...updates };
+        saveData(USERS_FILE, users);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ success: false, message: "User not found" });
+    }
+});
+
+// Serve frontend files
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });
