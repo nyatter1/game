@@ -3,183 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodyChat | Join the Community</title>
+    <title>SimpleChat - Login & Signup</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .animate-pop { animation: pop 0.3s ease-out; }
-        @keyframes pop {
-            0% { transform: scale(0.95); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            min-height: 100vh;
         }
-        .auth-card {
-            background: rgba(255, 255, 255, 0.98);
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
-        input, select {
-            background-color: #f9fafb !important;
+        .custom-error {
+            display: none;
+            color: #ef4444;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            font-weight: 600;
         }
     </style>
 </head>
-<body class="bg-gray-100 overflow-hidden">
+<body class="flex items-center justify-center p-4">
 
-    <!-- Auth Screen -->
-    <div id="auth-screen" class="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4 fixed inset-0">
-        <div class="auth-card rounded-3xl shadow-2xl w-full max-w-md p-8 animate-pop">
-            <div class="flex flex-col items-center mb-6">
-                <div class="bg-indigo-600 p-4 rounded-full shadow-lg mb-4 text-white">
-                    <i class="fa-solid fa-comment-dots fa-2x"></i>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-800">CodyChat</h1>
-                <p id="auth-subtitle" class="text-gray-500 mt-2 text-center">Connecting to server...</p>
+    <div class="glass w-full max-w-md p-8 rounded-3xl shadow-2xl transition-all duration-300">
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h1 id="form-title" class="text-3xl font-bold text-gray-800">Welcome Back</h1>
+            <p id="form-subtitle" class="text-gray-500 mt-2">Log in to access your chat account</p>
+        </div>
+
+        <form onsubmit="handleAuth(event)" class="space-y-4">
+            <!-- Universal Identification (Username or Email for Login) -->
+            <div>
+                <label id="id-label" class="block text-sm font-semibold text-gray-700 mb-1">Username or Email</label>
+                <input type="text" id="identifier" required placeholder="Enter username or email..." 
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
             </div>
 
-            <!-- Login Form -->
-            <form id="login-form" class="space-y-4">
+            <!-- Signup Specific Fields -->
+            <div id="signup-fields" class="hidden space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Email or Username</label>
-                    <input type="text" id="login-identifier" required class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Enter details...">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="email" placeholder="example@mail.com" 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Password</label>
-                    <input type="password" id="login-password" required class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="••••••••">
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95">Log In</button>
-                <div class="pt-2 text-center">
-                    <p class="text-sm text-gray-500">Don't have an account? <button type="button" onclick="toggleAuthMode('signup')" class="text-indigo-600 font-bold hover:underline">Sign Up</button></p>
-                </div>
-            </form>
-
-            <!-- Signup Form -->
-            <form id="signup-form" class="hidden space-y-3">
-                <div class="grid grid-cols-2 gap-3">
+                
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Username</label>
-                        <input type="text" id="signup-username" required maxlength="15" class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" placeholder="User123">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Age (7-1000)</label>
+                        <input type="number" id="age" min="7" max="1000" placeholder="Age" 
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Email</label>
-                        <input type="email" id="signup-email" required class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" placeholder="email@ext.com">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Password</label>
-                    <input type="password" id="signup-password" required minlength="6" class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" placeholder="Min. 6 characters">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Age (7-1000)</label>
-                        <input type="number" id="signup-age" required min="7" max="1000" class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 ml-1">Gender</label>
-                        <select id="signup-gender" required class="w-full px-4 py-2 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm cursor-pointer">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Gender</label>
+                        <select id="gender" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all appearance-none bg-white">
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                             <option value="other">Other</option>
                         </select>
                     </div>
                 </div>
-                <div class="flex flex-col items-center gap-2 py-2">
-                    <label class="block text-xs font-semibold text-gray-600 uppercase">Profile Picture</label>
-                    <div id="signup-pfp-preview" class="w-20 h-20 rounded-full bg-gray-100 border-4 border-white shadow-md flex items-center justify-center text-3xl overflow-hidden cursor-pointer hover:bg-gray-200 transition-colors" onclick="document.getElementById('signup-pfp-input').click()">👤</div>
-                    <input type="file" id="signup-pfp-input" accept="image/*" class="hidden" onchange="handlePfpSelect(event)">
-                    <button type="button" onclick="document.getElementById('signup-pfp-input').click()" class="text-xs text-indigo-600 font-bold underline">Change Photo</button>
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95">Create Account</button>
-                <div class="text-center">
-                    <button type="button" onclick="toggleAuthMode('login')" class="text-sm text-gray-500 font-medium hover:text-indigo-600 transition-colors">
-                        <i class="fa-solid fa-arrow-left mr-1"></i> Back to Login
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+            </div>
 
-    <!-- Success Screen (Mock App Entry) -->
-    <div id="app-layout" class="hidden min-h-screen flex items-center justify-center bg-gray-100">
-        <div class="text-center">
-            <h2 class="text-2xl font-bold text-gray-800">Welcome to CodyChat!</h2>
-            <p class="text-gray-500 mt-2">You are now logged in as <span id="display-name" class="font-bold text-indigo-600"></span></p>
-            <button onclick="location.reload()" class="mt-6 px-6 py-2 bg-white text-red-500 rounded-full shadow hover:bg-red-50 transition-all font-bold">Logout</button>
+            <!-- Password (Always Required) -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                <input type="password" id="password" required placeholder="••••••••" 
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+            </div>
+
+            <div id="error-box" class="custom-error">Invalid credentials. Please try again.</div>
+
+            <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-[0.98]">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <button onclick="toggleMode()" id="toggle-btn" class="text-sm text-indigo-600 font-semibold hover:underline">
+                Don't have an account? Create one
+            </button>
         </div>
     </div>
 
     <script>
-        // REPLACE THIS with your Render Web Service URL after you deploy server.js
-        const SERVER_URL = "http://localhost:3000"; 
-        const socket = io(SERVER_URL);
+        let isLogin = true;
 
-        let selectedPfp = "👤";
+        function toggleMode() {
+            isLogin = !isLogin;
+            const title = document.getElementById('form-title');
+            const subtitle = document.getElementById('form-subtitle');
+            const submitBtn = document.getElementById('submit-btn');
+            const toggleBtn = document.getElementById('toggle-btn');
+            const signupFields = document.getElementById('signup-fields');
+            const idLabel = document.getElementById('id-label');
+            const identifierInput = document.getElementById('identifier');
 
-        const authSubtitle = document.getElementById('auth-subtitle');
-        
-        socket.on('connect', () => { 
-            authSubtitle.innerText = "Welcome back!"; 
-            authSubtitle.classList.remove('text-red-500');
-        });
-        
-        socket.on('connect_error', () => { 
-            authSubtitle.innerText = "Connection failed. Check server URL."; 
-            authSubtitle.classList.add('text-red-500');
-        });
+            document.getElementById('error-box').style.display = 'none';
 
-        window.toggleAuthMode = (mode) => {
-            const isSignup = mode === 'signup';
-            document.getElementById('login-form').classList.toggle('hidden', isSignup);
-            document.getElementById('signup-form').classList.toggle('hidden', !isSignup);
-            authSubtitle.innerText = isSignup ? "Join the community!" : "Welcome back!";
-        };
+            if (isLogin) {
+                title.innerText = "Welcome Back";
+                subtitle.innerText = "Log in to access your chat account";
+                submitBtn.innerText = "Sign In";
+                toggleBtn.innerText = "Don't have an account? Create one";
+                idLabel.innerText = "Username or Email";
+                identifierInput.placeholder = "Enter username or email...";
+                signupFields.classList.add('hidden');
+                document.getElementById('email').required = false;
+                document.getElementById('age').required = false;
+            } else {
+                title.innerText = "Join SimpleChat";
+                subtitle.innerText = "Start earning coins and chatting live";
+                submitBtn.innerText = "Create Account";
+                toggleBtn.innerText = "Already have an account? Log in";
+                idLabel.innerText = "Choose Username";
+                identifierInput.placeholder = "Pick a unique username...";
+                signupFields.classList.remove('hidden');
+                document.getElementById('email').required = true;
+                document.getElementById('age').required = true;
+            }
+        }
 
-        window.handlePfpSelect = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                selectedPfp = event.target.result;
-                document.getElementById('signup-pfp-preview').innerHTML = `<img src="${selectedPfp}" class="w-full h-full object-cover">`;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        document.getElementById('signup-form').onsubmit = (e) => {
+        function handleAuth(e) {
             e.preventDefault();
-            const userData = {
-                username: document.getElementById('signup-username').value.trim(),
-                email: document.getElementById('signup-email').value.trim().toLowerCase(),
-                password: document.getElementById('signup-password').value,
-                age: document.getElementById('signup-age').value,
-                gender: document.getElementById('signup-gender').value,
-                pfp: selectedPfp
-            };
-            socket.emit('signup', userData);
-        };
+            const identifier = document.getElementById('identifier').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            const errorBox = document.getElementById('error-box');
+            
+            errorBox.style.display = 'none';
 
-        document.getElementById('login-form').onsubmit = (e) => {
-            e.preventDefault();
-            socket.emit('login', {
-                identifier: document.getElementById('login-identifier').value.trim(),
-                password: document.getElementById('login-password').value
-            });
-        };
+            // Get all stored users
+            const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
 
-        socket.on('authSuccess', (data) => {
-            alert(data.message);
-            toggleAuthMode('login');
-        });
+            if (isLogin) {
+                // Find user by username or email
+                let foundUser = null;
+                
+                // Check if identifier is username
+                if (users[identifier]) {
+                    foundUser = users[identifier];
+                } else {
+                    // Search by email
+                    foundUser = Object.values(users).find(u => u.email === identifier);
+                }
 
-        socket.on('authError', (err) => {
-            alert(err);
-        });
+                if (foundUser && foundUser.password === password) {
+                    localStorage.setItem('current_user_session', foundUser.username);
+                    window.location.href = 'chat.html';
+                } else {
+                    errorBox.innerText = "Invalid username/email or password.";
+                    errorBox.style.display = 'block';
+                }
+            } else {
+                // Signup Logic
+                const email = document.getElementById('email').value.trim().toLowerCase();
+                const age = parseInt(document.getElementById('age').value);
+                const gender = document.getElementById('gender').value;
 
-        socket.on('loginSuccess', (user) => {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-layout').classList.remove('hidden');
-            document.getElementById('display-name').innerText = user.username;
-        });
+                // Validations
+                if (users[identifier]) {
+                    errorBox.innerText = "Username is already taken.";
+                    errorBox.style.display = 'block';
+                    return;
+                }
+                if (Object.values(users).some(u => u.email === email)) {
+                    errorBox.innerText = "Email is already registered.";
+                    errorBox.style.display = 'block';
+                    return;
+                }
+                if (age < 7 || age > 1000 || isNaN(age)) {
+                    errorBox.innerText = "Age must be between 7 and 1000.";
+                    errorBox.style.display = 'block';
+                    return;
+                }
+
+                // Create new user record
+                const newUser = {
+                    username: identifier,
+                    email: email,
+                    password: password,
+                    age: age,
+                    gender: gender,
+                    pfp: "https://tse4.mm.bing.net/th/id/OIP.RzSDY3QeLinMNH2kcOduWQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3",
+                    gold: identifier === 'dev' ? 1000000000 : 100,
+                    rubies: identifier === 'dev' ? 1000000 : 10,
+                    joinedAt: new Date().toISOString()
+                };
+
+                users[identifier] = newUser;
+                localStorage.setItem('registered_users', JSON.stringify(users));
+                
+                // Save legacy key for chat.html compatibility
+                localStorage.setItem(`user_${identifier}`, JSON.stringify(newUser));
+                
+                localStorage.setItem('current_user_session', identifier);
+                window.location.href = 'chat.html';
+            }
+        }
+
+        window.onload = () => {
+            if (localStorage.getItem('current_user_session')) {
+                window.location.href = 'chat.html';
+            }
+        }
     </script>
 </body>
 </html>
