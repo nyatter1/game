@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -237,18 +238,29 @@
         </div>
     </div>
 
-    <script>
-        // Aura - Frontend Logic (Node-Ready)
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'aura-social-club';
+        
+        let currentUser = null;
         let userData = {
             pfp: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop',
             banner: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&h=300&fit=crop',
             username: '',
-            email: '',
             color: '#ffffff',
             font: "'Plus Jakarta Sans'"
         };
 
-        const showMessage = (text, isError = false) => {
+        // UI Logic Global Refs
+        window.showMessage = (text, isError = false) => {
             const notification = document.getElementById('notification');
             const notificationText = document.getElementById('notificationText');
             notificationText.innerText = text;
@@ -257,7 +269,7 @@
             setTimeout(() => notification.classList.remove('show'), 3000);
         };
 
-        const startLoadingSequence = (message, isPermanent = false, callback = null) => {
+        window.startLoadingSequence = (message, isPermanent = false, callback = null) => {
             const loadingScreen = document.getElementById('loadingScreen');
             const loadingStatus = document.getElementById('loadingStatus');
             const progressBar = document.getElementById('progressBar');
@@ -274,73 +286,101 @@
                 setTimeout(() => {
                     loadingScreen.classList.remove('active');
                     if (callback) callback();
-                }, 2000);
+                }, 4000);
             }
         };
 
+        // Auth Listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // Check if profile exists to skip login
+                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    localStorage.setItem('aura_setup_data', JSON.stringify(docSnap.data()));
+                    window.location.href = '/chat';
+                }
+            }
+        });
+
+        // Toggle Signup/Login
         window.toggleAuth = () => {
             document.getElementById('loginSection').classList.toggle('hidden-state');
             document.getElementById('signupSection').classList.toggle('hidden-state');
         };
 
-        // Node.js API Login
+        // Registration Logic
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPass').value;
+            const fullName = document.getElementById('signupName').value;
+
+            startLoadingSequence('Securing Identity', false, async () => {
+                try {
+                    // Firebase Auth usually handles users, but since we are in an iframe
+                    // we simulate a database check for unique emails
+                    const userDbRef = doc(db, 'artifacts', appId, 'public', 'data', 'auth_registry', btoa(email));
+                    const check = await getDoc(userDbRef);
+                    if (check.exists()) {
+                        showMessage('Email already recognized in the circle.', true);
+                        return;
+                    }
+
+                    // Authenticate Anonymously for the session
+                    if (!auth.currentUser) {
+                        await signInAnonymously(auth);
+                    }
+
+                    // Register in private-public lookup
+                    await setDoc(userDbRef, { email, password, fullName, uid: auth.currentUser.uid });
+
+                    document.getElementById('mainContent').classList.add('hidden-state');
+                    document.getElementById('setupWizard').classList.remove('hidden-state');
+                    initFontGrid();
+                } catch (err) {
+                    showMessage('Registration failed. Try again.', true);
+                }
+            });
+        });
+
+        // Login Logic
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPass').value;
 
-            startLoadingSequence('Authenticating');
-            
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+            startLoadingSequence('Authenticating', false, async () => {
+                try {
+                    const userDbRef = doc(db, 'artifacts', appId, 'public', 'data', 'auth_registry', btoa(email));
+                    const snap = await getDoc(userDbRef);
 
-                const result = await response.json();
-                if (response.ok) {
-                    localStorage.setItem('aura_user', JSON.stringify(result.user));
-                    window.location.href = '/chat';
-                } else {
-                    showMessage(result.error || 'Invalid credentials', true);
+                    if (snap.exists() && snap.data().password === password) {
+                        if (!auth.currentUser) await signInAnonymously(auth);
+                        
+                        // Check if they finished setup
+                        const profileRef = doc(db, 'artifacts', appId, 'users', snap.data().uid, 'profile', 'data');
+                        const profileSnap = await getDoc(profileRef);
+                        
+                        if (profileSnap.exists()) {
+                            localStorage.setItem('aura_setup_data', JSON.stringify(profileSnap.data()));
+                            window.location.href = '/chat';
+                        } else {
+                            document.getElementById('mainContent').classList.add('hidden-state');
+                            document.getElementById('setupWizard').classList.remove('hidden-state');
+                            initFontGrid();
+                        }
+                    } else {
+                        showMessage('Invalid credentials.', true);
+                    }
+                } catch (err) {
+                    showMessage('Access denied.', true);
                 }
-            } catch (err) {
-                showMessage('Server connection failed.', true);
-            }
+            });
         });
 
-        // Node.js API Signup
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            userData.email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPass').value;
-            const fullName = document.getElementById('signupName').value;
-
-            startLoadingSequence('Securing Identity');
-            
-            try {
-                const response = await fetch('/api/signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: userData.email, password, fullName })
-                });
-
-                const result = await response.json();
-                if (response.ok) {
-                    userData.id = result.userId;
-                    document.getElementById('mainContent').classList.add('hidden-state');
-                    document.getElementById('setupWizard').classList.remove('hidden-state');
-                    initFontGrid();
-                } else {
-                    showMessage(result.error || 'Signup failed', true);
-                }
-            } catch (err) {
-                showMessage('Server connection failed.', true);
-            }
-        });
-
-        // Font Grid
+        // Wizard Logic
         window.initFontGrid = () => {
             const availableFonts = [
                 { name: 'Classic Sans', value: "'Plus Jakarta Sans'" },
@@ -417,23 +457,20 @@
         };
 
         window.finishSetup = async () => {
-            startLoadingSequence('Etching Dossier', true);
+            if (!auth.currentUser) return;
+            startLoadingSequence('Finalizing Identity', true);
+            
             try {
-                const response = await fetch('/api/complete-setup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userData)
-                });
+                const userDocRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
+                await setDoc(userDocRef, { ...userData, uid: auth.currentUser.uid, lastSeen: serverTimestamp() });
 
-                if (response.ok) {
-                    localStorage.setItem('aura_user', JSON.stringify(userData));
-                    window.location.href = '/chat';
-                } else {
-                    showMessage('Setup failed. Please try again.', true);
-                    document.getElementById('loadingScreen').classList.remove('active');
-                }
+                const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'online_users', auth.currentUser.uid);
+                await setDoc(publicRef, { ...userData, uid: auth.currentUser.uid, lastSeen: serverTimestamp() });
+
+                localStorage.setItem('aura_setup_data', JSON.stringify(userData));
+                window.location.href = '/chat';
             } catch (err) {
-                showMessage('Connection lost.', true);
+                showMessage('Error syncing dossier.', true);
                 document.getElementById('loadingScreen').classList.remove('active');
             }
         };
