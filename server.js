@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
+const readline = require('readline');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +12,13 @@ const io = new Server(server, {
         origin: "*",
         methods: ["GET", "POST"]
     }
+});
+
+// Setup terminal interface for server-side "Nuclear" commands
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
 });
 
 // Middleware
@@ -36,6 +44,33 @@ const initFiles = () => {
     }
 };
 initFiles();
+
+/**
+ * Utility to perform a Global Factory Reset
+ * This clears the server database AND tells all clients to clear their cache/localStorage
+ */
+const triggerGlobalNuke = () => {
+    console.log("!!! GLOBAL FACTORY RESET INITIATED !!!");
+    
+    // 1. Wipe Server Files
+    saveData(USERS_FILE, {});
+    saveData(CHAT_FILE, []);
+    
+    // 2. Clear Online State
+    onlineUsers = {};
+
+    // 3. Signal EVERYONE to clear their local browser storage/cache and reload
+    io.emit('system_message', "⚠️ GLOBAL WIPE: The site is being reset. All data cleared.");
+    io.emit('force_wipe_client'); 
+};
+
+// Console Command: Type 'nuke' in your terminal to clear everything for everyone
+rl.on('line', (line) => {
+    if (line.trim().toLowerCase() === 'nuke') {
+        triggerGlobalNuke();
+        console.log(">> Global wipe complete. All users reset.");
+    }
+});
 
 /**
  * Utility to read JSON files
@@ -72,10 +107,8 @@ io.on('connection', (socket) => {
         const users = readData(USERS_FILE);
         const username = userData.username.toLowerCase();
         
-        // Load persistent data if exists, otherwise use what client sent
         let persistentUser = users[username] || userData;
         
-        // Assign Ranks
         if (username === 'dev') {
             persistentUser.rank = 'Developer';
         } else if (username === 'rawrer') {
@@ -86,17 +119,12 @@ io.on('connection', (socket) => {
             persistentUser.rank = 'VIP';
         }
 
-        // Add to online tracking
         onlineUsers[socket.id] = persistentUser;
-        
-        // Broadcast updated user list to everyone
         io.emit('user_list_update', Object.values(onlineUsers));
         
-        // Send persistent history to the joiner
         const history = readData(CHAT_FILE);
         socket.emit('history', history);
         
-        // System message
         io.emit('system_message', `${persistentUser.username} (${persistentUser.rank}) joined the chat`);
     });
 
@@ -105,40 +133,17 @@ io.on('connection', (socket) => {
         const sender = onlineUsers[socket.id];
         if (!sender) return;
 
-        // 1. Check for commands
         if (msg.text && msg.text.startsWith('/')) {
             const parts = msg.text.split(' ');
             const cmd = parts[0].toLowerCase();
 
-            // /wipe - Factory Reset (Dev Only)
-            if (cmd === '/wipe') {
-                if (sender.username.toLowerCase() === 'dev') {
-                    console.log("!!! DATABASE WIPE INITIATED BY DEV !!!");
-                    
-                    // Clear files on server
-                    saveData(USERS_FILE, {});
-                    saveData(CHAT_FILE, []);
-                    
-                    // Notify everyone and force them to reload
-                    io.emit('system_message', "⚠️ EMERGENCY: SERVER DATABASE WIPED BY DEV. REBOOTING...");
-                    io.emit('chat_message', { 
-                        type: 'chat', 
-                        user: 'SYSTEM', 
-                        text: 'Database wiped. All accounts deleted. Application will now reset.', 
-                        rank: 'Developer' 
-                    });
-
-                    // Force all sockets to disconnect and tell clients to clear local storage via custom event
-                    // We broadcast this so the frontend script can execute its wipe logic
-                    io.emit('force_wipe_client');
-                    
-                    // Reset internal state
-                    onlineUsers = {};
-                    return;
-                }
+            // /wipe command for Dev in chat
+            if (cmd === '/wipe' && sender.username.toLowerCase() === 'dev') {
+                triggerGlobalNuke();
+                return;
             }
 
-            // /give {user} {g/r} {amount} (Dev Only)
+            // /give {user} {g/r} {amount}
             if (cmd === '/give' && sender.username.toLowerCase() === 'dev') {
                 if (parts.length === 4) {
                     const targetName = parts[1].toLowerCase();
@@ -152,14 +157,12 @@ io.on('connection', (socket) => {
                         const typeLabel = isGold ? 'gold' : 'rubies';
 
                         if (isGold || isRuby) {
-                            // Update Database first
                             if (users[targetName]) {
                                 if (isGold) users[targetName].gold += amount;
                                 else users[targetName].rubies += amount;
                                 saveData(USERS_FILE, users);
                             }
 
-                            // Update online user if they are here
                             const targetSocketId = Object.keys(onlineUsers).find(
                                 id => onlineUsers[id].username.toLowerCase() === targetName
                             );
@@ -178,7 +181,6 @@ io.on('connection', (socket) => {
             }
         }
 
-        // Standard message processing for non-command chat or handled visuals
         const messageObj = {
             ...msg,
             rank: sender.rank || 'VIP',
@@ -194,13 +196,11 @@ io.on('connection', (socket) => {
         io.emit('chat_message', messageObj);
     });
 
-    // Sync state changes from client (e.g., gambling results)
     socket.on('update_user', (userData) => {
         if (onlineUsers[socket.id]) {
             const username = onlineUsers[socket.id].username.toLowerCase();
             onlineUsers[socket.id] = { ...onlineUsers[socket.id], ...userData };
             
-            // Save to persistent storage
             const users = readData(USERS_FILE);
             users[username] = onlineUsers[socket.id];
             saveData(USERS_FILE, users);
