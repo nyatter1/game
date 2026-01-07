@@ -240,7 +240,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         // Firebase Configuration
         const firebaseConfig = JSON.parse(__firebase_config);
@@ -258,40 +258,137 @@
             font: "'Plus Jakarta Sans'"
         };
 
-        // Initialize Auth
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
-            } else {
-                await signInAnonymously(auth);
+        // UI Logic Global Refs
+        window.showMessage = (text, isError = false) => {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            notificationText.innerText = text;
+            notificationText.style.color = isError ? '#ff6b6b' : '#ffffff';
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        };
+
+        window.startLoadingSequence = (message, isPermanent = false, callback = null) => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const loadingStatus = document.getElementById('loadingStatus');
+            const progressBar = document.getElementById('progressBar');
+            const factText = document.getElementById('factText');
+            const facts = ["Privacy is the ultimate luxury.", "Fortune favors the bold.", "Exclusivity is a state of mind.", "Silence is elegant."];
+
+            loadingScreen.classList.add('active');
+            loadingStatus.innerText = message;
+            factText.innerText = facts[Math.floor(Math.random() * facts.length)];
+            progressBar.style.width = '0%';
+            setTimeout(() => progressBar.style.width = '100%', 50);
+
+            if (!isPermanent) {
+                setTimeout(() => {
+                    loadingScreen.classList.remove('active');
+                    if (callback) callback();
+                }, 4000);
             }
         };
-        initAuth();
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) currentUser = user;
+        // Auth Listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // Check if profile exists to skip login
+                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    localStorage.setItem('aura_setup_data', JSON.stringify(docSnap.data()));
+                    window.location.href = '/chat';
+                }
+            }
         });
 
-        // UI Logic
-        const notification = document.getElementById('notification');
-        const notificationText = document.getElementById('notificationText');
-        const loadingScreen = document.getElementById('loadingScreen');
-        const factText = document.getElementById('factText');
-        const progressBar = document.getElementById('progressBar');
-        const loadingStatus = document.getElementById('loadingStatus');
+        // Toggle Signup/Login
+        window.toggleAuth = () => {
+            document.getElementById('loginSection').classList.toggle('hidden-state');
+            document.getElementById('signupSection').classList.toggle('hidden-state');
+        };
 
-        const availableFonts = [
-            { name: 'Classic Sans', value: "'Plus Jakarta Sans'" },
-            { name: 'Luxe Serif', value: "'Playfair Display'" },
-            { name: 'Monospace', value: "'Space Mono'" },
-            { name: 'Editorial', value: "'Cormorant Garamond'" },
-            { name: 'Modern', value: "'Inter'" },
-            { name: 'Heritage', value: "'Baskervville'" }
-        ];
+        // Registration Logic
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPass').value;
+            const fullName = document.getElementById('signupName').value;
 
-        const facts = ["Privacy is the ultimate luxury.", "Fortune favors the bold.", "Exclusivity is a state of mind.", "Silence is elegant."];
+            startLoadingSequence('Securing Identity', false, async () => {
+                try {
+                    // Firebase Auth usually handles users, but since we are in an iframe
+                    // we simulate a database check for unique emails
+                    const userDbRef = doc(db, 'artifacts', appId, 'public', 'data', 'auth_registry', btoa(email));
+                    const check = await getDoc(userDbRef);
+                    if (check.exists()) {
+                        showMessage('Email already recognized in the circle.', true);
+                        return;
+                    }
 
+                    // Authenticate Anonymously for the session
+                    if (!auth.currentUser) {
+                        await signInAnonymously(auth);
+                    }
+
+                    // Register in private-public lookup
+                    await setDoc(userDbRef, { email, password, fullName, uid: auth.currentUser.uid });
+
+                    document.getElementById('mainContent').classList.add('hidden-state');
+                    document.getElementById('setupWizard').classList.remove('hidden-state');
+                    initFontGrid();
+                } catch (err) {
+                    showMessage('Registration failed. Try again.', true);
+                }
+            });
+        });
+
+        // Login Logic
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPass').value;
+
+            startLoadingSequence('Authenticating', false, async () => {
+                try {
+                    const userDbRef = doc(db, 'artifacts', appId, 'public', 'data', 'auth_registry', btoa(email));
+                    const snap = await getDoc(userDbRef);
+
+                    if (snap.exists() && snap.data().password === password) {
+                        if (!auth.currentUser) await signInAnonymously(auth);
+                        
+                        // Check if they finished setup
+                        const profileRef = doc(db, 'artifacts', appId, 'users', snap.data().uid, 'profile', 'data');
+                        const profileSnap = await getDoc(profileRef);
+                        
+                        if (profileSnap.exists()) {
+                            localStorage.setItem('aura_setup_data', JSON.stringify(profileSnap.data()));
+                            window.location.href = '/chat';
+                        } else {
+                            document.getElementById('mainContent').classList.add('hidden-state');
+                            document.getElementById('setupWizard').classList.remove('hidden-state');
+                            initFontGrid();
+                        }
+                    } else {
+                        showMessage('Invalid credentials.', true);
+                    }
+                } catch (err) {
+                    showMessage('Access denied.', true);
+                }
+            });
+        });
+
+        // Wizard Logic
         window.initFontGrid = () => {
+            const availableFonts = [
+                { name: 'Classic Sans', value: "'Plus Jakarta Sans'" },
+                { name: 'Luxe Serif', value: "'Playfair Display'" },
+                { name: 'Monospace', value: "'Space Mono'" },
+                { name: 'Editorial', value: "'Cormorant Garamond'" },
+                { name: 'Modern', value: "'Inter'" },
+                { name: 'Heritage', value: "'Baskervville'" }
+            ];
             const grid = document.getElementById('fontGrid');
             grid.innerHTML = '';
             availableFonts.forEach(font => {
@@ -305,33 +402,6 @@
                 };
                 grid.appendChild(card);
             });
-        };
-
-        window.showMessage = (text, isError = false) => {
-            notificationText.innerText = text;
-            notificationText.style.color = isError ? '#ff6b6b' : '#ffffff';
-            notification.classList.add('show');
-            setTimeout(() => notification.classList.remove('show'), 3000);
-        };
-
-        window.toggleAuth = () => {
-            document.getElementById('loginSection').classList.toggle('hidden-state');
-            document.getElementById('signupSection').classList.toggle('hidden-state');
-        };
-
-        window.startLoadingSequence = (message, isPermanent = false, callback = null) => {
-            loadingScreen.classList.add('active');
-            loadingStatus.innerText = message;
-            factText.innerText = facts[Math.floor(Math.random() * facts.length)];
-            progressBar.style.width = '0%';
-            setTimeout(() => progressBar.style.width = '100%', 50);
-
-            if (!isPermanent) {
-                setTimeout(() => {
-                    loadingScreen.classList.remove('active');
-                    if (callback) callback();
-                }, 4000);
-            }
         };
 
         window.nextStep = (step) => {
@@ -386,62 +456,23 @@
         };
 
         window.finishSetup = async () => {
-            if (!currentUser) {
-                showMessage('Connection lost. Please wait...', true);
-                return;
-            }
-            startLoadingSequence('Initializing Session', true);
+            if (!auth.currentUser) return;
+            startLoadingSequence('Finalizing Identity', true);
             
             try {
-                // Save to cloud storage (Firestore)
-                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
-                await setDoc(userDocRef, {
-                    ...userData,
-                    uid: currentUser.uid,
-                    lastSeen: serverTimestamp()
-                }, { merge: true });
+                const userDocRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
+                await setDoc(userDocRef, { ...userData, uid: auth.currentUser.uid, lastSeen: serverTimestamp() });
 
-                // Also save to public list
-                const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'online_users', currentUser.uid);
-                await setDoc(publicRef, {
-                    username: userData.username,
-                    pfp: userData.pfp,
-                    color: userData.color,
-                    font: userData.font,
-                    uid: currentUser.uid,
-                    lastSeen: serverTimestamp()
-                });
+                const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'online_users', auth.currentUser.uid);
+                await setDoc(publicRef, { ...userData, uid: auth.currentUser.uid, lastSeen: serverTimestamp() });
 
-                // Persist locally for the chat page
                 localStorage.setItem('aura_setup_data', JSON.stringify(userData));
-                
-                setTimeout(() => {
-                    window.location.href = 'chat.html';
-                }, 3500);
+                window.location.href = '/chat';
             } catch (err) {
-                console.error(err);
                 showMessage('Error syncing dossier.', true);
-                loadingScreen.classList.remove('active');
+                document.getElementById('loadingScreen').classList.remove('active');
             }
         };
-
-        document.getElementById('signupForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            startLoadingSequence('Account Created', false, () => {
-                document.getElementById('mainContent').classList.add('hidden-state');
-                document.getElementById('setupWizard').classList.remove('hidden-state');
-                initFontGrid();
-            });
-        });
-
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            startLoadingSequence('Authenticating', false, () => {
-                document.getElementById('mainContent').classList.add('hidden-state');
-                document.getElementById('setupWizard').classList.remove('hidden-state');
-                initFontGrid();
-            });
-        });
     </script>
 </body>
 </html>
