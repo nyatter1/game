@@ -1,13 +1,20 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 // Middleware
 app.use(express.json());
-
-// Serve static files from the root directory so chat.html/index.html are accessible
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -51,89 +58,125 @@ const saveData = (filePath, data) => {
     }
 };
 
-// --- API ROUTES ---
+// --- Socket.io Logic ---
+let onlineUsers = {}; // Key: socket.id, Value: user data object
 
-// Registration/Login Route
-app.post('/api/auth', (req, res) => {
-    const { identifier, password, isLogin, email, age, gender } = req.body;
-    const users = readData(USERS_FILE);
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
 
-    if (isLogin) {
-        // Login Logic
-        let user = users[identifier.toLowerCase()];
-        if (!user) {
-            user = Object.values(users).find(u => u.email === identifier.toLowerCase());
-        }
-
-        if (user && user.password === password) {
-            const { password, ...safeUser } = user;
-            return res.json({ success: true, user: safeUser });
-        }
-        return res.status(401).json({ success: false, message: "Invalid credentials" });
-    } else {
-        // Signup Logic
-        const username = identifier.toLowerCase();
-        if (users[username]) return res.status(400).json({ success: false, message: "Username taken" });
+    // When a user joins
+    socket.on('join', (userData) => {
+        const users = readData(USERS_FILE);
+        const username = userData.username.toLowerCase();
         
-        const newUser = {
-            username,
-            email: email.toLowerCase(),
-            password,
-            age,
-            gender,
-            pfp: "https://tse4.mm.bing.net/th/id/OIP.RzSDY3QeLinMNH2kcOduWQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3",
-            gold: username === 'dev' ? 1000000000 : 100,
-            rubies: username === 'dev' ? 1000000 : 10,
-            joinedAt: new Date().toISOString()
+        // Load persistent data if exists, otherwise use what client sent
+        let persistentUser = users[username] || userData;
+        
+        // Assign Ranks
+        if (username === 'dev') {
+            persistentUser.rank = 'Developer';
+        } else {
+            persistentUser.rank = 'VIP';
+        }
+
+        // Add to online tracking
+        onlineUsers[socket.id] = persistentUser;
+        
+        // Broadcast updated user list to everyone
+        io.emit('user_list_update', Object.values(onlineUsers));
+        
+        // Send persistent history to the joiner
+        const history = readData(CHAT_FILE);
+        socket.emit('history', history);
+        
+        // System message
+        io.emit('system_message', `${persistentUser.username} (${persistentUser.rank}) joined the chat`);
+    });
+
+    // Handle new chat messages
+    socket.on('chat_message', (msg) => {
+        const sender = onlineUsers[socket.id];
+        if (!sender) return;
+
+        // 1. Check for /give command (Developer only)
+        if (msg.text && msg.text.startsWith('/give ')) {
+            if (sender.username.toLowerCase() === 'dev') {
+                const parts = msg.text.split(' '); // /give {user} {type} {amount}
+                if (parts.length === 4) {
+                    const targetName = parts[1].toLowerCase();
+                    const type = parts[2].toLowerCase();
+                    const amount = parseInt(parts[3]);
+
+                    if (!isNaN(amount)) {
+                        const users = readData(USERS_FILE);
+                        
+                        // Update online user if they are here
+                        const targetSocketId = Object.keys(onlineUsers).find(
+                            id => onlineUsers[id].username.toLowerCase() === targetName
+                        );
+
+                        // Update Database first (Offline storage)
+                        if (users[targetName]) {
+                            if (type === 'gold') users[targetName].gold += amount;
+                            if (type === 'rubies' || type === 'ruby') users[targetName].rubies += amount;
+                            saveData(USERS_FILE, users);
+                        }
+
+                        if (targetSocketId) {
+                            if (type === 'gold') onlineUsers[targetSocketId].gold += amount;
+                            if (type === 'rubies' || type === 'ruby') onlineUsers[targetSocketId].rubies += amount;
+                            io.to(targetSocketId).emit('force_update', onlineUsers[targetSocketId]);
+                        }
+
+                        io.emit('system_message', `DEV granted ${amount} ${type} to ${targetName}!`);
+                        return; 
+                    }
+                }
+            }
+        }
+
+        // Standard message processing
+        const messageObj = {
+            ...msg,
+            rank: sender.rank || 'VIP',
+            id: Date.now() + Math.random(),
+            timestamp: new Date()
         };
-
-        users[username] = newUser;
-        saveData(USERS_FILE, users);
         
-        const { password: pw, ...safeUser } = newUser;
-        res.json({ success: true, user: safeUser });
-    }
+        const history = readData(CHAT_FILE);
+        history.push(messageObj);
+        if (history.length > 100) history.shift();
+        saveData(CHAT_FILE, history);
+        
+        io.emit('chat_message', messageObj);
+    });
+
+    // Sync state changes from client (e.g., gambling results)
+    socket.on('update_user', (userData) => {
+        if (onlineUsers[socket.id]) {
+            const username = onlineUsers[socket.id].username.toLowerCase();
+            onlineUsers[socket.id] = { ...onlineUsers[socket.id], ...userData };
+            
+            // Save to persistent storage
+            const users = readData(USERS_FILE);
+            users[username] = onlineUsers[socket.id];
+            saveData(USERS_FILE, users);
+
+            io.emit('user_list_update', Object.values(onlineUsers));
+        }
+    });
+
+    socket.on('disconnect', () => {
+        if (onlineUsers[socket.id]) {
+            const username = onlineUsers[socket.id].username;
+            delete onlineUsers[socket.id];
+            io.emit('user_list_update', Object.values(onlineUsers));
+            console.log('User disconnected:', username);
+        }
+    });
 });
 
-// Get Chat History
-app.get('/api/chat', (req, res) => {
-    const history = readData(CHAT_FILE);
-    res.json(history);
-});
-
-// Save Chat Message
-app.post('/api/chat', (req, res) => {
-    const msgObj = req.body;
-    if (!msgObj || !msgObj.user) return res.status(400).json({ success: false });
-
-    const history = readData(CHAT_FILE);
-    history.push(msgObj);
-    if (history.length > 100) history.shift();
-    
-    saveData(CHAT_FILE, history);
-    res.json({ success: true });
-});
-
-// Update User Stats (Gold/Gems/PFP)
-app.post('/api/user/update', (req, res) => {
-    const { username, updates } = req.body;
-    const users = readData(USERS_FILE);
-    
-    if (users[username]) {
-        users[username] = { ...users[username], ...updates };
-        saveData(USERS_FILE, users);
-        res.json({ success: true, user: users[username] });
-    } else {
-        res.status(404).json({ success: false, message: "User not found" });
-    }
-});
-
-// Fallback: serve index.html for unknown routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Start server
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
