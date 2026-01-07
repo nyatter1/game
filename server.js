@@ -6,6 +6,9 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
+
+// Serve static files from the root directory so chat.html/index.html are accessible
+app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Data Persistence Paths
@@ -14,9 +17,15 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHAT_FILE = path.join(DATA_DIR, 'chat.json');
 
 // Ensure data directory and files exist
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, JSON.stringify({}));
-if (!fs.existsSync(CHAT_FILE)) fs.writeFileSync(CHAT_FILE, JSON.stringify([]));
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+if (!fs.existsSync(USERS_FILE)) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify({}));
+}
+if (!fs.existsSync(CHAT_FILE)) {
+    fs.writeFileSync(CHAT_FILE, JSON.stringify([]));
+}
 
 /**
  * Utility to read JSON files
@@ -26,6 +35,7 @@ const readData = (filePath) => {
         const content = fs.readFileSync(filePath, 'utf8');
         return JSON.parse(content);
     } catch (err) {
+        console.error(`Error reading ${filePath}:`, err);
         return filePath === CHAT_FILE ? [] : {};
     }
 };
@@ -34,7 +44,11 @@ const readData = (filePath) => {
  * Utility to write JSON files
  */
 const saveData = (filePath, data) => {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    try {
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    } catch (err) {
+        console.error(`Error saving ${filePath}:`, err);
+    }
 };
 
 // --- API ROUTES ---
@@ -90,8 +104,9 @@ app.get('/api/chat', (req, res) => {
 // Save Chat Message
 app.post('/api/chat', (req, res) => {
     const msgObj = req.body;
+    if (!msgObj || !msgObj.user) return res.status(400).json({ success: false });
+
     const history = readData(CHAT_FILE);
-    
     history.push(msgObj);
     if (history.length > 100) history.shift();
     
@@ -107,17 +122,18 @@ app.post('/api/user/update', (req, res) => {
     if (users[username]) {
         users[username] = { ...users[username], ...updates };
         saveData(USERS_FILE, users);
-        res.json({ success: true });
+        res.json({ success: true, user: users[username] });
     } else {
         res.status(404).json({ success: false, message: "User not found" });
     }
 });
 
-// Serve frontend files
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Fallback: serve index.html for unknown routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Start server
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
