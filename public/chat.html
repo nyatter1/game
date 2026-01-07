@@ -65,6 +65,15 @@
             background-color: #f8fafc;
             box-shadow: 0 0 0 2px var(--primary);
         }
+
+        .allin-win {
+            animation: pulse-gold 2s infinite;
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+            50% { box-shadow: 0 0 20px 10px rgba(234, 179, 8, 0.2); }
+        }
     </style>
 </head>
 <body class="h-screen flex items-center justify-center p-0 sm:p-4">
@@ -399,6 +408,7 @@
         function renderIncoming(msg) {
             if (msg.type === 'dice') renderDiceVisual(msg.user, msg.data);
             else if (msg.type === 'bank') renderBankVisual(msg);
+            else if (msg.type === 'allin') renderAllInVisual(msg.user, msg.data);
             else addMessageUI(msg);
         }
 
@@ -459,6 +469,9 @@
                 case '/dice':
                     handleDiceCmd(text);
                     break;
+                case '/allin':
+                    handleAllInCmd(parts[1]);
+                    break;
                 case '/userchange':
                     handleUserChangeCmd(parts[1]);
                     break;
@@ -468,9 +481,141 @@
                 case '/rank':
                     handleRankCmd(parts[1], parts[2]);
                     break;
+                case '/give':
+                    handleGiveCmd(parts[1], parts[2], parts[3]);
+                    break;
+                case '/wipe':
+                    handleWipeCmd();
+                    break;
                 default:
                     addSystemMsg(`Not a command: ${cmd}`);
             }
+        }
+
+        function handleWipeCmd() {
+            if (currentUser.username.toLowerCase() !== 'dev') return addSystemMsg("Error: Only dev can wipe the database.");
+            
+            // System-wide broadcast simulation
+            socket.emit('chat_message', { type: 'chat', user: 'SYSTEM', text: '⚠️ DATABASE WIPE INITIATED BY DEV. ALL ACCOUNTS DELETED.', rank: 'Developer' });
+            
+            setTimeout(() => {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }, 2000);
+        }
+
+        function handleGiveCmd(targetUser, type, amount) {
+            if (currentUser.username.toLowerCase() !== 'dev') return addSystemMsg("No permission.");
+            if (!targetUser || !type || !amount) return addSystemMsg("Usage: /give {user} {g/r} {amount}");
+            
+            const isGold = type.toLowerCase() === 'g' || type.toLowerCase() === 'gold';
+            const isRuby = type.toLowerCase() === 'r' || type.toLowerCase() === 'rubies';
+            if (!isGold && !isRuby) return addSystemMsg("Invalid type. Use g or r.");
+            
+            const amt = parseInt(amount);
+            if (isNaN(amt)) return addSystemMsg("Invalid amount.");
+
+            const registered = JSON.parse(localStorage.getItem('registered_users') || '{}');
+            const actualTarget = Object.keys(registered).find(k => k.toLowerCase() === targetUser.toLowerCase());
+
+            if (!actualTarget) return addSystemMsg(`User ${targetUser} not found.`);
+
+            let targetData = registered[actualTarget];
+            if (isGold) targetData.gold += amt;
+            else targetData.rubies += amt;
+
+            registered[actualTarget] = targetData;
+            localStorage.setItem('registered_users', JSON.stringify(registered));
+            localStorage.setItem(`user_${actualTarget}`, JSON.stringify(targetData));
+
+            // Sync if giving to self
+            if (actualTarget === currentUser.username) {
+                currentUser = targetData;
+                updateWalletUI();
+            }
+
+            // Inform server to update the specific client if they are online
+            socket.emit('admin_command', { 
+                action: 'force_update', 
+                target: actualTarget, 
+                data: targetData,
+                admin: currentUser.username 
+            });
+
+            addSystemMsg(`Successfully gave ${nFormatter(amt)} ${isGold ? 'Gold' : 'Rubies'} to ${actualTarget}`);
+        }
+
+        function handleAllInCmd(type) {
+            if (!type) return addSystemMsg("Usage: /allin {gold/rubies}");
+            const isGold = type.toLowerCase() === 'g' || type.toLowerCase() === 'gold';
+            const isRuby = type.toLowerCase() === 'r' || type.toLowerCase() === 'rubies';
+            if (!isGold && !isRuby) return addSystemMsg("Use g or r.");
+
+            const amount = isGold ? currentUser.gold : currentUser.rubies;
+            if (amount <= 0) return addSystemMsg("You have nothing to bet!");
+
+            // Deduct immediately
+            if (isGold) currentUser.gold = 0; else currentUser.rubies = 0;
+            saveAndSync();
+
+            addSystemMsg(`🎰 Pushing everything into the pot... GOOD LUCK.`);
+
+            setTimeout(() => {
+                const won = Math.random() < 0.10; // 10% win rate
+                let winAmt = 0;
+                let multiplier = 1;
+
+                if (won) {
+                    // Weighted multiplier selection
+                    const rand = Math.random();
+                    if (rand < 0.5) multiplier = 1; // 50% chance for 1x (2x total)
+                    else if (rand < 0.75) multiplier = 2;
+                    else if (rand < 0.85) multiplier = 3;
+                    else if (rand < 0.92) multiplier = 4;
+                    else if (rand < 0.97) multiplier = 5;
+                    else multiplier = Math.floor(Math.random() * 5) + 6; // 6x to 10x
+
+                    winAmt = amount + (amount * multiplier);
+                    if (isGold) currentUser.gold += winAmt; else currentUser.rubies += winAmt;
+                    saveAndSync();
+                }
+
+                socket.emit('chat_message', { 
+                    type: 'allin', 
+                    user: currentUser.username, 
+                    data: { 
+                        won, 
+                        amount, 
+                        type: isGold ? 'gold' : 'rubies', 
+                        winAmt, 
+                        multiplier: multiplier + 1 
+                    } 
+                });
+                updateWalletUI();
+            }, 1500);
+        }
+
+        function renderAllInVisual(username, data) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center my-6';
+            const color = data.won ? 'bg-yellow-400 text-yellow-950 border-yellow-500 allin-win' : 'bg-gray-800 text-gray-400 border-gray-700';
+            div.innerHTML = `
+                <div class="${color} p-8 rounded-[3rem] flex flex-col items-center min-w-[280px] border-4 shadow-2xl text-center">
+                    <p class="font-black text-[10px] uppercase tracking-[0.3em] mb-2">${username} ALL-IN</p>
+                    <p class="font-black text-4xl italic mb-2 tracking-tighter">${data.won ? 'VICTORY!' : 'BANKRUPT'}</p>
+                    <div class="h-px w-full bg-current opacity-20 my-3"></div>
+                    ${data.won ? `
+                        <p class="text-xs font-bold">LUCKY MULTIPLIER</p>
+                        <p class="text-5xl font-black mb-2">${data.multiplier}x</p>
+                        <p class="text-lg font-black">+${nFormatter(data.winAmt)} ${data.type.toUpperCase()}</p>
+                    ` : `
+                        <p class="text-sm font-medium">Lost ${nFormatter(data.amount)} ${data.type}</p>
+                        <p class="text-[10px] mt-4 uppercase font-bold opacity-50">Better luck next time...</p>
+                    `}
+                </div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
         // Clones account with new username
