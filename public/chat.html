@@ -248,13 +248,76 @@
             `<svg class="w-12 h-12" viewBox="0 0 20 20" fill="currentColor"><path d="M6 6a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 12a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4zM6 18a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4z"/></svg>`
         ];
 
-        function nFormatter(num) {
-            if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T';
-            if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-            return num.toLocaleString();
-        }
+        function nFormatter(num, digits = 1) {
+    if (num === 0) return "0";
+    
+    // List of prefixes starting from 10^3 (K) to 10^153
+    const lookup = [
+        { value: 1e3, symbol: "K" },
+        { value: 1e6, symbol: "M" },
+        { value: 1e9, symbol: "B" },
+        { value: 1e12, symbol: "T" },
+        { value: 1e15, symbol: "Qa" },  // Quadrillion
+        { value: 1e18, symbol: "Qi" },  // Quintillion
+        { value: 1e21, symbol: "Sx" },  // Sextillion
+        { value: 1e24, symbol: "Sp" },  // Septillion
+        { value: 1e27, symbol: "Oc" },  // Octillion
+        { value: 1e30, symbol: "No" },  // Nonillion
+        { value: 1e33, symbol: "Dc" },  // Decillion
+        { value: 1e36, symbol: "Ud" },  // Undecillion
+        { value: 1e39, symbol: "Dd" },  // Duodecillion
+        { value: 1e42, symbol: "Td" },  // Tredecillion
+        { value: 1e45, symbol: "Qad" }, // Quattuordecillion
+        { value: 1e48, symbol: "Qid" }, // Quindecillion
+        { value: 1e51, symbol: "Sxd" }, // Sexdecillion
+        { value: 1e54, symbol: "Spd" }, // Septendecillion
+        { value: 1e57, symbol: "Ocd" }, // Octodecillion
+        { value: 1e60, symbol: "Nod" }, // Novemdecillion
+        { value: 1e63, symbol: "Vg" },  // Vigintillion
+        { value: 1e66, symbol: "Uvg" }, // Unvigintillion
+        { value: 1e69, symbol: "Dvg" }, // Duovigintillion
+        { value: 1e72, symbol: "Tvg" }, // Trevigintillion
+        { value: 1e75, symbol: "Qavg" },// Quattuorvigintillion
+        { value: 1e78, symbol: "Qivg" },// Quinvigintillion
+        { value: 1e81, symbol: "Sxvg" },// Sexvigintillion
+        { value: 1e84, symbol: "Spvg" },// Septenvigintillion
+        { value: 1e87, symbol: "Ocvg" },// Octovigintillion
+        { value: 1e90, symbol: "Novg" },// Novemvigintillion
+        { value: 1e93, symbol: "Tg" },  // Trigintillion
+        { value: 1e96, symbol: "Utg" }, // Untrigintillion
+        { value: 1e99, symbol: "Dtg" }, // Duotrigintillion
+        { value: 1e102, symbol: "Ttg" },
+        { value: 1e105, symbol: "Qatg" },
+        { value: 1e108, symbol: "Qitg" },
+        { value: 1e111, symbol: "Sxtg" },
+        { value: 1e114, symbol: "Sptg" },
+        { value: 1e117, symbol: "Octg" },
+        { value: 1e120, symbol: "Notg" },
+        { value: 1e123, symbol: "Qdg" }, // Quadragintillion
+        { value: 1e126, symbol: "Uqdg" },
+        { value: 1e129, symbol: "Dqdg" },
+        { value: 1e132, symbol: "Tqdg" },
+        { value: 1e135, symbol: "Qaqdg" },
+        { value: 1e138, symbol: "Qiqdg" },
+        { value: 1e141, symbol: "Sxqdg" },
+        { value: 1e144, symbol: "Spqdg" },
+        { value: 1e147, symbol: "Ocqdg" },
+        { value: 1e150, symbol: "Noqdg" },
+        { value: 1e153, symbol: "Qig" }  // Quinquagintillion
+    ];
+
+    const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+    
+    // Loop backwards through lookup to find the largest applicable unit
+    var item = lookup.slice().reverse().find(function(item) {
+        return num >= item.value;
+    });
+
+    return item 
+        ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol 
+        : num.toLocaleString();
+}
+
 
         function init() {
             const username = localStorage.getItem('current_user_session');
