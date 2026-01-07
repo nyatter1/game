@@ -65,8 +65,11 @@
             100% { transform: rotate(0deg) scale(1); }
         }
 
-        /* Dynamic Theme Classes */
-        .theme-btn-active { ring: 2px solid var(--primary); ring-offset: 2px; }
+        .theme-card-active {
+            border-color: var(--primary) !important;
+            background-color: #f8fafc;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
     </style>
 </head>
 <body class="h-screen flex items-center justify-center p-0 sm:p-4">
@@ -175,16 +178,18 @@
                     <h2 class="font-bold text-gray-800 text-lg">Global Lounge</h2>
                     <p class="text-xs text-gray-400" id="online-count">0 Players Online</p>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-4">
-                    <button onclick="toggleThemeModal(true)" class="p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-600 transition-colors border border-gray-100" title="Themes">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button onclick="toggleThemeModal(true)" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors border border-gray-100" title="Themes">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.828 2.828a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                         </svg>
+                        <span class="text-xs font-bold hidden sm:inline">Themes</span>
                     </button>
-                    <button onclick="toggleWallet(true)" class="p-2.5 rounded-xl bg-gray-50 hover:bg-indigo-50 text-indigo-600 transition-colors border border-gray-100" title="Wallet">
+                    <button onclick="toggleWallet(true)" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 text-indigo-600 transition-colors border border-indigo-100/50" title="Wallet">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3-3v8a3 3 0 003 3z" />
                         </svg>
+                        <span class="text-xs font-bold hidden sm:inline">Wallet</span>
                     </button>
                     <button onclick="logout()" class="px-4 py-2 rounded-xl text-xs bg-red-50 text-red-500 font-bold hover:bg-red-100 transition-colors">Logout</button>
                 </div>
@@ -276,36 +281,21 @@
             document.getElementById('user-pfp').src = currentUser.pfp || DEFAULT_PFP;
             
             // Apply saved theme
-            if (currentUser.theme) applyTheme(currentUser.theme);
+            if (typeof currentUser.theme !== 'undefined') applyTheme(currentUser.theme);
             
             updateWalletUI();
             renderThemeGrid();
 
-            // Connect to Live Server
             socket = io();
-
-            socket.on('connect', () => {
-                socket.emit('join', currentUser);
-            });
-
+            socket.on('connect', () => { socket.emit('join', currentUser); });
             socket.on('history', (msgs) => {
                 const container = document.getElementById('chat-messages');
                 container.innerHTML = '';
                 msgs.forEach(msg => renderIncoming(msg));
             });
-
-            socket.on('user_list_update', (users) => {
-                updateSidebar(users);
-            });
-
-            socket.on('chat_message', (msg) => {
-                renderIncoming(msg);
-            });
-
-            socket.on('system_message', (text) => {
-                addSystemMsg(text);
-            });
-
+            socket.on('user_list_update', (users) => { updateSidebar(users); });
+            socket.on('chat_message', (msg) => { renderIncoming(msg); });
+            socket.on('system_message', (text) => { addSystemMsg(text); });
             socket.on('force_update', (newData) => {
                 currentUser = newData;
                 saveAndSync();
@@ -326,25 +316,18 @@
             const offlineList = document.getElementById('offline-users-list');
             const countLabel = document.getElementById('online-count');
             
-            // Get all registered users from localStorage to determine who is offline
             const allUsersObj = JSON.parse(localStorage.getItem('registered_users') || '{}');
             const allUsernames = Object.keys(allUsersObj);
             const onlineUsernames = onlineUsers.map(u => u.username);
             const offlineUsernames = allUsernames.filter(name => !onlineUsernames.includes(name));
 
             countLabel.innerText = `${onlineUsers.length} Player${onlineUsers.length === 1 ? '' : 's'} Online`;
-            
-            // Render Online
             onlineList.innerHTML = onlineUsers.map(user => userItemTemplate(user, true)).join('');
-            
-            // Render Offline
-            offlineList.innerHTML = offlineUsernames.map(name => {
-                const data = allUsersObj[name];
-                return userItemTemplate(data, false);
-            }).join('');
+            offlineList.innerHTML = offlineUsernames.map(name => userItemTemplate(allUsersObj[name], false)).join('');
         }
 
         function userItemTemplate(user, isOnline) {
+            if (!user) return '';
             const rankClass = user.rank === 'Developer' ? 'rank-dev' : 'rank-vip';
             return `
                 <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/50 transition-all border border-transparent">
@@ -362,8 +345,9 @@
 
         function renderThemeGrid() {
             const grid = document.getElementById('theme-grid');
+            const activeIdx = currentUser.theme || 0;
             grid.innerHTML = THEMES.map((t, idx) => `
-                <button onclick="applyTheme(${idx})" class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-gray-50 transition-all group">
+                <button onclick="applyTheme(${idx})" id="theme-card-${idx}" class="theme-card flex flex-col items-center gap-2 p-3 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-gray-50 transition-all group ${idx === activeIdx ? 'theme-card-active' : ''}">
                     <div class="w-full h-12 rounded-xl shadow-inner border border-gray-200" style="background: linear-gradient(135deg, ${t.primary} 50%, ${t.bg} 50%)"></div>
                     <span class="text-[10px] font-bold text-gray-600 truncate w-full text-center">${t.name}</span>
                 </button>
@@ -378,7 +362,6 @@
             document.documentElement.style.setProperty('--primary-hover', theme.primary + 'dd');
             document.documentElement.style.setProperty('--bg-main', theme.bg);
             
-            // Update specific elements that need direct color change
             const sendBtn = document.getElementById('send-btn');
             if (sendBtn) sendBtn.style.backgroundColor = theme.primary;
             
@@ -387,6 +370,11 @@
 
             currentUser.theme = index;
             saveAndSync();
+
+            // Visual update for the grid
+            document.querySelectorAll('.theme-card').forEach(card => card.classList.remove('theme-card-active'));
+            const selectedCard = document.getElementById(`theme-card-${index}`);
+            if (selectedCard) selectedCard.classList.add('theme-card-active');
         }
 
         function renderIncoming(msg) {
@@ -439,12 +427,7 @@
             } else if (text.startsWith('/dice ')) {
                 handleDiceCmd(text);
             } else {
-                socket.emit('chat_message', {
-                    type: 'chat',
-                    user: currentUser.username,
-                    pfp: currentUser.pfp,
-                    text: text
-                });
+                socket.emit('chat_message', { type: 'chat', user: currentUser.username, pfp: currentUser.pfp, text: text, rank: currentUser.rank });
             }
             input.value = '';
         }
@@ -453,12 +436,10 @@
             const parts = text.split(' ');
             const type = parts[1]?.toLowerCase();
             const amount = parseInt(parts[2]);
-
             if (isNaN(amount) || amount <= 0) return addSystemMsg("Usage: /dice gold 500");
             
             const isGold = type === 'gold' || type === 'g';
             const realType = isGold ? 'gold' : 'rubies';
-
             if (isGold && currentUser.gold < amount) return addSystemMsg("Insufficient Gold!");
             if (!isGold && (type === 'rubies' || type === 'r') && currentUser.rubies < amount) return addSystemMsg("Insufficient Rubies!");
             
@@ -469,15 +450,8 @@
                 const won = Math.random() < 0.45;
                 const roll = won ? Math.floor(Math.random() * 3) + 4 : Math.floor(Math.random() * 3) + 1;
                 const winAmt = amount * 2;
-                if (won) {
-                    if (isGold) currentUser.gold += winAmt; else currentUser.rubies += winAmt;
-                    saveAndSync();
-                }
-                socket.emit('chat_message', {
-                    type: 'dice',
-                    user: currentUser.username,
-                    data: { roll, won, amount, type: realType, winAmt }
-                });
+                if (won) { if (isGold) currentUser.gold += winAmt; else currentUser.rubies += winAmt; saveAndSync(); }
+                socket.emit('chat_message', { type: 'dice', user: currentUser.username, data: { roll, won, amount, type: realType, winAmt } });
             }, 600);
         }
 
@@ -503,15 +477,14 @@
             div.className = 'flex justify-center my-4';
             div.innerHTML = `
                 <div class="bg-gray-900 text-white p-6 rounded-[2.5rem] shadow-2xl border border-gray-700 w-full max-w-[260px] flex flex-col items-center relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-8 bg-indigo-500/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
                     <img src="${msg.pfp || DEFAULT_PFP}" class="w-16 h-16 rounded-2xl border-2 border-indigo-500 mb-2 object-cover relative z-10">
                     <h4 class="font-black text-xs tracking-widest mb-4 z-10">${msg.user.toUpperCase()}'S VAULT</h4>
                     <div class="w-full space-y-2 relative z-10">
-                        <div class="flex justify-between bg-white/5 p-3 rounded-2xl border border-white/5">
+                        <div class="flex justify-between bg-white/5 p-3 rounded-2xl">
                             <span class="text-[10px] font-bold text-gray-400">GOLD</span>
                             <span class="text-sm font-black text-yellow-400">${nFormatter(msg.gold)}</span>
                         </div>
-                        <div class="flex justify-between bg-white/5 p-3 rounded-2xl border border-white/5">
+                        <div class="flex justify-between bg-white/5 p-3 rounded-2xl">
                             <span class="text-[10px] font-bold text-gray-400">RUBIES</span>
                             <span class="text-sm font-black text-rose-400">${nFormatter(msg.rubies)}</span>
                         </div>
@@ -537,14 +510,8 @@
             document.getElementById('sidebar-gems').innerText = nFormatter(currentUser.rubies);
         }
 
-        function toggleWallet(show) {
-            document.getElementById('wallet-modal').classList.toggle('hidden', !show);
-        }
-
-        function toggleThemeModal(show) {
-            document.getElementById('theme-modal').classList.toggle('hidden', !show);
-        }
-
+        function toggleWallet(show) { document.getElementById('wallet-modal').classList.toggle('hidden', !show); }
+        function toggleThemeModal(show) { document.getElementById('theme-modal').classList.toggle('hidden', !show); }
         function handlePfpChange(event) {
             const file = event.target.files[0];
             if (file) {
@@ -554,7 +521,6 @@
                     currentUser.pfp = e.target.result;
                     document.getElementById('user-pfp').src = currentUser.pfp;
                     saveAndSync();
-                    addSystemMsg("Profile Updated!");
                 };
                 reader.readAsDataURL(file);
             }
