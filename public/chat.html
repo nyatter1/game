@@ -38,18 +38,12 @@
             border-radius: 10px;
         }
 
-        .vip-gradient {
-            background: linear-gradient(45deg, #fbbf24, #f59e0b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
         .pfp-preview {
             transition: transform 0.2s;
         }
 
         .pfp-preview:hover {
-            transform: scale(1.1) rotate(5deg);
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -66,13 +60,13 @@
 
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleSettings()">
-                <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700" src="" alt="User">
-                <div class="hidden sm:block">
+                <img id="header-pfp" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 object-cover" src="https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain" alt="User">
+                <div class="hidden sm:block text-left">
                     <p id="header-username" class="text-sm font-bold leading-none"></p>
-                    <span class="text-[10px] font-black text-amber-500 tracking-widest">VIP MEMBER</span>
+                    <span class="text-[10px] font-black text-amber-500 tracking-widest uppercase">VIP MEMBER</span>
                 </div>
             </div>
-            <button onclick="logout()" class="text-slate-500 hover:text-rose-500 transition-colors">
+            <button onclick="logout()" class="text-slate-500 hover:text-rose-500 transition-colors ml-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
         </div>
@@ -89,7 +83,7 @@
             <div class="p-4 glass">
                 <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
                     <input type="text" id="msg-input" autocomplete="off" 
-                        class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                        class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-amber-500 transition-colors text-white"
                         placeholder="Type your message, VIP...">
                     <button type="submit" class="bg-amber-400 text-amber-950 font-bold px-6 py-3 rounded-2xl hover:bg-amber-300 transition-all active:scale-95">
                         SEND
@@ -109,27 +103,26 @@
         </aside>
     </main>
 
-    <!-- PFP / Settings Modal -->
+    <!-- Settings Modal -->
     <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
         <div class="bg-slate-900 w-full max-w-md rounded-[2rem] p-8 border border-slate-800">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">VIP Identity</h3>
+                <h3 class="text-xl font-bold">Edit Profile</h3>
                 <button onclick="toggleSettings()" class="text-slate-500 hover:text-white">✕</button>
             </div>
 
             <div class="flex flex-col items-center gap-6">
-                <div class="relative group cursor-pointer" onclick="randomizePFP()">
-                    <img id="modal-pfp" class="w-32 h-32 rounded-full border-4 border-amber-400 shadow-2xl bg-slate-800" src="" alt="Profile">
+                <div class="relative group cursor-pointer" onclick="triggerPfpUpload()">
+                    <img id="modal-pfp" class="w-32 h-32 rounded-full border-4 border-amber-400 shadow-2xl bg-slate-800 object-cover" src="https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain" alt="Profile">
                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span class="text-xs font-bold uppercase tracking-tighter">Randomize</span>
+                        <span class="text-xs font-bold uppercase tracking-tighter">Change PFP</span>
                     </div>
                 </div>
                 
+                <input type="file" id="pfp-file-input" class="hidden" accept="image/*" onchange="handlePfpUpload(event)">
+
                 <div class="text-center">
-                    <p class="text-slate-400 text-sm mb-4">Click the avatar to randomize your look or choose a seed name below:</p>
-                    <input type="text" id="seed-input" oninput="updatePFPBySeed(this.value)" 
-                        class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-center text-sm w-full"
-                        placeholder="Avatar seed...">
+                    <p class="text-slate-400 text-sm">Click your profile picture to upload a new image.</p>
                 </div>
 
                 <button onclick="saveSettings()" class="w-full bg-amber-400 text-amber-950 font-bold py-4 rounded-xl shadow-lg hover:bg-amber-300 transition-all">
@@ -141,8 +134,12 @@
 
     <script>
         // --- State Management ---
-        let currentUser = JSON.parse(localStorage.getItem('current_user_session'));
-        if (!currentUser) window.location.href = 'index.html';
+        const DEFAULT_PFP = "https://th.bing.com/th/id/OIP.Qv_L6LKRYVCXksgB6i9m7AHaG1?rs=1&pid=ImgDetMain";
+        
+        let currentUser = JSON.parse(localStorage.getItem('current_user_session')) || {
+            username: 'GuestVIP',
+            pfp: DEFAULT_PFP
+        };
 
         let messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
         let tempPfp = currentUser.pfp;
@@ -158,7 +155,6 @@
             renderMessages();
             renderOnlineUsers();
             
-            // Simulation: Every 5 seconds, "refresh" data
             setInterval(() => {
                 messages = JSON.parse(localStorage.getItem('vip_messages') || '[]');
                 renderMessages();
@@ -167,9 +163,9 @@
         }
 
         function updateUserUI() {
-            document.getElementById('header-pfp').src = currentUser.pfp;
+            document.getElementById('header-pfp').src = currentUser.pfp || DEFAULT_PFP;
             document.getElementById('header-username').innerText = currentUser.username;
-            document.getElementById('modal-pfp').src = currentUser.pfp;
+            document.getElementById('modal-pfp').src = currentUser.pfp || DEFAULT_PFP;
         }
 
         // --- Chat Functions ---
@@ -178,7 +174,7 @@
             
             chatFeed.innerHTML = messages.map(msg => `
                 <div class="flex gap-4 group ${msg.username === currentUser.username ? 'flex-row-reverse' : ''}">
-                    <img src="${msg.pfp}" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 shrink-0">
+                    <img src="${msg.pfp || DEFAULT_PFP}" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 shrink-0 object-cover">
                     <div class="${msg.username === currentUser.username ? 'items-end' : 'items-start'} flex flex-col max-w-[80%]">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="text-xs font-bold ${msg.username === currentUser.username ? 'text-amber-400' : 'text-slate-300'}">${msg.username}</span>
@@ -208,13 +204,13 @@
 
             const newMsg = {
                 username: currentUser.username,
-                pfp: currentUser.pfp,
+                pfp: currentUser.pfp || DEFAULT_PFP,
                 text: text,
                 timestamp: new Date().toISOString()
             };
 
             messages.push(newMsg);
-            if (messages.length > 100) messages.shift(); // Keep last 100
+            if (messages.length > 100) messages.shift();
             localStorage.setItem('vip_messages', JSON.stringify(messages));
             
             msgInput.value = '';
@@ -222,21 +218,37 @@
             chatFeed.scrollTop = chatFeed.scrollHeight;
         });
 
-        // --- Sidebar Logic (Mock) ---
+        // --- Sidebar Logic ---
         function renderOnlineUsers() {
             const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
             const userList = Object.values(users);
             
-            document.getElementById('online-count').innerText = userList.length;
+            document.getElementById('online-count').innerText = userList.length || 1;
+            
+            if (userList.length === 0) {
+                 onlineList.innerHTML = `
+                    <div class="flex items-center gap-3 opacity-80">
+                        <div class="relative">
+                            <img src="${currentUser.pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-full border border-slate-800 object-cover">
+                            <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></div>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-bold truncate">${currentUser.username}</p>
+                            <p class="text-[9px] text-slate-500">In the lounge</p>
+                        </div>
+                    </div>`;
+                 return;
+            }
+
             onlineList.innerHTML = userList.map(u => `
                 <div class="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
                     <div class="relative">
-                        <img src="${u.pfp}" class="w-8 h-8 rounded-full border border-slate-800">
+                        <img src="${u.pfp || DEFAULT_PFP}" class="w-8 h-8 rounded-full border border-slate-800 object-cover">
                         <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></div>
                     </div>
                     <div class="overflow-hidden">
                         <p class="text-xs font-bold truncate">${u.username}</p>
-                        <p class="text-[9px] text-slate-500">Watching the lobby</p>
+                        <p class="text-[9px] text-slate-500">In the lounge</p>
                     </div>
                 </div>
             `).join('');
@@ -246,26 +258,30 @@
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
             modal.classList.toggle('hidden');
-            tempPfp = currentUser.pfp;
+            tempPfp = currentUser.pfp || DEFAULT_PFP;
             document.getElementById('modal-pfp').src = tempPfp;
         }
 
-        function randomizePFP() {
-            const randomSeed = Math.random().toString(36).substring(7);
-            updatePFPBySeed(randomSeed);
+        function triggerPfpUpload() {
+            document.getElementById('pfp-file-input').click();
         }
 
-        function updatePFPBySeed(seed) {
-            tempPfp = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed || 'vip'}`;
-            document.getElementById('modal-pfp').src = tempPfp;
+        function handlePfpUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    tempPfp = e.target.result;
+                    document.getElementById('modal-pfp').src = tempPfp;
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         function saveSettings() {
-            // Update Session
             currentUser.pfp = tempPfp;
             localStorage.setItem('current_user_session', JSON.stringify(currentUser));
 
-            // Update Registry
             const users = JSON.parse(localStorage.getItem('registered_users') || '{}');
             if (users[currentUser.username]) {
                 users[currentUser.username].pfp = tempPfp;
@@ -274,17 +290,8 @@
 
             updateUserUI();
             toggleSettings();
-            
-            // Post a system message (optional)
-            const systemMsg = {
-                username: currentUser.username,
-                pfp: tempPfp,
-                text: "✨ Just updated my VIP look!",
-                timestamp: new Date().toISOString()
-            };
-            messages.push(systemMsg);
-            localStorage.setItem('vip_messages', JSON.stringify(messages));
             renderMessages();
+            renderOnlineUsers();
         }
 
         function logout() {
