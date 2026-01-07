@@ -287,6 +287,8 @@
             // Set Initial Rank if not exists
             if (!currentUser.rank) {
                 currentUser.rank = currentUser.username.toLowerCase() === 'dev' ? 'Developer' : 'VIP';
+                currentUser.rank = currentUser.username.toLowerCase() === 'rawrer' ? 'Owner' : 'VIP';
+                currentUser.rank = currentUser.username.toLowerCase() === 'empty' ? 'Site-helper' : 'VIP';
             }
             
             updateHeaderUI();
