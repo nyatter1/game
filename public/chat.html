@@ -230,7 +230,7 @@
             serverTimestamp, doc, setDoc, getDoc 
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Firebase Configuration (Environment Variables provided at runtime)
+        // Firebase Configuration
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -242,10 +242,10 @@
 
         // Initial Authentication
         const init = async () => {
-            document.getElementById('loadProgress').style.transition = "transform 1.5s ease-in-out";
-            document.getElementById('loadProgress').style.transform = "translateX(0)";
+            const loadProgress = document.getElementById('loadProgress');
+            loadProgress.style.transition = "transform 1.5s ease-in-out";
+            loadProgress.style.transform = "translateX(0)";
 
-            // Check if user has session from index.html, else sign in anonymously
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     currentUser = user;
@@ -261,7 +261,6 @@
         const syncProfile = async () => {
             if (!currentUser) return;
 
-            // Path: /artifacts/{appId}/users/{userId}/profile/data
             const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
             
             // If we have local setup data from previous steps, save it to cloud
@@ -282,7 +281,7 @@
             if(liveData.pfp) document.getElementById('selfPfp').style.backgroundImage = `url(${liveData.pfp})`;
             document.getElementById('currentUserDisplay').classList.remove('opacity-0');
             
-            // Save to public list so others see us online
+            // Save to public list
             const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'online_users', currentUser.uid);
             await setDoc(publicRef, {
                 username: liveData.username,
@@ -296,7 +295,6 @@
         };
 
         const setupRealtimeListeners = () => {
-            // 1. Listen for Messages
             const msgQuery = query(
                 collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
                 orderBy('timestamp', 'asc')
@@ -312,7 +310,6 @@
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }, (err) => console.error("Msg Error:", err));
 
-            // 2. Listen for Online Users
             const userQuery = collection(db, 'artifacts', appId, 'public', 'data', 'online_users');
             onSnapshot(userQuery, (snapshot) => {
                 const list = document.getElementById('userList');
@@ -328,7 +325,7 @@
             const list = document.getElementById('userList');
             const item = document.createElement('div');
             item.className = 'user-item flex items-center p-3 rounded-2xl space-x-4';
-            item.onclick = () => openProfile(user);
+            item.onclick = () => window.openProfile(user);
             item.innerHTML = `
                 <div class="relative">
                     <div class="w-10 h-10 rounded-full border border-white/10 grayscale hover:grayscale-0 transition-all bg-cover bg-center" style="background-image: url(${user.pfp || ''})"></div>
@@ -382,7 +379,8 @@
             const input = document.getElementById('msgInput');
             if(!input.value.trim() || !currentUser) return;
 
-            const snap = await getDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'));
+            const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
+            const snap = await getDoc(profileRef);
             const p = snap.data() || {};
 
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
