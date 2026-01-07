@@ -3,201 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Network | Authentication</title>
+    <title>VIP Access | Entry</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: #020617;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f172a;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
-            color: #f8fafc;
         }
 
         .glass-card {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 450px;
-            padding: 3rem;
-            border-radius: 2.5rem;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .input-field {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1.25rem 1.25rem 1.25rem 3.5rem;
-            border-radius: 1.25rem;
-            color: white;
-            transition: all 0.3s ease;
-            outline: none;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
         }
 
         .input-field:focus {
-            background: rgba(255, 255, 255, 0.07);
-            border-color: #3b82f6;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1.25rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #64748b;
-            transition: color 0.3s ease;
-        }
-
-        .input-field:focus + .input-icon {
-            color: #3b82f6;
-        }
-
-        .login-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            padding: 1.25rem;
-            border-radius: 1.25rem;
-            font-weight: 700;
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.5);
-            filter: brightness(1.1);
-        }
-
-        .login-btn:active {
-            transform: scale(0.98);
-        }
-
-        .brand-logo {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border-radius: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-            transform: rotate(-5deg);
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+            outline: none;
         }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center p-4">
 
-    <div class="glass-card">
-        <div class="brand-logo">
-            <i class="fa-solid fa-bolt-lightning text-white"></i>
-        </div>
-        
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-black tracking-tight mb-2">Welcome Back</h1>
-            <p class="text-slate-400 font-medium">Access the Nexus Global Network</p>
+    <div class="glass-card w-full max-w-[400px] rounded-[2.5rem] p-8 shadow-2xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-amber-400 rounded-2xl mb-4 shadow-lg shadow-amber-400/20">
+                <span class="text-3xl">✨</span>
+            </div>
+            <h1 id="form-title" class="text-2xl font-black text-white tracking-tight">VIP ENTRANCE</h1>
+            <p id="form-sub" class="text-slate-400 text-sm mt-1">Please sign in to join the club.</p>
         </div>
 
-        <form id="login-form">
-            <div class="input-group">
-                <input 
-                    type="text" 
-                    id="username" 
-                    class="input-field" 
-                    placeholder="Enter Username" 
-                    required
-                    autocomplete="off"
-                >
-                <i class="fa-solid fa-user input-icon"></i>
+        <!-- Notification Box -->
+        <div id="msg-box" class="hidden mb-6 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest text-center"></div>
+
+        <!-- Form -->
+        <form id="auth-form" class="space-y-4">
+            <div id="email-group" class="hidden">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase ml-4 mb-1">Email Address</label>
+                <input type="email" id="email" class="input-field w-full px-5 py-4 rounded-2xl text-white placeholder-slate-600" placeholder="your@email.com">
             </div>
 
-            <div class="input-group">
-                <input 
-                    type="password" 
-                    id="password" 
-                    class="input-field" 
-                    placeholder="Security Code" 
-                    required
-                >
-                <i class="fa-solid fa-lock input-icon"></i>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase ml-4 mb-1">Username</label>
+                <input type="text" id="username" required class="input-field w-full px-5 py-4 rounded-2xl text-white placeholder-slate-600" placeholder="Display Name">
             </div>
 
-            <button type="submit" class="login-btn">
-                <span>INITIALIZE SESSION</span>
-                <i class="fa-solid fa-arrow-right"></i>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase ml-4 mb-1">Password</label>
+                <input type="password" id="password" required class="input-field w-full px-5 py-4 rounded-2xl text-white placeholder-slate-600" placeholder="••••••••">
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full bg-amber-400 hover:bg-amber-300 text-amber-950 font-black py-4 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-amber-400/10">
+                ENTER LOUNGE
             </button>
         </form>
 
+        <!-- Toggle -->
         <div class="mt-8 text-center">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-loose">
-                Authorized Access Only<br>
-                Terminal Encryption Active
-            </p>
+            <button id="toggle-auth" class="text-xs font-bold text-slate-400 hover:text-white uppercase tracking-widest transition-colors">
+                New here? Request Access
+            </button>
         </div>
     </div>
 
     <script>
-        const loginForm = document.getElementById('login-form');
+        const authForm = document.getElementById('auth-form');
+        const formTitle = document.getElementById('form-title');
+        const formSub = document.getElementById('form-sub');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleBtn = document.getElementById('toggle-auth');
+        const msgBox = document.getElementById('msg-box');
+        const emailGroup = document.getElementById('email-group');
 
-        // Check if user is already logged in
-        if (localStorage.getItem('user')) {
-            window.location.href = 'chat.html';
+        let isLogin = true;
+
+        // Load Registered Users from LocalStorage
+        const getUsers = () => JSON.parse(localStorage.getItem('registered_users') || '{}');
+
+        function showMsg(text, type = 'error') {
+            msgBox.innerText = text;
+            msgBox.className = `mb-6 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest text-center ${
+                type === 'error' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+            }`;
+            msgBox.classList.remove('hidden');
         }
 
-        loginForm.onsubmit = (e) => {
+        toggleBtn.addEventListener('click', () => {
+            isLogin = !isLogin;
+            msgBox.classList.add('hidden');
+            formTitle.innerText = isLogin ? 'VIP ENTRANCE' : 'MEMBER REGISTRY';
+            formSub.innerText = isLogin ? 'Please sign in to join the club.' : 'Create your VIP account below.';
+            submitBtn.innerText = isLogin ? 'ENTER LOUNGE' : 'JOIN CLUB';
+            toggleBtn.innerText = isLogin ? 'New here? Request Access' : 'Already registered? Sign In';
+            emailGroup.classList.toggle('hidden', isLogin);
+            
+            const emailInput = document.getElementById('email');
+            if (isLogin) {
+                emailInput.removeAttribute('required');
+            } else {
+                emailInput.setAttribute('required', '');
+            }
+        });
+
+        authForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const users = getUsers();
             const username = document.getElementById('username').value.trim();
-            
-            // Basic User Initialization
-            // In a real app, this would be an API call
-            const user = {
-                username: username,
-                gold: 0,
-                rubies: 0,
-                rank: username.toLowerCase() === 'dev' ? 'Developer' : 'USER'
-            };
+            const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value.trim().toLowerCase();
 
-            localStorage.setItem('user', JSON.stringify(user));
-            
-            // Visual feedback before redirect
-            const btn = document.querySelector('.login-btn');
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> SYNCING...';
-            btn.style.opacity = '0.7';
-            btn.style.pointerEvents = 'none';
+            if (isLogin) {
+                // LOGIN LOGIC
+                const user = users[username];
+                if (!user) {
+                    return showMsg('Access Denied: User not found.');
+                }
+                if (user.password !== password) {
+                    return showMsg('Access Denied: Invalid credentials.');
+                }
 
-            setTimeout(() => {
-                window.location.href = 'chat.html';
-            }, 800);
-        };
+                // Success
+                localStorage.setItem('current_user_session', JSON.stringify(user));
+                showMsg('Welcome Back, VIP', 'success');
+                setTimeout(() => window.location.href = 'chat.html', 800);
+
+            } else {
+                // SIGNUP LOGIC
+                // Check if username taken
+                if (users[username]) {
+                    return showMsg('Error: Username already claimed.');
+                }
+
+                // Check if email taken
+                const emailExists = Object.values(users).some(u => u.email === email);
+                if (emailExists) {
+                    return showMsg('Error: Email already registered.');
+                }
+
+                // Create User
+                const newUser = {
+                    username: username,
+                    password: password,
+                    email: email,
+                    rank: 'VIP',
+                    pfp: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+                    joined: new Date().toISOString()
+                };
+
+                users[username] = newUser;
+                localStorage.setItem('registered_users', JSON.stringify(users));
+                localStorage.setItem('current_user_session', JSON.stringify(newUser));
+
+                showMsg('Account Secured! Entering...', 'success');
+                setTimeout(() => window.location.href = 'chat.html', 1200);
+            }
+        });
+
+        // Auto-redirect if already logged in
+        if (localStorage.getItem('current_user_session')) {
+            window.location.href = 'chat.html';
+        }
     </script>
 </body>
 </html>
