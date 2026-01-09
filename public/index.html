@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumière | Live Lounge</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Socket.io client library provided by the server -->
     <script src="/socket.io/socket.io.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,76 +32,63 @@
             width: 4px;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #1a1a1a;
             border-radius: 10px;
         }
 
-        /* Prevent ring/outline on focus */
         input:focus {
             outline: none !important;
             box-shadow: none !important;
         }
 
-        .glass-panel {
-            background: rgba(24, 24, 27, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        #login-screen {
-            display: flex;
-        }
-
-        #chat-screen {
-            display: none;
-        }
+        #auth-screen { display: flex; }
+        #chat-screen { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- Login Screen -->
-    <div id="login-screen" class="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-serif text-zinc-100">
-        <div class="max-w-md w-full space-y-12 text-center">
+    <!-- Auth Screen (Login/Signup) -->
+    <div id="auth-screen" class="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-serif text-zinc-100">
+        <div class="max-w-md w-full space-y-10 text-center">
             <div class="space-y-4">
                 <div class="flex justify-center">
                     <div class="p-4 border border-zinc-800 rounded-full bg-zinc-900/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-200/80"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-200/80"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
                     </div>
                 </div>
                 <h1 class="text-4xl font-light tracking-widest uppercase">Lumière</h1>
-                <p class="text-zinc-500 tracking-wide font-sans text-sm uppercase">Private Conversations • Est. 2024</p>
+                <p class="text-zinc-500 tracking-wide font-sans text-sm uppercase" id="auth-subtitle">Enter the Circle</p>
             </div>
 
-            <form id="login-form" class="space-y-8">
-                <div class="relative group">
-                    <input
-                        id="username-input"
-                        type="text"
-                        placeholder="ENTER YOUR MONIKER"
-                        class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors placeholder:text-zinc-700 font-sans uppercase text-xs"
-                        maxlength="15"
-                        required
-                        autocomplete="off"
-                    >
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-6">
+                <div class="space-y-4">
+                    <input id="login-identifier" type="text" placeholder="USERNAME OR EMAIL" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="login-password" type="password" placeholder="PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
                 </div>
-                <button
-                    type="submit"
-                    class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-amber-100 transition-all duration-500 rounded-sm"
-                >
-                    Request Access
-                </button>
+                <div id="login-error" class="text-red-500 text-[10px] font-sans uppercase tracking-widest hidden">Invalid credentials</div>
+                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-amber-100 transition-all rounded-sm">Login</button>
+                <p class="text-[10px] text-zinc-500 font-sans uppercase tracking-widest cursor-pointer hover:text-zinc-300" onclick="toggleAuth(true)">New here? Create Account</p>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="space-y-6 hidden">
+                <div class="space-y-4">
+                    <input id="signup-username" type="text" placeholder="USERNAME" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="signup-email" type="email" placeholder="EMAIL ADDRESS" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="signup-password" type="password" placeholder="CREATE PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
+                </div>
+                <div id="signup-error" class="text-red-500 text-[10px] font-sans uppercase tracking-widest hidden">Username or Email already taken</div>
+                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-amber-100 transition-all rounded-sm">Sign Up</button>
+                <p class="text-[10px] text-zinc-500 font-sans uppercase tracking-widest cursor-pointer hover:text-zinc-300" onclick="toggleAuth(false)">Already a member? Sign in</p>
             </form>
         </div>
     </div>
 
     <!-- Chat Screen -->
     <div id="chat-screen" class="flex h-screen bg-[#0d0d0d] text-zinc-300 font-sans overflow-hidden">
-        <!-- Sidebar -->
         <aside class="hidden md:flex w-72 border-r border-zinc-900 flex-col bg-black/40">
             <div class="p-8 border-b border-zinc-900">
                 <h2 class="text-xl font-serif tracking-tighter text-zinc-100">Lumière</h2>
@@ -111,112 +97,115 @@
                     <span class="text-[10px] uppercase tracking-widest text-zinc-500">Live Lounge</span>
                 </div>
             </div>
-            
             <div class="flex-1 p-6 space-y-6">
                 <div class="space-y-3">
                     <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Lounge Status</h3>
                     <div id="user-list" class="space-y-4">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-500"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-500"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
                             <span id="display-name" class="text-sm font-medium text-zinc-300">Guest</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="p-8 border-t border-zinc-900 text-[10px] text-zinc-700 uppercase tracking-widest">
-                Real-time Node Gateway
-            </div>
+            <button onclick="logout()" class="p-8 text-[10px] text-zinc-500 hover:text-zinc-100 uppercase tracking-widest text-left border-t border-zinc-900 transition-colors">Sign Out</button>
         </aside>
 
-        <!-- Main Chat Area -->
         <main class="flex-1 flex flex-col relative">
             <header class="h-20 border-b border-zinc-900 flex items-center justify-between px-8 bg-black/20 backdrop-blur-md">
-                <div class="flex items-center gap-4">
-                    <div class="md:hidden font-serif text-lg tracking-tight">L</div>
-                    <h2 class="text-xs uppercase tracking-[0.2em] font-bold text-zinc-400">Main Gallery</h2>
-                </div>
-                <div class="flex items-center gap-4 text-zinc-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </div>
+                <h2 class="text-xs uppercase tracking-[0.2em] font-bold text-zinc-400">Main Gallery</h2>
             </header>
-
-            <div id="messages-container" class="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
-                <!-- Messages will be injected here -->
-            </div>
-
+            <div id="messages-container" class="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar"></div>
             <div class="p-8 bg-gradient-to-t from-black to-transparent">
                 <form id="chat-form" class="max-w-4xl mx-auto flex items-center gap-4 bg-zinc-900/40 border border-zinc-800/50 p-2 pl-6 rounded-full transition-all backdrop-blur-xl">
-                    <input
-                        id="chat-input"
-                        type="text"
-                        placeholder="Speak your mind..."
-                        autocomplete="off"
-                        class="flex-1 bg-transparent border-none text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-0"
-                    >
-                    <button
-                        id="send-button"
-                        type="submit"
-                        class="p-3 bg-zinc-200 text-black rounded-full hover:bg-white transition-all shadow-lg"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                    </button>
+                    <input id="chat-input" type="text" placeholder="Speak your mind..." autocomplete="off" class="flex-1 bg-transparent border-none text-sm text-zinc-200 placeholder:text-zinc-600">
+                    <button type="submit" class="p-3 bg-zinc-200 text-black rounded-full hover:bg-white shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
                 </form>
-                <p class="text-center mt-4 text-[9px] uppercase tracking-[0.2em] text-zinc-700">
-                    Membership in good standing required
-                </p>
             </div>
         </main>
     </div>
 
     <script>
-        // Initialize Socket.io
         const socket = io();
-
-        const loginScreen = document.getElementById('login-screen');
+        const authScreen = document.getElementById('auth-screen');
         const chatScreen = document.getElementById('chat-screen');
         const loginForm = document.getElementById('login-form');
-        const usernameInput = document.getElementById('username-input');
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
+        const signupForm = document.getElementById('signup-form');
         const messagesContainer = document.getElementById('messages-container');
         const displayName = document.getElementById('display-name');
 
-        let currentUser = '';
+        let currentUser = null;
 
-        // Handle Login
+        // Auth Logic using LocalStorage
+        function toggleAuth(toSignup) {
+            loginForm.classList.toggle('hidden', toSignup);
+            signupForm.classList.toggle('hidden', !toSignup);
+            document.getElementById('auth-subtitle').textContent = toSignup ? 'Create Account' : 'Enter the Circle';
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('signup-error').classList.add('hidden');
+        }
+
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signup-username').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+
+            let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
+            
+            if (users.find(u => u.username === username || u.email === email)) {
+                document.getElementById('signup-error').classList.remove('hidden');
+                return;
+            }
+
+            users.push({ username, email, password });
+            localStorage.setItem('lumiere_users', JSON.stringify(users));
+            enterLounge(username);
+        });
+
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const name = usernameInput.value.trim();
-            if (name) {
-                currentUser = name;
-                displayName.textContent = `${currentUser} (You)`;
-                loginScreen.style.display = 'none';
-                chatScreen.style.display = 'flex';
-                
-                // Tell server we joined
-                socket.emit('join', currentUser);
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
+            const user = users.find(u => (u.username === identifier || u.email === identifier) && u.password === password);
+
+            if (user) {
+                enterLounge(user.username);
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
             }
         });
 
-        // Handle Message Submission
-        chatForm.addEventListener('submit', (e) => {
+        function enterLounge(username) {
+            currentUser = username;
+            displayName.textContent = `${currentUser} (You)`;
+            authScreen.style.display = 'none';
+            chatScreen.style.display = 'flex';
+            socket.emit('join', currentUser);
+        }
+
+        function logout() {
+            window.location.reload();
+        }
+
+        // Chat Logic
+        document.getElementById('chat-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const text = chatInput.value.trim();
+            const text = document.getElementById('chat-input').value.trim();
             if (text) {
-                socket.emit('chat_message', { text: text });
-                chatInput.value = '';
+                socket.emit('chat_message', { text });
+                document.getElementById('chat-input').value = '';
             }
         });
 
-        // Listen for messages from server
         socket.on('chat_message', (data) => {
             appendMessage(data.user, data.text, data.time, data.user === currentUser);
         });
 
-        // Listen for system notifications
         socket.on('system_message', (text) => {
             appendMessage('System', text, '', false, true);
         });
@@ -224,29 +213,20 @@
         function appendMessage(user, text, time, isMe, isSystem = false) {
             const div = document.createElement('div');
             div.className = `flex flex-col ${isMe && !isSystem ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full`;
-
             if (isSystem) {
-                div.innerHTML = `
-                    <div class="w-full text-center py-4">
-                        <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-600 font-medium">
-                            ${text}
-                        </span>
-                    </div>
-                `;
+                div.innerHTML = `<div class="w-full text-center py-4"><span class="text-[10px] uppercase tracking-[0.3em] text-zinc-600">${text}</span></div>`;
             } else {
                 div.innerHTML = `
-                    <div class="group flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-2 max-w-[80%] md:max-w-[60%]">
+                    <div class="group flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-2 max-w-[80%]">
                         <div class="flex items-center gap-3 px-1">
                             <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">${user}</span>
                             <span class="text-[9px] text-zinc-700">${time}</span>
                         </div>
-                        <div class="${isMe ? 'bg-zinc-100 text-black rounded-tr-none shadow-xl shadow-white/5' : 'bg-zinc-900/50 border border-zinc-800 text-zinc-200 rounded-tl-none'} px-6 py-4 rounded-2xl leading-relaxed text-[15px]">
+                        <div class="${isMe ? 'bg-zinc-100 text-black' : 'bg-zinc-900 border border-zinc-800 text-zinc-200'} px-6 py-4 rounded-2xl text-[15px]">
                             ${text}
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
-
             messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
