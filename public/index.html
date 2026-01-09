@@ -3,499 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumière | Live Lounge</title>
+    <title>Elite Circle Luxury Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include Socket.io Client -->
     <script src="/socket.io/socket.io.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0a0a0a;
-        }
         body {
-            background-color: var(--bg-color);
-            color: #d4d4d8;
             font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e7eb;
             overflow: hidden;
-            margin: 0;
+            height: 100vh;
         }
-        .font-serif { font-family: 'Cinzel', serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        input:focus, textarea:focus { outline: none !important; box-shadow: none !important; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         
-        .glass-panel { background: rgba(24, 24, 27, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        
-        /* New Smooth Gradient Background */
-        .app-bg {
-            background: radial-gradient(circle at 50% 0%, #1a1a20 0%, #000000 100%);
-            position: absolute; inset: 0; z-index: -1;
+        @keyframes pulse-emerald {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
-
-        .rank-dev { color: #a855f7; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
-        .edit-overlay { background: rgba(0,0,0,0.6); opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        .editable:hover .edit-overlay { opacity: 1; cursor: pointer; }
-        .hidden { display: none !important; }
+        .animate-pulse-emerald {
+            animation: pulse-emerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.7s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body>
+<body class="flex">
 
-    <div class="app-bg"></div>
-    <div id="alert-container"></div>
+    <!-- HIDDEN INPUTS -->
+    <input type="file" id="pfpInput" class="hidden" accept="image/*">
+    <input type="file" id="bannerInput" class="hidden" accept="image/*">
 
-    <!-- PROFILE MODAL (VIEWER & EDITOR) -->
-    <div id="profile-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/80 backdrop-blur-xl transition-all duration-300">
-        <div class="relative w-full max-w-lg mx-4">
-            <button onclick="toggleProfile(false)" class="absolute top-4 right-4 z-20 text-white/50 hover:text-white transition-colors bg-black/20 p-2 rounded-full backdrop-blur-md">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-
-            <div class="glass-panel rounded-3xl overflow-hidden shadow-2xl relative">
-                <!-- Banner with Click-to-Edit -->
-                <div class="h-32 w-full bg-zinc-800 relative group" id="banner-container">
-                    <img id="profile-banner-img" src="" class="w-full h-full object-cover opacity-80 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
-                    
-                    <!-- Edit Overlay -->
-                    <div id="banner-edit-overlay" class="edit-overlay absolute inset-0 hidden" onclick="changeBanner()">
-                        <span class="text-[10px] uppercase tracking-widest font-bold text-white border border-white/30 px-3 py-1 rounded-full bg-black/50">Change Banner</span>
-                    </div>
-                </div>
-
-                <!-- Content -->
-                <div class="px-8 pb-8 -mt-12 relative z-10">
-                    <div class="flex justify-between items-end">
-                        <!-- Avatar with Click-to-Edit -->
-                        <div class="relative group" id="pfp-container">
-                            <div class="relative overflow-hidden rounded-2xl w-24 h-24 border-4 border-[#121212] shadow-xl bg-zinc-900">
-                                <img id="profile-pfp-img" src="" class="w-full h-full object-cover">
-                                <!-- Edit Overlay -->
-                                <div id="pfp-edit-overlay" class="edit-overlay absolute inset-0 hidden" onclick="changePfp()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                </div>
-                            </div>
-                            
-                            <div id="profile-rank-badge" class="absolute -bottom-2 -right-2 bg-zinc-900 border border-zinc-700 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold text-white shadow-lg">
-                                MEMBER
-                            </div>
-                        </div>
-                        
-                        <div class="mb-2" id="profile-actions">
-                            <button id="btn-edit-profile" onclick="enableEditMode()" class="hidden px-4 py-1.5 bg-zinc-100 text-black text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-white transition-colors">Edit Profile</button>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 space-y-1">
-                        <h2 id="profile-username" class="text-2xl font-serif text-white tracking-wide">Username</h2>
-                        <p id="profile-role" class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold">Lounge Member</p>
-                    </div>
-
-                    <!-- Bio Section -->
-                    <div class="mt-6">
-                        <p id="profile-bio" class="text-sm text-zinc-400 font-light leading-relaxed">No biography set.</p>
-                        
-                        <!-- Edit Form (Only for Bio, images are handled via click) -->
-                        <div id="profile-edit-form" class="hidden space-y-4 mt-2">
-                            <p class="text-[9px] text-zinc-500 uppercase tracking-widest italic text-center border-b border-zinc-800 pb-2">Click your Avatar or Banner to change them</p>
-                            
-                            <div class="space-y-1">
-                                <label class="text-[9px] uppercase tracking-widest text-zinc-600">Bio</label>
-                                <textarea id="edit-bio" rows="3" class="w-full bg-black/40 border border-zinc-800 rounded px-3 py-2 text-xs text-white focus:border-purple-500/50 transition-colors custom-scrollbar"></textarea>
-                            </div>
-                            <div class="flex gap-2 pt-2">
-                                <button onclick="saveProfile()" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Save Changes</button>
-                                <button onclick="cancelEdit()" class="px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Stats Grid -->
-                    <div class="grid grid-cols-3 gap-3 mt-8 pt-6 border-t border-white/5">
-                        <div class="bg-black/40 rounded-xl p-3 text-center border border-white/5">
-                            <div class="text-[9px] uppercase tracking-widest text-zinc-500 mb-1">Level</div>
-                            <div id="profile-level" class="text-lg font-serif text-white">0</div>
-                        </div>
-                        <div class="bg-black/40 rounded-xl p-3 text-center border border-white/5">
-                            <div class="text-[9px] uppercase tracking-widest text-zinc-500 mb-1">Gold</div>
-                            <div id="profile-gold" class="text-lg font-serif text-amber-200">0</div>
-                        </div>
-                        <div class="bg-black/40 rounded-xl p-3 text-center border border-white/5">
-                            <div class="text-[9px] uppercase tracking-widest text-zinc-500 mb-1">Rubies</div>
-                            <div id="profile-rubies" class="text-lg font-serif text-rose-400">0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- LEFT SIDEBAR: NAVIGATION -->
+    <nav class="w-20 border-r border-white/5 flex flex-col items-center py-8 space-y-8 bg-[#0d0d0d]">
+        <div class="w-12 h-12 rounded-full border border-amber-500/30 flex items-center justify-center bg-gradient-to-tr from-amber-900/20 to-transparent shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+            <span class="text-amber-500 font-serif text-2xl font-bold italic">E</span>
         </div>
-    </div>
-
-    <!-- Auth Screen -->
-    <div id="auth-screen" class="min-h-screen bg-transparent flex items-center justify-center p-6 font-serif text-zinc-100 relative z-10">
-        <div class="max-w-md w-full space-y-10 text-center">
-            <div class="space-y-4">
-                <div class="flex justify-center">
-                    <div class="p-4 border border-zinc-800 rounded-full bg-zinc-900/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-purple-400/80"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
-                    </div>
-                </div>
-                <h1 class="text-4xl font-light tracking-widest uppercase">Lumière</h1>
-                <p class="text-zinc-500 tracking-wide font-sans text-sm uppercase" id="auth-subtitle">Enter the Circle</p>
-            </div>
-
-            <!-- LOGIN FORM -->
-            <form id="login-form" class="space-y-6">
-                <div class="space-y-4">
-                    <input id="login-identifier" type="text" placeholder="USERNAME OR EMAIL" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
-                    <input id="login-password" type="password" placeholder="PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
-                </div>
-                <div id="login-error" class="text-red-500 text-[10px] font-sans uppercase tracking-widest hidden">Invalid credentials</div>
-                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-purple-200 transition-all rounded-sm">Login</button>
-                <p class="text-[10px] text-zinc-500 font-sans uppercase tracking-widest cursor-pointer hover:text-zinc-300" onclick="toggleAuth(true)">New here? Create Account</p>
-            </form>
-
-            <!-- SIGNUP FORM -->
-            <form id="signup-form" class="space-y-6 hidden">
-                <div class="space-y-4">
-                    <input id="signup-username" type="text" placeholder="USERNAME" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
-                    <input id="signup-email" type="email" placeholder="EMAIL ADDRESS" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
-                    <input id="signup-password" type="password" placeholder="CREATE PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
-                </div>
-                <div id="signup-error" class="text-red-500 text-[10px] font-sans uppercase tracking-widest hidden">Username or Email already taken</div>
-                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-purple-200 transition-all rounded-sm">Sign Up</button>
-                <p class="text-[10px] text-zinc-500 font-sans uppercase tracking-widest cursor-pointer hover:text-zinc-300" onclick="toggleAuth(false)">Already a member? Sign in</p>
-            </form>
-        </div>
-    </div>
-
-    <!-- Chat Screen -->
-    <div id="chat-screen" class="flex h-screen text-zinc-300 font-sans overflow-hidden relative z-10">
         
-        <aside class="flex flex-col w-64 md:w-80 border-r border-zinc-800/50 bg-black/60 backdrop-blur-md flex-shrink-0">
-            <div class="p-6 border-b border-zinc-800/50 bg-white/5">
-                <div class="flex items-center gap-4 cursor-pointer hover:bg-white/5 p-2 -m-2 rounded-xl transition-colors" onclick="viewProfile(currentUser)">
-                    <img id="my-pfp" src="" alt="PFP" class="w-10 h-10 rounded-full pfp-image border border-zinc-800 shadow-lg object-cover">
-                    <div class="overflow-hidden">
-                        <h2 id="my-username" class="text-xs font-serif tracking-widest text-zinc-100 uppercase truncate">Guest</h2>
-                        <div class="flex items-center gap-2 mt-1">
-                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                            <span class="text-[8px] uppercase tracking-[0.2em] text-emerald-500/80">Online</span>
-                        </div>
-                    </div>
+        <button onclick="switchView('chat')" id="nav-chat" class="p-3 rounded-xl transition-all bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.05)]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </button>
+
+        <button onclick="openProfileEditor()" id="nav-settings" class="p-3 rounded-xl transition-all text-gray-500 hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </button>
+
+        <div class="mt-auto flex flex-col space-y-4 pb-4">
+            <button onclick="openProfileEditor()" class="w-10 h-10 rounded-full border border-white/10 p-0.5 overflow-hidden hover:border-amber-500/50 transition-colors">
+                <img id="nav-avatar" src="" class="rounded-full bg-neutral-800 w-full h-full object-cover" alt="Me">
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col relative">
+        <header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-[#0d0d0d]/50 backdrop-blur-md z-10">
+            <h1 id="view-title" class="text-[10px] font-medium tracking-[0.4em] uppercase text-amber-500/80">Public Frequency</h1>
+            <div class="flex items-center space-x-4">
+                <button onclick="clearChat()" id="clear-btn" class="text-[9px] uppercase tracking-widest text-gray-700 hover:text-red-500 transition-colors">Wipe History</button>
+                <div class="flex items-center space-x-2">
+                    <div class="w-1 h-1 rounded-full bg-emerald-500 animate-pulse-emerald"></div>
+                    <span class="text-[9px] uppercase tracking-widest text-gray-500">Live</span>
                 </div>
             </div>
-            
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-8">
-                <div class="space-y-4">
-                    <h3 class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-bold px-2 flex justify-between">
-                        <span>Online</span>
-                        <span id="online-count" class="text-emerald-500/50">0</span>
-                    </h3>
-                    <div id="online-list" class="space-y-1"></div>
-                </div>
+        </header>
+
+        <div id="content-viewport" class="flex-1 overflow-y-auto p-8 flex justify-center">
+            <!-- Content Injected via JS -->
+        </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR: USERS ONLINE -->
+    <aside class="w-80 border-l border-white/5 bg-[#0d0d0d] hidden xl:flex flex-col">
+        <div class="p-8 border-b border-white/5">
+            <h3 class="text-[9px] uppercase tracking-[0.5em] font-black text-amber-500/60 tracking-[0.4em]">Players Online</h3>
+            <p id="online-count" class="text-[10px] text-gray-600 mt-2 tracking-widest uppercase">0 Presences Active</p>
+        </div>
+        
+        <div id="users-list" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- User List Injected via JS -->
+        </div>
+
+        <div class="p-8 border-t border-white/5 opacity-30 hover:opacity-100 transition-opacity">
+            <div class="text-[8px] uppercase tracking-[0.4em] text-center text-gray-600 leading-relaxed">
+                Everything is recorded.<br>Nothing is forgotten.
             </div>
-
-            <button onclick="logout()" class="p-4 text-[9px] text-zinc-500 hover:text-red-400 uppercase tracking-[0.3em] text-center border-t border-zinc-800/50 transition-colors font-bold">Sign Out</button>
-        </aside>
-
-        <main class="flex-1 flex flex-col min-w-0 relative">
-            <header class="h-16 border-b border-zinc-800/50 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md z-10">
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-purple-500/50 animate-pulse"></div>
-                    <h2 class="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-400">Main Gallery</h2>
-                </div>
-                <button onclick="openWallet()" class="p-2 text-zinc-500 hover:text-purple-300 transition-colors relative group">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-                    <span class="absolute top-full right-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-[8px] uppercase tracking-widest text-zinc-400 pointer-events-none">Vault</span>
-                </button>
-            </header>
-
-            <div id="messages-container" class="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar"></div>
-            
-            <div class="p-8 bg-gradient-to-t from-black via-black/80 to-transparent">
-                <form id="chat-form" class="max-w-3xl mx-auto flex items-center gap-4 bg-zinc-900/50 border border-zinc-800/50 p-1.5 pl-6 rounded-full backdrop-blur-2xl shadow-2xl focus-within:border-zinc-600 transition-all">
-                    <input id="chat-input" type="text" placeholder="Type /cmds for help..." autocomplete="off" class="flex-1 bg-transparent border-none text-sm text-zinc-200 placeholder:text-zinc-600 py-3">
-                    <button type="submit" class="p-3 bg-zinc-100 text-black rounded-full hover:bg-white transition-all active:scale-95 shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                    </button>
-                </form>
-            </div>
-        </main>
-    </div>
+        </div>
+    </aside>
 
     <script>
+        // --- SOCKET CONNECTION ---
         const socket = io();
-        let currentUser = null;
-        let pendingPfp = null;
-        let pendingBanner = null;
 
-        const authScreen = document.getElementById('auth-screen');
-        const chatScreen = document.getElementById('chat-screen');
-        const messagesContainer = document.getElementById('messages-container');
-        const onlineList = document.getElementById('online-list');
-        const profileModal = document.getElementById('profile-modal');
-        const alertContainer = document.getElementById('alert-container');
-        const loginForm = document.getElementById('login-form');
-        const signupForm = document.getElementById('signup-form');
+        // --- CONSTANTS & INITIAL STATE ---
+        const DEFAULT_AVATAR = "https://api.dicebear.com/7.x/initials/svg?seed=Elite&backgroundColor=1a1a1a&textColor=c5a059";
         
-        function showAlert(text, isSuccess = true) {
-            const alert = document.createElement('div');
-            alert.className = `command-alert px-8 py-4 rounded-lg font-serif text-[10px] uppercase tracking-[0.3em] shadow-2xl backdrop-blur-xl border ${isSuccess ? 'bg-zinc-900/90 text-white border-zinc-700' : 'bg-red-950/90 text-red-200 border-red-800'}`;
-            alert.innerHTML = text;
-            alertContainer.appendChild(alert);
-            setTimeout(() => alert.remove(), 2500);
+        // Generate a random ID if not exists to track sessions
+        let localId = localStorage.getItem('elite_session_id') || Math.random().toString(36).substring(7);
+        localStorage.setItem('elite_session_id', localId);
+
+        let user = JSON.parse(localStorage.getItem('elite_circle_user')) || {
+            id: localId,
+            name: 'Anonymous',
+            bio: 'New Presence.',
+            avatar: DEFAULT_AVATAR,
+            banner: null, 
+            bannerColor: '#1a1a1a',
+            status: 'online',
+            rank: 'Guest'
+        };
+
+        let messages = [];
+        let onlineUsers = [];
+        let currentView = 'chat';
+
+        // --- CORE FUNCTIONS ---
+        function saveState() {
+            localStorage.setItem('elite_circle_user', JSON.stringify(user));
+            document.getElementById('nav-avatar').src = user.avatar;
+            // Tell server our profile updated
+            socket.emit('update_profile', user);
         }
 
-        // --- PROFILE SYSTEM ---
-        function toggleProfile(show) {
-            if (show) {
-                profileModal.classList.remove('invisible', 'opacity-0');
+        // --- SOCKET HANDLERS ---
+        socket.on('connect', () => {
+            socket.emit('join', user);
+        });
+
+        socket.on('chat_history', (history) => {
+            messages = history;
+            if (currentView === 'chat') renderChat();
+        });
+
+        socket.on('new_message', (msg) => {
+            messages.push(msg);
+            if (currentView === 'chat') {
+                renderChat();
+            }
+        });
+
+        socket.on('user_list', (users) => {
+            onlineUsers = users;
+            renderUsersList();
+        });
+
+        function switchView(view) {
+            currentView = view;
+            const title = document.getElementById('view-title');
+            const clearBtn = document.getElementById('clear-btn');
+            
+            document.getElementById('nav-chat').className = view === 'chat' 
+                ? 'p-3 rounded-xl transition-all bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.05)]'
+                : 'p-3 rounded-xl transition-all text-gray-500 hover:text-gray-300';
+            document.getElementById('nav-settings').className = (view === 'profile-edit')
+                ? 'p-3 rounded-xl transition-all bg-amber-500/10 text-amber-500'
+                : 'p-3 rounded-xl transition-all text-gray-500 hover:text-gray-300';
+
+            if (view === 'chat') {
+                title.innerText = 'Public Frequency';
+                clearBtn.style.display = 'block';
+                renderChat();
             } else {
-                profileModal.classList.add('invisible', 'opacity-0');
-                setTimeout(cancelEdit, 300);
+                title.innerText = 'Identity Matrix';
+                clearBtn.style.display = 'none';
+                renderProfileEditor();
             }
         }
 
-        function viewProfile(username) {
-            socket.emit('get_profile', username);
-            toggleProfile(true);
-        }
-
-        function enableEditMode() {
-            document.getElementById('profile-bio').classList.add('hidden');
-            document.getElementById('profile-edit-form').classList.remove('hidden');
-            document.getElementById('edit-bio').value = document.getElementById('profile-bio').textContent;
-            
-            // Enable hover overlays for images
-            document.getElementById('pfp-container').classList.add('editable');
-            document.getElementById('banner-container').classList.add('editable');
-            document.getElementById('pfp-edit-overlay').classList.remove('hidden');
-            document.getElementById('banner-edit-overlay').classList.remove('hidden');
-            
-            pendingPfp = null;
-            pendingBanner = null;
-        }
-
-        function cancelEdit() {
-            document.getElementById('profile-bio').classList.remove('hidden');
-            document.getElementById('profile-edit-form').classList.add('hidden');
-            
-            document.getElementById('pfp-container').classList.remove('editable');
-            document.getElementById('banner-container').classList.remove('editable');
-            document.getElementById('pfp-edit-overlay').classList.add('hidden');
-            document.getElementById('banner-edit-overlay').classList.add('hidden');
-        }
-
-        function changePfp() {
-            const url = prompt("Enter new Profile Picture URL:");
-            if(url) {
-                pendingPfp = url;
-                document.getElementById('profile-pfp-img').src = url;
-            }
-        }
-
-        function changeBanner() {
-            const url = prompt("Enter new Banner URL:");
-            if(url) {
-                pendingBanner = url;
-                document.getElementById('profile-banner-img').src = url;
-            }
-        }
-
-        function saveProfile() {
-            const bio = document.getElementById('edit-bio').value;
-            // Send updates to server
-            socket.emit('update_profile', { 
-                bio, 
-                pfp: pendingPfp, 
-                banner: pendingBanner 
-            });
-            
-            // Optimistic update
-            document.getElementById('profile-bio').textContent = bio;
-            cancelEdit();
-        }
-
-        socket.on('profile_data', (data) => {
-            document.getElementById('profile-username').textContent = data.username;
-            document.getElementById('profile-username').className = `text-2xl font-serif tracking-wide ${data.rank === 'DEV' ? 'text-purple-400 drop-shadow-[0_0_8px_rgba(192,132,252,0.5)]' : 'text-white'}`;
-            document.getElementById('profile-bio').textContent = data.bio || "No biography set.";
-            document.getElementById('profile-role').textContent = data.rank === 'DEV' ? "System Architect" : "Lounge Member";
-            document.getElementById('profile-pfp-img').src = data.pfp;
-            document.getElementById('profile-banner-img').src = data.banner;
-            document.getElementById('profile-level').textContent = data.level;
-            document.getElementById('profile-gold').textContent = data.gold.toLocaleString();
-            document.getElementById('profile-rubies').textContent = data.rubies.toLocaleString();
-
-            const badge = document.getElementById('profile-rank-badge');
-            badge.textContent = data.rank;
-            badge.className = data.rank === 'DEV' 
-                ? "absolute -bottom-2 -right-2 bg-purple-900 border border-purple-500 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold text-purple-200 shadow-lg"
-                : "absolute -bottom-2 -right-2 bg-zinc-900 border border-zinc-700 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold text-zinc-500 shadow-lg";
-
-            const editBtn = document.getElementById('btn-edit-profile');
-            if (data.username === currentUser) {
-                editBtn.classList.remove('hidden');
-            } else {
-                editBtn.classList.add('hidden');
-            }
-        });
-
-        // --- AUTH & SETUP ---
-        function toggleAuth(toSignup) {
-            loginForm.classList.toggle('hidden', toSignup);
-            signupForm.classList.toggle('hidden', !toSignup);
-            document.getElementById('auth-subtitle').textContent = toSignup ? 'Create Account' : 'Enter the Circle';
-            document.getElementById('login-error').classList.add('hidden');
-            document.getElementById('signup-error').classList.add('hidden');
-        }
-
-        function enterLounge(username) {
-            currentUser = username;
-            sessionStorage.setItem('lumiere_active_user', username);
-            document.getElementById('my-username').textContent = currentUser;
-            authScreen.style.display = 'none';
-            chatScreen.style.display = 'flex';
-            socket.emit('join', currentUser);
-        }
-
-        function logout() {
-            sessionStorage.removeItem('lumiere_active_user');
-            window.location.reload();
-        }
-
-        window.addEventListener('load', () => {
-            const savedUser = sessionStorage.getItem('lumiere_active_user');
-            if (savedUser) { enterLounge(savedUser); }
-        });
-
-        // LOGIN SUBMIT
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const identifier = document.getElementById('login-identifier').value.trim().toLowerCase();
-            const password = document.getElementById('login-password').value;
-            
-            let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            const user = users.find(u => (u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier) && u.password === password);
-            
-            if (user) { 
-                enterLounge(user.username); 
-            } else { 
-                document.getElementById('login-error').classList.remove('hidden'); 
-            }
-        });
-
-        // SIGNUP SUBMIT
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = document.getElementById('signup-username').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value;
-            
-            let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            
-            if (users.find(u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase())) {
-                document.getElementById('signup-error').classList.remove('hidden');
-                return;
-            }
-            
-            users.push({ username, email, password });
-            localStorage.setItem('lumiere_users', JSON.stringify(users));
-            enterLounge(username);
-        });
-
-        document.getElementById('chat-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = document.getElementById('chat-input').value.trim();
-            if (text) {
-                socket.emit('chat_message', { text });
-                document.getElementById('chat-input').value = '';
-            }
-        });
-
-        // --- SOCKET EVENTS ---
-        socket.on('history', (history) => {
-            messagesContainer.innerHTML = '';
-            history.forEach(data => appendMessage(data));
-        });
-
-        socket.on('user_update', (users) => {
-            onlineList.innerHTML = '';
-            let count = 0;
-            users.forEach(user => {
-                const isMe = user.username === currentUser;
-                if(isMe) document.getElementById('my-pfp').src = user.pfp;
-
-                const row = document.createElement('div');
-                row.className = `flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors group ${user.rank === 'DEV' ? 'bg-purple-900/10 border border-purple-500/20' : 'bg-transparent'}`;
-                row.onclick = () => viewProfile(user.username);
-                
-                row.innerHTML = `
-                    <div class="relative">
-                        <img src="${user.pfp}" class="w-8 h-8 rounded-full border ${user.rank === 'DEV' ? 'border-purple-500' : 'border-zinc-800'} pfp-image object-cover">
-                        <div class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-black"></div>
+        function renderChat() {
+            const viewport = document.getElementById('content-viewport');
+            viewport.innerHTML = `
+                <div class="w-full max-w-3xl flex flex-col h-full">
+                    <div id="chat-scroll" class="flex-1 space-y-8 overflow-y-auto pb-4 scrollbar-hide px-4">
+                        ${messages.map(msg => `
+                            <div class="flex flex-col ${msg.senderId === user.id ? 'items-end' : 'items-start'}">
+                                <div class="flex items-center space-x-3 mb-2 px-1">
+                                    <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-500/40">${msg.senderName}</span>
+                                    <span class="text-[9px] text-gray-700">${msg.time}</span>
+                                </div>
+                                <div class="px-5 py-3 rounded-2xl max-w-md text-sm font-light leading-relaxed border transition-all duration-500 ${
+                                    msg.senderId === user.id 
+                                    ? 'bg-amber-600/5 text-amber-50/90 border-amber-500/10 shadow-[0_5px_15px_rgba(0,0,0,0.2)]' 
+                                    : msg.isSystem ? 'bg-white/[0.01] text-amber-500/40 border-transparent italic text-center w-full' : 'bg-white/[0.02] text-gray-400 border-white/5'
+                                }">
+                                    ${msg.text}
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-                    <div class="flex-1 overflow-hidden">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold uppercase tracking-widest truncate ${user.rank === 'DEV' ? 'text-purple-400' : 'text-zinc-300'}">${user.username}</span>
-                            ${user.rank === 'DEV' ? '<span class="text-[7px] bg-purple-500 text-black px-1 rounded font-bold">DEV</span>' : ''}
+                    <form id="chat-form" class="mt-8 relative px-4 pb-4">
+                        <input id="chat-input" type="text" autocomplete="off" placeholder="Transmit thought..." 
+                            class="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 px-8 pr-16 text-sm focus:outline-none focus:border-amber-500/20 focus:bg-white/[0.05] transition-all placeholder:text-gray-700 placeholder:tracking-widest">
+                        <button type="submit" class="absolute right-8 top-3.5 p-2.5 text-amber-500/50 hover:text-amber-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </form>
+                </div>
+            `;
+            
+            const scroll = document.getElementById('chat-scroll');
+            if (scroll) scroll.scrollTop = scroll.scrollHeight;
+
+            document.getElementById('chat-form').onsubmit = (e) => {
+                e.preventDefault();
+                const input = document.getElementById('chat-input');
+                if (!input.value.trim()) return;
+
+                const msgData = {
+                    senderId: user.id,
+                    senderName: user.name,
+                    text: input.value,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isSystem: false
+                };
+
+                socket.emit('send_message', msgData);
+                input.value = '';
+            };
+        }
+
+        function renderProfileEditor() {
+            const viewport = document.getElementById('content-viewport');
+            const bannerStyle = user.banner 
+                ? `background-image: url(${user.banner}); background-size: cover; background-position: center;`
+                : `background-color: ${user.bannerColor || '#1a1a1a'}`;
+
+            viewport.innerHTML = `
+                <div class="w-full max-w-xl fade-in-up">
+                    <div class="bg-[#0f0f0f] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
+                        <div class="h-48 w-full transition-all duration-700 relative group overflow-hidden bg-neutral-900" style="${bannerStyle}">
+                            <div class="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
+                            <div class="absolute inset-0 flex items-center justify-center space-x-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                                <button onclick="document.getElementById('bannerInput').click()" class="flex items-center space-x-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10 hover:bg-black/80 transition-all">
+                                    <span class="text-[10px] uppercase tracking-widest font-bold">Upload Banner</span>
+                                </button>
+                                <label class="flex items-center space-x-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10 hover:bg-black/80 transition-all cursor-pointer">
+                                    <span class="text-[10px] uppercase tracking-widest font-bold">Color</span>
+                                    <input type="color" class="hidden" value="${user.bannerColor}" onchange="updateBannerColor(this.value)">
+                                </label>
+                            </div>
+                        </div>
+                        <div class="px-10 pb-12 -mt-16 relative z-20">
+                            <div class="relative inline-block group">
+                                <div class="w-32 h-32 rounded-[2rem] border-[6px] border-[#0f0f0f] overflow-hidden bg-neutral-900 shadow-2xl relative">
+                                    <img src="${user.avatar}" class="w-full h-full object-cover">
+                                    <button onclick="document.getElementById('pfpInput').click()" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-8 space-y-8">
+                                <div class="space-y-2">
+                                    <label class="text-[9px] uppercase tracking-[0.4em] text-gray-600 font-black px-1">Nomenclature</label>
+                                    <input type="text" id="edit-name" value="${user.name}" oninput="updateUserName(this.value)"
+                                        class="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 px-6 focus:outline-none focus:border-amber-500/20 text-lg font-serif">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[9px] uppercase tracking-[0.4em] text-gray-600 font-black px-1">Statement</label>
+                                    <textarea id="edit-bio" rows="2" oninput="updateUserBio(this.value)"
+                                        class="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 px-6 focus:outline-none focus:border-amber-500/20 resize-none font-light italic text-gray-400">${user.bio}</textarea>
+                                </div>
+                                <button onclick="switchView('chat')"
+                                    class="w-full py-5 bg-amber-500 text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl hover:bg-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)] transition-all active:scale-[0.98]">
+                                    Save Identity
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUsersList() {
+            const list = document.getElementById('users-list');
+            document.getElementById('online-count').innerText = `${onlineUsers.length} Presences Active`;
+
+            let html = '';
+            onlineUsers.forEach(u => {
+                const isMe = u.id === user.id;
+                html += `
+                    <div ${isMe ? 'onclick="openProfileEditor()"' : ''} class="flex items-center p-4 rounded-3xl hover:bg-white/[0.03] cursor-pointer group transition-all duration-500 border border-transparent hover:border-white/5 ${isMe ? '' : 'opacity-70 hover:opacity-100'}">
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-amber-500/30 transition-colors shadow-lg">
+                                <img src="${u.avatar}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-[#0d0d0d] rounded-full shadow-lg"></div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-xs font-bold ${isMe ? 'text-amber-500' : 'text-gray-400'} group-hover:text-amber-500 transition-colors uppercase tracking-widest">${u.name} ${isMe ? '(You)' : ''}</p>
+                            <p class="text-[9px] text-gray-700 mt-1 uppercase tracking-tighter">${u.rank || 'Member'}</p>
                         </div>
                     </div>
                 `;
-                onlineList.appendChild(row);
-                count++;
             });
-            document.getElementById('online-count').textContent = count;
-        });
 
-        socket.on('chat_message', (data) => {
-            appendMessage(data);
-        });
+            list.innerHTML = html;
+        }
 
-        socket.on('wallet_update', (user) => {
-             // Just update the modal UI silently if it's open, or allow viewing via profile
-             // For this specific request, wallet button opens profile as a quick view
-             viewProfile(user.username);
-        });
-
-        socket.on('command_response', (res) => {
-            showAlert(res.message, res.success);
-        });
-
-        function appendMessage(data) {
-            const isMe = data.user === currentUser;
-            const isSystem = data.user === 'System';
-            const div = document.createElement('div');
-            
-            div.className = `flex flex-col ${isMe && !isSystem ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300`;
-            
-            if (isSystem) {
-                div.innerHTML = `<div class="w-full text-center py-4"><span class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 bg-black/40 border border-white/5 py-1.5 px-4 rounded-full backdrop-blur-md">${data.text}</span></div>`;
-            } else {
-                div.innerHTML = `
-                    <div class="group flex flex-row ${isMe ? 'flex-row-reverse' : ''} items-start gap-4 max-w-[90%]">
-                        <img src="${data.pfp}" class="w-8 h-8 rounded-full border ${data.rank === 'DEV' ? 'border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]' : 'border-zinc-800'} mt-1 flex-shrink-0 shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform" onclick="viewProfile('${data.user}')">
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-                            <div class="flex items-center gap-2 px-1">
-                                <span class="text-[9px] font-bold uppercase tracking-widest ${data.rank === 'DEV' ? 'text-purple-400 drop-shadow-lg' : 'text-zinc-500'} cursor-pointer hover:text-white transition-colors" onclick="viewProfile('${data.user}')">${data.user}</span>
-                                <span class="text-[8px] text-zinc-700 font-mono">${data.time}</span>
-                            </div>
-                            <div class="${isMe ? 'bg-zinc-100 text-black' : 'bg-zinc-900/60 border border-white/10 text-zinc-300'} px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm backdrop-blur-md">
-                                ${data.text}
-                            </div>
-                        </div>
-                    </div>`;
+        // --- HANDLERS ---
+        function updateUserName(val) { user.name = val; saveState(); }
+        function updateUserBio(val) { user.bio = val; saveState(); }
+        function updateBannerColor(val) { user.banner = null; user.bannerColor = val; saveState(); renderProfileEditor(); }
+        function openProfileEditor() { switchView('profile-edit'); }
+        
+        function clearChat() {
+            // Since this is live, we only "clear" for ourselves or trigger a server wipe if permitted
+            if (confirm("Permanently wipe your local view of frequency history?")) {
+                messages = [];
+                renderChat();
             }
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // Renamed function to avoid confusion with command
-        function openWallet() {
-            // This button now fetches balance privately, which triggers wallet_update -> viewProfile
-            // This avoids spamming the public chat with /bank
-            socket.emit('fetch_balance');
-        }
+        // File upload handlers
+        document.getElementById('pfpInput').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = () => { user.avatar = reader.result; saveState(); renderProfileEditor(); };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+        document.getElementById('bannerInput').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = () => { user.banner = reader.result; saveState(); renderProfileEditor(); };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        // --- INIT ---
+        window.onload = () => {
+            saveState();
+            switchView('chat');
+        };
     </script>
 </body>
 </html>
