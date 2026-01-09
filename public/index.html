@@ -76,11 +76,47 @@
             border: 1px solid rgba(255,255,255,0.05);
             transition: all 0.3s ease;
         }
+
+        /* Wallet Modal Transition */
+        #wallet-modal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
     </style>
 </head>
 <body>
 
     <div id="alert-container"></div>
+
+    <!-- Wallet Modal Overlay -->
+    <div id="wallet-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/60 backdrop-blur-xl transition-all duration-300">
+        <div class="relative w-full max-w-md p-8 mx-4">
+            <button onclick="toggleWallet(false)" class="absolute -top-12 right-0 text-zinc-500 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            
+            <div class="bg-zinc-900/50 border border-zinc-800 p-8 rounded-3xl shadow-2xl text-center space-y-8">
+                <div class="space-y-2">
+                    <h3 id="wallet-user" class="text-xs font-serif tracking-[0.3em] text-zinc-500 uppercase">Personal Vault</h3>
+                    <div class="h-[1px] w-12 bg-amber-200/30 mx-auto"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-1">
+                        <p class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Gold Reserves</p>
+                        <p id="wallet-gold" class="text-2xl font-serif text-amber-200">0</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Rubies Held</p>
+                        <p id="wallet-rubies" class="text-2xl font-serif text-rose-400">0</p>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="toggleWallet(false)" class="px-8 py-3 bg-zinc-100 text-black text-[10px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-white transition-all">Close Vault</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Auth Screen -->
     <div id="auth-screen" class="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-serif text-zinc-100">
@@ -159,7 +195,10 @@
                     <div class="w-2 h-2 rounded-full bg-amber-200/40 animate-pulse"></div>
                     <h2 class="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-400">Main Gallery</h2>
                 </div>
-                <button onclick="clearSavedChat()" class="text-[9px] uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors">Clear History</button>
+                <button onclick="openWallet()" class="p-2 text-zinc-500 hover:text-amber-200 transition-colors relative group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    <span class="absolute top-full right-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-[8px] uppercase tracking-widest text-zinc-400 pointer-events-none">Vault</span>
+                </button>
             </header>
 
             <div id="messages-container" class="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar"></div>
@@ -186,10 +225,12 @@
         const offlineList = document.getElementById('offline-list');
         const onlineCount = document.getElementById('online-count');
         const alertContainer = document.getElementById('alert-container');
+        const walletModal = document.getElementById('wallet-modal');
         
         const PFP_URL = "https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1";
 
         let currentUser = null;
+        let lastBankData = { gold: 0, rubies: 0 };
 
         function showAlert(text, isSuccess = true) {
             const alert = document.createElement('div');
@@ -197,6 +238,26 @@
             alert.textContent = text;
             alertContainer.appendChild(alert);
             setTimeout(() => alert.remove(), 2000);
+        }
+
+        function toggleWallet(show) {
+            if (show) {
+                walletModal.classList.remove('invisible');
+                walletModal.classList.add('opacity-100');
+            } else {
+                walletModal.classList.add('invisible');
+                walletModal.classList.remove('opacity-100');
+            }
+        }
+
+        function openWallet() {
+            // Update modal text before showing
+            document.getElementById('wallet-user').textContent = `${currentUser}'s Vault`;
+            document.getElementById('wallet-gold').textContent = lastBankData.gold.toLocaleString();
+            document.getElementById('wallet-rubies').textContent = lastBankData.rubies.toLocaleString();
+            toggleWallet(true);
+            // We emit /bank quietly just to ensure the UI has latest data if possible
+            socket.emit('chat_message', { text: '/bank' });
         }
 
         socket.on('command_response', (res) => {
@@ -211,6 +272,11 @@
 
         // Triggered when someone does /bank
         socket.on('bank_display', (data) => {
+            lastBankData = { gold: data.gold, rubies: data.rubies };
+            // Update modal in real-time if it happens to be open
+            document.getElementById('wallet-gold').textContent = data.gold.toLocaleString();
+            document.getElementById('wallet-rubies').textContent = data.rubies.toLocaleString();
+            
             appendBankCard(data);
             saveMessage({ type: 'bank_card', ...data });
         });
@@ -311,18 +377,13 @@
             history.forEach(data => {
                 if (data.type === 'bank_card') {
                     appendBankCard(data, true);
+                    if(data.username === currentUser) lastBankData = { gold: data.gold, rubies: data.rubies };
                 } else if (data.user === 'System') {
                     appendMessage('System', data.text, '', false, true, true);
                 } else {
                     appendMessage(data.user, data.text, data.time, data.user === currentUser, false, true);
                 }
             });
-        }
-
-        function clearSavedChat() {
-            localStorage.removeItem('lumiere_chat_history');
-            messagesContainer.innerHTML = '';
-            appendMessage('System', 'HISTORY CLEARED', '', false, true);
         }
 
         document.getElementById('chat-form').addEventListener('submit', (e) => {
@@ -340,6 +401,7 @@
         });
 
         socket.on('system_message', (text) => {
+            if (text.includes('VAULT ACCESS:')) return;
             const data = { user: 'System', text: text, time: '' };
             appendMessage('System', text, '', false, true);
             saveMessage(data);
