@@ -46,9 +46,6 @@
         #chat-screen { display: none; }
         .hidden { display: none !important; }
 
-        .user-status-online { color: #10b981; }
-        .user-status-offline { color: #71717a; filter: grayscale(1); opacity: 0.6; }
-        
         .pfp-image {
             object-fit: cover;
             border-radius: 50%;
@@ -57,7 +54,7 @@
 </head>
 <body>
 
-    <!-- Auth Screen (Login/Signup) -->
+    <!-- Auth Screen -->
     <div id="auth-screen" class="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-serif text-zinc-100">
         <div class="max-w-md w-full space-y-10 text-center">
             <div class="space-y-4">
@@ -118,7 +115,7 @@
                 <div class="space-y-4">
                     <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold px-2">Online — <span id="online-count">0</span></h3>
                     <div id="online-list" class="space-y-2">
-                        <!-- Online users injected here -->
+                        <!-- Online users will be injected here -->
                     </div>
                 </div>
 
@@ -126,7 +123,7 @@
                 <div class="space-y-4">
                     <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold px-2">Recently Seen</h3>
                     <div id="offline-list" class="space-y-2">
-                        <!-- Offline users injected here -->
+                        <!-- Offline users will be injected here -->
                     </div>
                 </div>
             </div>
@@ -171,7 +168,6 @@
             }
         });
 
-        // Auth Logic using LocalStorage
         function toggleAuth(toSignup) {
             loginForm.classList.toggle('hidden', toSignup);
             signupForm.classList.toggle('hidden', !toSignup);
@@ -204,8 +200,6 @@
             const password = document.getElementById('login-password').value;
 
             let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            
-            // Fixed validation logic
             const user = users.find(u => 
                 (u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier) && 
                 u.password === password
@@ -221,14 +215,9 @@
         function enterLounge(username) {
             currentUser = username;
             sessionStorage.setItem('lumiere_active_user', username);
-            
-            // Update Self Profile
             document.getElementById('my-username').textContent = currentUser;
-            
             authScreen.style.display = 'none';
             chatScreen.style.display = 'flex';
-            
-            // Sync with server
             socket.emit('join', currentUser);
         }
 
@@ -239,16 +228,11 @@
 
         // --- Presence Tracking ---
         socket.on('user_update', (onlineUsernames) => {
-            updatePresenceLists(onlineUsernames);
-        });
-
-        function updatePresenceLists(onlineUsernames) {
             const registeredUsers = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
             const registeredNames = registeredUsers.map(u => u.username);
             
             onlineList.innerHTML = '';
             offlineList.innerHTML = '';
-            
             let count = 0;
 
             registeredNames.forEach(name => {
@@ -256,7 +240,7 @@
                 const isMe = name === currentUser;
                 
                 const userEl = document.createElement('div');
-                userEl.className = `flex items-center gap-3 p-2 rounded-lg transition-colors ${isOnline ? 'bg-zinc-900/40' : 'opacity-40'}`;
+                userEl.className = `flex items-center gap-3 p-2 rounded-lg transition-all ${isOnline ? 'bg-zinc-900/40' : 'opacity-40'}`;
                 
                 userEl.innerHTML = `
                     <img src="${PFP_URL}" class="w-8 h-8 rounded-full border border-zinc-800 pfp-image">
@@ -277,7 +261,7 @@
             });
 
             onlineCount.textContent = count;
-        }
+        });
 
         // --- Chat Logic ---
         document.getElementById('chat-form').addEventListener('submit', (e) => {
