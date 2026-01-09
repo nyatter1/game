@@ -5,7 +5,7 @@
 
 // Simple in-memory storage for player stats
 // Default: 100 Gold, 10 Rubies, Level 1
-const playerStats = {};
+let playerStats = {};
 
 const commands = {
     "bank": {
@@ -25,7 +25,7 @@ const commands = {
 
             const stats = playerStats[username];
 
-            // Broadcast to everyone to show the "Bank Menu" overlay
+            // Trigger the small centered UI overlay for immediate impact
             io.emit('bank_display', {
                 username: username,
                 gold: stats.gold,
@@ -34,7 +34,26 @@ const commands = {
                 pfp: stats.pfp
             });
 
-            return { success: true, message: "WEALTH REVEALED" };
+            // Send a system message to the chat so it persists in the history (visible to all)
+            io.emit('system_message', `VAULT ACCESS: ${username.toUpperCase()} | LVL ${stats.level} | ${stats.gold} GOLD | ${stats.rubies} RUBIES`);
+
+            return { success: true, message: "ACTION COMPLETE" };
+        }
+    },
+    "wipe": {
+        description: "Delete all account data and reset the circle",
+        execute: (socket, io, args) => {
+            // Clear the server-side stats memory
+            playerStats = {};
+            
+            // Broadcast a system-wide alert that a wipe has occurred
+            io.emit('system_message', "!! SYSTEM WIPE INITIATED: ALL ACCOUNTS AND STATS HAVE BEEN DELETED !!");
+            
+            // Note: This only clears server-side memory for current session stats.
+            // Client-side localStorage (passwords/accounts) would need a client-side trigger.
+            io.emit('force_logout_all'); 
+
+            return { success: true, message: "ACTION COMPLETE" };
         }
     }
 };
