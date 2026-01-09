@@ -4,9 +4,10 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
-// Tell the server to look for index.html
+// Change this part in your server.js
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  // We add 'public' to the path here
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Handle the "Live" connection
