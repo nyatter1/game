@@ -79,7 +79,7 @@
 
         /* Wallet Modal Transition */
         #wallet-modal {
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
         }
     </style>
 </head>
@@ -90,7 +90,8 @@
     <!-- Wallet Modal Overlay -->
     <div id="wallet-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/60 backdrop-blur-xl transition-all duration-300">
         <div class="relative w-full max-w-md p-8 mx-4">
-            <button onclick="toggleWallet(false)" class="absolute -top-12 right-0 text-zinc-500 hover:text-white transition-colors">
+            <!-- Close button moved to top-left -->
+            <button onclick="toggleWallet(false)" class="absolute -top-12 left-0 text-zinc-500 hover:text-white transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             
@@ -256,11 +257,13 @@
             document.getElementById('wallet-gold').textContent = lastBankData.gold.toLocaleString();
             document.getElementById('wallet-rubies').textContent = lastBankData.rubies.toLocaleString();
             toggleWallet(true);
-            // We emit /bank quietly just to ensure the UI has latest data if possible
+            // We emit /bank silently to sync data without showing "Action Complete" alert
             socket.emit('chat_message', { text: '/bank' });
         }
 
         socket.on('command_response', (res) => {
+            // Remove generic alerts for system-triggered /bank calls to keep UI smooth
+            if (res.message.includes("action complete")) return;
             showAlert(res.message, res.success);
         });
 
@@ -270,10 +273,8 @@
             window.location.reload();
         });
 
-        // Triggered when someone does /bank
         socket.on('bank_display', (data) => {
             lastBankData = { gold: data.gold, rubies: data.rubies };
-            // Update modal in real-time if it happens to be open
             document.getElementById('wallet-gold').textContent = data.gold.toLocaleString();
             document.getElementById('wallet-rubies').textContent = data.rubies.toLocaleString();
             
