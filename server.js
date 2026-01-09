@@ -12,18 +12,39 @@ let users = {};
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('register user', (username) => {
-    users[socket.id] = { id: socket.id, username: username };
+  // Register user with optional profile picture
+  socket.on('register user', (data) => {
+    // data can be just username or an object { username, pfp }
+    const username = typeof data === 'string' ? data : data.username;
+    const pfp = data.pfp || null;
+    
+    users[socket.id] = { id: socket.id, username: username, pfp: pfp };
     // Broadcast updated user list to everyone
     io.emit('update user list', Object.values(users));
   });
 
+  // Handle PFP updates
+  socket.on('update pfp', (pfpData) => {
+    if (users[socket.id]) {
+      users[socket.id].pfp = pfpData;
+      io.emit('update user list', Object.values(users));
+    }
+  });
+
   socket.on('global message', (data) => {
+    // Attach current PFP to the message data from server state
+    if (users[socket.id]) {
+      data.senderPfp = users[socket.id].pfp;
+    }
     // Send to everyone
     io.emit('global message', data);
   });
 
   socket.on('private message', (data) => {
+    // Attach current PFP
+    if (users[socket.id]) {
+      data.senderPfp = users[socket.id].pfp;
+    }
     // data.targetId is the socket.id of the recipient
     if (users[data.targetId]) {
       io.to(data.targetId).emit('private message', data);
