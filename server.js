@@ -1,70 +1,82 @@
 const express = require('express');
-const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const http = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
 
-/**
- * AURA CHAT - SOCKET.IO SERVER
- * This version uses WebSockets for real-time communication.
- * Note: Messages are not persisted to a database in this version.
- */
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Keep track of connected users in server memory
-let users = {}; 
-
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  // Register user with optional profile picture
-  socket.on('register user', (data) => {
-    // data can be just username or an object { username, pfp }
-    const username = typeof data === 'string' ? data : data.username;
-    const pfp = data.pfp || null;
-    
-    users[socket.id] = { id: socket.id, username: username, pfp: pfp };
-    // Broadcast updated user list to everyone
-    io.emit('update user list', Object.values(users));
-  });
-
-  // Handle PFP updates
-  socket.on('update pfp', (pfpData) => {
-    if (users[socket.id]) {
-      users[socket.id].pfp = pfpData;
-      io.emit('update user list', Object.values(users));
-    }
-  });
-
-  socket.on('global message', (data) => {
-    // Attach current PFP to the message data from server state
-    if (users[socket.id]) {
-      data.senderPfp = users[socket.id].pfp;
-    }
-    // Send to everyone
-    io.emit('global message', data);
-  });
-
-  socket.on('private message', (data) => {
-    // Attach current PFP
-    if (users[socket.id]) {
-      data.senderPfp = users[socket.id].pfp;
-    }
-    // data.targetId is the socket.id of the recipient
-    if (users[data.targetId]) {
-      io.to(data.targetId).emit('private message', data);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    delete users[socket.id];
-    io.emit('update user list', Object.values(users));
-    console.log('User disconnected');
-  });
-});
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// In-memory store for active sessions
+const activeUsers = new Map();
+
+io.on('connection', (socket) => {
+    console.log(`New connection: ${socket.id}`);
+
+    // Handle user registration/login
+    socket.on('register user', (profile) => {
+        const userData = {
+            id: socket.id,
+            username: profile.username,
+            pfp: profile.pfp,
+            gender: profile.gender,
+            age: profile.age
+        };
+        
+        activeUsers.set(socket.id, userData);
+        
+        // Broadcast updated user list to everyone
+        io.emit('update user list', Array.from(activeUsers.values()));
+    });
+
+    // Handle PFP updates during session
+    socket.on('update pfp', (newPfp) => {
+        const user = activeUsers.get(socket.id);
+        if (user) {
+            user.pfp = newPfp;
+            activeUsers.set(socket.id, user);
+            // Sync the updated PFP across all clients' sidebars
+            io.emit('update user list', Array.from(activeUsers.values()));
+        }
+    });
+
+    // Handle Global Messages
+    socket.on('global message', (msg) => {
+        // Ensure the sender ID is correct from the socket session
+        msg.senderId = socket.id;
+        io.emit('global message', msg);
+    });
+
+    // Handle Private Messages (PMs)
+    socket.on('private message', (msg) => {
+        const targetSocketId = msg.targetId;
+        const senderData = activeUsers.get(socket.id);
+
+        if (targetSocketId && senderData) {
+            // Forward the message specifically to the recipient
+            io.to(targetSocketId).emit('private message', {
+                senderId: socket.id,
+                senderName: senderData.username,
+                senderPfp: senderData.pfp,
+                text: msg.text,
+                timestamp: msg.timestamp
+            });
+        }
+    });
+
+    // Handle Disconnection
+    socket.on('disconnect', () => {
+        activeUsers.delete(socket.id);
+        io.emit('update user list', Array.from(activeUsers.values()));
+        console.log(`User disconnected: ${socket.id}`);
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`AuraChat Pro Server running on port ${PORT}`);
 });
