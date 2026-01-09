@@ -8,14 +8,11 @@
     <script src="/socket.io/socket.io.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0a0a0a;
-            --zinc-900: #18181b;
-            --zinc-800: #27272a;
         }
-
         body {
             background-color: var(--bg-color);
             color: #d4d4d8;
@@ -23,95 +20,102 @@
             overflow: hidden;
             margin: 0;
         }
-
-        .font-serif {
-            font-family: 'Cinzel', serif;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 3px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #27272a;
-            border-radius: 10px;
-        }
-
-        input:focus {
-            outline: none !important;
-            box-shadow: none !important;
-        }
-
-        #auth-screen { display: flex; }
-        #chat-screen { display: none; }
-        .hidden { display: none !important; }
-
-        .pfp-image {
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        @keyframes centerFadeInOut {
-            0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
-            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -60%) scale(1.05); }
-        }
-
-        .command-alert {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-            animation: centerFadeInOut 2s forwards ease-in-out;
-            pointer-events: none;
-            text-align: center;
-            min-width: 300px;
-        }
-
-        .stat-card {
-            background: linear-gradient(145deg, #18181b, #09090b);
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
-        }
-
-        #wallet-modal {
-            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
-        }
+        .font-serif { font-family: 'Cinzel', serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        input:focus, textarea:focus { outline: none !important; box-shadow: none !important; }
+        .glass-panel { background: rgba(24, 24, 27, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .rank-dev { color: #a855f7; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+        .rank-member { color: #71717a; }
+        
+        /* Modal Transitions */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: all 0.2s ease-in; }
     </style>
 </head>
 <body>
 
     <div id="alert-container"></div>
 
-    <!-- Wallet Modal Overlay -->
-    <div id="wallet-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/80 backdrop-blur-xl transition-all duration-300">
-        <div class="relative w-full max-w-md mx-4">
-            <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl text-center space-y-8 relative overflow-hidden">
-                <!-- Fixed Close Button inside UI -->
-                <button onclick="toggleWallet(false)" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors p-2 z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
+    <!-- PROFILE MODAL (VIEWER & EDITOR) -->
+    <div id="profile-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/80 backdrop-blur-xl transition-all duration-300">
+        <div class="relative w-full max-w-lg mx-4">
+            <!-- Close Button -->
+            <button onclick="toggleProfile(false)" class="absolute top-4 right-4 z-20 text-white/50 hover:text-white transition-colors bg-black/20 p-2 rounded-full backdrop-blur-md">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
 
-                <div class="space-y-2 pt-4">
-                    <h3 id="wallet-user" class="text-xs font-serif tracking-[0.3em] text-zinc-500 uppercase">Personal Vault</h3>
-                    <div class="h-[1px] w-12 bg-amber-200/30 mx-auto"></div>
+            <div class="glass-panel rounded-3xl overflow-hidden shadow-2xl relative">
+                <!-- Banner -->
+                <div class="h-32 w-full bg-zinc-800 relative">
+                    <img id="profile-banner-img" src="" class="w-full h-full object-cover opacity-80">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="space-y-1">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Gold Reserves</p>
-                        <p id="wallet-gold" class="text-2xl font-serif text-amber-200">0</p>
+                <!-- Content -->
+                <div class="px-8 pb-8 -mt-12 relative z-10">
+                    <div class="flex justify-between items-end">
+                        <!-- Avatar -->
+                        <div class="relative">
+                            <img id="profile-pfp-img" src="" class="w-24 h-24 rounded-2xl border-4 border-[#121212] object-cover shadow-xl bg-zinc-900">
+                            <div id="profile-rank-badge" class="absolute -bottom-2 -right-2 bg-zinc-900 border border-zinc-700 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold text-white shadow-lg">
+                                MEMBER
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mb-2" id="profile-actions">
+                            <button id="btn-edit-profile" onclick="enableEditMode()" class="hidden px-4 py-1.5 bg-zinc-100 text-black text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-white transition-colors">Edit Profile</button>
+                        </div>
                     </div>
-                    <div class="space-y-1">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Rubies Held</p>
-                        <p id="wallet-rubies" class="text-2xl font-serif text-rose-400">0</p>
-                    </div>
-                </div>
 
-                <div class="pt-4">
-                    <button onclick="toggleWallet(false)" class="px-8 py-3 bg-zinc-100 text-black text-[10px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-white transition-all">Secure Vault</button>
+                    <div class="mt-4 space-y-1">
+                        <h2 id="profile-username" class="text-2xl font-serif text-white tracking-wide">Username</h2>
+                        <p id="profile-role" class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold">Lounge Member</p>
+                    </div>
+
+                    <!-- Bio Section -->
+                    <div class="mt-6">
+                        <p id="profile-bio" class="text-sm text-zinc-400 font-light leading-relaxed">No biography set.</p>
+                        
+                        <!-- Edit Form (Hidden by default) -->
+                        <div id="profile-edit-form" class="hidden space-y-4 mt-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] uppercase tracking-widest text-zinc-600">Avatar URL</label>
+                                <input id="edit-pfp" type="text" class="w-full bg-black/40 border border-zinc-800 rounded px-3 py-2 text-xs text-white focus:border-purple-500/50 transition-colors">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] uppercase tracking-widest text-zinc-600">Banner URL</label>
+                                <input id="edit-banner" type="text" class="w-full bg-black/40 border border-zinc-800 rounded px-3 py-2 text-xs text-white focus:border-purple-500/50 transition-colors">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] uppercase tracking-widest text-zinc-600">Bio</label>
+                                <textarea id="edit-bio" rows="2" class="w-full bg-black/40 border border-zinc-800 rounded px-3 py-2 text-xs text-white focus:border-purple-500/50 transition-colors custom-scrollbar"></textarea>
+                            </div>
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="saveProfile()" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Save Changes</button>
+                                <button onclick="cancelEdit()" class="px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-3 gap-3 mt-8 pt-6 border-t border-white/5">
+                        <div class="bg-black/40 rounded-xl p-3 text-center border border-white/5">
+                            <div class="text-[9px] uppercase tracking-widest text-zinc-500 mb-1">Level</div>
+                            <div id="profile-level" class="text-lg font-serif text-white">0</div>
+                        </div>
+                        <div class="bg-black/40 rounded-xl p-3 text-center border border-white/5">
+                            <div class="text-[9px] uppercase tracking-widest text-zinc-500 mb-1">Gold</div>
+                            <div id="profile-gold" class="text-lg font-serif text-amber-200">0</div>
+                        </div>
+                        <div class="bg-black/40 rounded-xl p-3 text-center border border-white/5">
+                            <div class="text-[9px] uppercase tracking-widest text-zinc-500 mb-1">Rubies</div>
+                            <div id="profile-rubies" class="text-lg font-serif text-rose-400">0</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,7 +127,7 @@
             <div class="space-y-4">
                 <div class="flex justify-center">
                     <div class="p-4 border border-zinc-800 rounded-full bg-zinc-900/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-200/80"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-purple-400/80"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
                     </div>
                 </div>
                 <h1 class="text-4xl font-light tracking-widest uppercase">Lumière</h1>
@@ -132,22 +136,22 @@
 
             <form id="login-form" class="space-y-6">
                 <div class="space-y-4">
-                    <input id="login-identifier" type="text" placeholder="USERNAME OR EMAIL" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
-                    <input id="login-password" type="password" placeholder="PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="login-identifier" type="text" placeholder="USERNAME" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="login-password" type="password" placeholder="PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
                 </div>
                 <div id="login-error" class="text-red-500 text-[10px] font-sans uppercase tracking-widest hidden">Invalid credentials</div>
-                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-amber-100 transition-all rounded-sm">Login</button>
+                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-purple-200 transition-all rounded-sm">Enter</button>
                 <p class="text-[10px] text-zinc-500 font-sans uppercase tracking-widest cursor-pointer hover:text-zinc-300" onclick="toggleAuth(true)">New here? Create Account</p>
             </form>
 
             <form id="signup-form" class="space-y-6 hidden">
                 <div class="space-y-4">
-                    <input id="signup-username" type="text" placeholder="USERNAME" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
-                    <input id="signup-email" type="email" placeholder="EMAIL ADDRESS" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
-                    <input id="signup-password" type="password" placeholder="CREATE PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-amber-200/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="signup-username" type="text" placeholder="USERNAME" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="signup-email" type="email" placeholder="EMAIL ADDRESS" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
+                    <input id="signup-password" type="password" placeholder="CREATE PASSWORD" class="w-full bg-transparent border-b border-zinc-800 py-4 px-2 text-center text-zinc-200 tracking-widest focus:border-purple-500/50 transition-colors font-sans uppercase text-xs" required>
                 </div>
                 <div id="signup-error" class="text-red-500 text-[10px] font-sans uppercase tracking-widest hidden">Username or Email already taken</div>
-                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-amber-100 transition-all rounded-sm">Sign Up</button>
+                <button type="submit" class="w-full py-4 bg-zinc-100 text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-purple-200 transition-all rounded-sm">Sign Up</button>
                 <p class="text-[10px] text-zinc-500 font-sans uppercase tracking-widest cursor-pointer hover:text-zinc-300" onclick="toggleAuth(false)">Already a member? Sign in</p>
             </form>
         </div>
@@ -158,13 +162,13 @@
         
         <aside class="flex flex-col w-64 md:w-80 border-r border-zinc-900 bg-black/40 flex-shrink-0">
             <div class="p-6 border-b border-zinc-900 bg-zinc-900/20">
-                <div class="flex items-center gap-4">
-                    <img src="https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1" alt="PFP" class="w-10 h-10 rounded-full pfp-image border border-zinc-800 shadow-lg">
+                <div class="flex items-center gap-4 cursor-pointer hover:bg-white/5 p-2 -m-2 rounded-xl transition-colors" onclick="viewProfile(currentUser)">
+                    <img id="my-pfp" src="" alt="PFP" class="w-10 h-10 rounded-full pfp-image border border-zinc-800 shadow-lg object-cover">
                     <div class="overflow-hidden">
                         <h2 id="my-username" class="text-xs font-serif tracking-widest text-zinc-100 uppercase truncate">Guest</h2>
                         <div class="flex items-center gap-2 mt-1">
                             <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                            <span class="text-[8px] uppercase tracking-[0.2em] text-emerald-500/80">Active Now</span>
+                            <span class="text-[8px] uppercase tracking-[0.2em] text-emerald-500/80">Online</span>
                         </div>
                     </div>
                 </div>
@@ -178,23 +182,18 @@
                     </h3>
                     <div id="online-list" class="space-y-1"></div>
                 </div>
-
-                <div class="space-y-4">
-                    <h3 class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-bold px-2">Recently Seen</h3>
-                    <div id="offline-list" class="space-y-1"></div>
-                </div>
             </div>
 
-            <button onclick="logout()" class="p-4 text-[9px] text-zinc-500 hover:text-zinc-100 uppercase tracking-[0.3em] text-center border-t border-zinc-900 transition-colors font-bold">Sign Out</button>
+            <button onclick="logout()" class="p-4 text-[9px] text-zinc-500 hover:text-red-400 uppercase tracking-[0.3em] text-center border-t border-zinc-900 transition-colors font-bold">Sign Out</button>
         </aside>
 
-        <main class="flex-1 flex flex-col min-w-0 relative">
+        <main class="flex-1 flex flex-col min-w-0 relative bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-opacity-20">
             <header class="h-16 border-b border-zinc-900 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md z-10">
                 <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-amber-200/40 animate-pulse"></div>
+                    <div class="w-2 h-2 rounded-full bg-purple-500/50 animate-pulse"></div>
                     <h2 class="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-400">Main Gallery</h2>
                 </div>
-                <button onclick="openWallet()" class="p-2 text-zinc-500 hover:text-amber-200 transition-colors relative group">
+                <button onclick="openWallet()" class="p-2 text-zinc-500 hover:text-purple-300 transition-colors relative group">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                     <span class="absolute top-full right-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-[8px] uppercase tracking-widest text-zinc-400 pointer-events-none">Vault</span>
                 </button>
@@ -203,8 +202,8 @@
             <div id="messages-container" class="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar"></div>
             
             <div class="p-8 bg-gradient-to-t from-black via-black/80 to-transparent">
-                <form id="chat-form" class="max-w-3xl mx-auto flex items-center gap-4 bg-zinc-900/30 border border-zinc-800/50 p-1.5 pl-6 rounded-full backdrop-blur-2xl shadow-2xl focus-within:border-zinc-700 transition-all">
-                    <input id="chat-input" type="text" placeholder="Speak your mind..." autocomplete="off" class="flex-1 bg-transparent border-none text-sm text-zinc-200 placeholder:text-zinc-700 py-3">
+                <form id="chat-form" class="max-w-3xl mx-auto flex items-center gap-4 bg-zinc-900/50 border border-zinc-800/50 p-1.5 pl-6 rounded-full backdrop-blur-2xl shadow-2xl focus-within:border-zinc-600 transition-all">
+                    <input id="chat-input" type="text" placeholder="Speak your mind..." autocomplete="off" class="flex-1 bg-transparent border-none text-sm text-zinc-200 placeholder:text-zinc-600 py-3">
                     <button type="submit" class="p-3 bg-zinc-100 text-black rounded-full hover:bg-white transition-all active:scale-95 shadow-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     </button>
@@ -215,127 +214,119 @@
 
     <script>
         const socket = io();
+        
+        // --- VARIABLES & STATE ---
+        let currentUser = null;
+        let isSyncingWallet = false;
+        
+        // DOM Elements
         const authScreen = document.getElementById('auth-screen');
         const chatScreen = document.getElementById('chat-screen');
-        const loginForm = document.getElementById('login-form');
-        const signupForm = document.getElementById('signup-form');
         const messagesContainer = document.getElementById('messages-container');
         const onlineList = document.getElementById('online-list');
-        const offlineList = document.getElementById('offline-list');
-        const onlineCount = document.getElementById('online-count');
+        const profileModal = document.getElementById('profile-modal');
         const alertContainer = document.getElementById('alert-container');
-        const walletModal = document.getElementById('wallet-modal');
         
-        const PFP_URL = "https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1";
-
-        let currentUser = null;
-        let lastBankData = { gold: 0, rubies: 0 };
-        let isSyncingWallet = false; // Flag to silence background updates
-
+        // --- ALERT SYSTEM ---
         function showAlert(text, isSuccess = true) {
             const alert = document.createElement('div');
-            alert.className = `command-alert px-10 py-6 rounded-lg font-serif text-[12px] uppercase tracking-[0.5em] shadow-2xl backdrop-blur-2xl border ${isSuccess ? 'bg-zinc-100/95 text-black border-white' : 'bg-red-950/90 text-red-100 border-red-800'}`;
-            alert.textContent = text;
+            alert.className = `command-alert px-8 py-4 rounded-lg font-serif text-[10px] uppercase tracking-[0.3em] shadow-2xl backdrop-blur-xl border ${isSuccess ? 'bg-zinc-900/90 text-white border-zinc-700' : 'bg-red-950/90 text-red-200 border-red-800'}`;
+            alert.innerHTML = text;
             alertContainer.appendChild(alert);
-            setTimeout(() => alert.remove(), 2000);
+            setTimeout(() => alert.remove(), 2500);
         }
 
-        function toggleWallet(show) {
+        // --- PROFILE SYSTEM ---
+        function toggleProfile(show) {
             if (show) {
-                walletModal.classList.remove('invisible');
-                walletModal.classList.add('opacity-100');
+                profileModal.classList.remove('invisible', 'opacity-0');
             } else {
-                walletModal.classList.add('invisible');
-                walletModal.classList.remove('opacity-100');
+                profileModal.classList.add('invisible', 'opacity-0');
+                // Reset edit mode when closing
+                setTimeout(cancelEdit, 300);
             }
         }
 
-        function openWallet() {
-            document.getElementById('wallet-user').textContent = `${currentUser}'s Vault`;
-            document.getElementById('wallet-gold').textContent = lastBankData.gold.toLocaleString();
-            document.getElementById('wallet-rubies').textContent = lastBankData.rubies.toLocaleString();
-            
-            toggleWallet(true);
-            
-            // Background sync - set flag to suppress "Action Complete" alert and chat card
-            isSyncingWallet = true;
-            socket.emit('chat_message', { text: '/bank' });
+        function viewProfile(username) {
+            socket.emit('get_profile', username);
+            toggleProfile(true);
         }
 
-        socket.on('command_response', (res) => {
-            // SILENCE logic: If we are syncing the wallet and the message is "Action Complete", do nothing.
-            if (isSyncingWallet && res.message.toLowerCase().includes("action complete")) {
-                // Keep the flag true for the bank_display listener that follows immediately
-                return;
-            }
-            showAlert(res.message, res.success);
-        });
-
-        socket.on('bank_display', (data) => {
-            lastBankData = { gold: data.gold, rubies: data.rubies };
-            document.getElementById('wallet-gold').textContent = data.gold.toLocaleString();
-            document.getElementById('wallet-rubies').textContent = data.rubies.toLocaleString();
+        function enableEditMode() {
+            document.getElementById('profile-bio').classList.add('hidden');
+            document.getElementById('profile-edit-form').classList.remove('hidden');
             
-            // Only post to chat if the user typed /bank manually
-            if (!isSyncingWallet) {
-                appendBankCard(data);
-                saveMessage({ type: 'bank_card', ...data });
-            }
-            
-            // Reset sync flag
-            isSyncingWallet = false;
-        });
-
-        socket.on('force_logout_all', () => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.reload();
-        });
-
-        window.addEventListener('load', () => {
-            const savedUser = sessionStorage.getItem('lumiere_active_user');
-            if (savedUser) { enterLounge(savedUser); }
-            loadSavedChat();
-        });
-
-        function toggleAuth(toSignup) {
-            loginForm.classList.toggle('hidden', toSignup);
-            signupForm.classList.toggle('hidden', !toSignup);
-            document.getElementById('auth-subtitle').textContent = toSignup ? 'Create Account' : 'Enter the Circle';
+            // Pre-fill inputs
+            document.getElementById('edit-bio').value = document.getElementById('profile-bio').textContent;
+            document.getElementById('edit-pfp').value = document.getElementById('profile-pfp-img').src;
+            document.getElementById('edit-banner').value = document.getElementById('profile-banner-img').src;
         }
 
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = document.getElementById('signup-username').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value;
-            let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            if (users.find(u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase())) {
-                document.getElementById('signup-error').classList.remove('hidden');
-                return;
+        function cancelEdit() {
+            document.getElementById('profile-bio').classList.remove('hidden');
+            document.getElementById('profile-edit-form').classList.add('hidden');
+        }
+
+        function saveProfile() {
+            const bio = document.getElementById('edit-bio').value;
+            const pfp = document.getElementById('edit-pfp').value;
+            const banner = document.getElementById('edit-banner').value;
+
+            socket.emit('update_profile', { bio, pfp, banner });
+            
+            // Optimistic Update
+            document.getElementById('profile-bio').textContent = bio;
+            if(pfp) document.getElementById('profile-pfp-img').src = pfp;
+            if(banner) document.getElementById('profile-banner-img').src = banner;
+            
+            cancelEdit();
+        }
+
+        socket.on('profile_data', (data) => {
+            // Update Modal UI
+            document.getElementById('profile-username').textContent = data.username;
+            document.getElementById('profile-username').className = `text-2xl font-serif tracking-wide ${data.rank === 'DEV' ? 'text-purple-400 drop-shadow-[0_0_8px_rgba(192,132,252,0.5)]' : 'text-white'}`;
+            
+            document.getElementById('profile-bio').textContent = data.bio || "No biography set.";
+            document.getElementById('profile-role').textContent = data.rank === 'DEV' ? "System Architect" : "Lounge Member";
+            
+            document.getElementById('profile-pfp-img').src = data.pfp;
+            document.getElementById('profile-banner-img').src = data.banner;
+            
+            document.getElementById('profile-level').textContent = data.level;
+            document.getElementById('profile-gold').textContent = data.gold.toLocaleString();
+            document.getElementById('profile-rubies').textContent = data.rubies.toLocaleString();
+
+            // Badge
+            const badge = document.getElementById('profile-rank-badge');
+            badge.textContent = data.rank;
+            if (data.rank === 'DEV') {
+                badge.className = "absolute -bottom-2 -right-2 bg-purple-900 border border-purple-500 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold text-purple-200 shadow-lg";
+            } else {
+                badge.className = "absolute -bottom-2 -right-2 bg-zinc-900 border border-zinc-700 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold text-zinc-500 shadow-lg";
             }
-            users.push({ username, email, password });
-            localStorage.setItem('lumiere_users', JSON.stringify(users));
-            enterLounge(username);
+
+            // Edit Button Visibility
+            const editBtn = document.getElementById('btn-edit-profile');
+            if (data.username === currentUser) {
+                editBtn.classList.remove('hidden');
+            } else {
+                editBtn.classList.add('hidden');
+            }
         });
 
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const identifier = document.getElementById('login-identifier').value.trim().toLowerCase();
-            const password = document.getElementById('login-password').value;
-            let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            const user = users.find(u => (u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier) && u.password === password);
-            if (user) { enterLounge(user.username); } 
-            else { document.getElementById('login-error').classList.remove('hidden'); }
-        });
-
+        // --- AUTH & SETUP ---
         function enterLounge(username) {
             currentUser = username;
             sessionStorage.setItem('lumiere_active_user', username);
+            
             document.getElementById('my-username').textContent = currentUser;
             authScreen.style.display = 'none';
             chatScreen.style.display = 'flex';
+            
             socket.emit('join', currentUser);
+            // Fetch own profile initially to set PFP in sidebar
+            setTimeout(() => socket.emit('get_profile', currentUser), 500); 
         }
 
         function logout() {
@@ -343,146 +334,134 @@
             window.location.reload();
         }
 
-        socket.on('user_update', (onlineUsernames) => {
-            const registeredUsers = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            const registeredNames = registeredUsers.map(u => u.username);
-            onlineUsernames.forEach(name => {
-                if (!registeredNames.includes(name)) { registeredNames.push(name); }
-            });
+        function toggleAuth(toSignup) {
+            document.getElementById('login-form').classList.toggle('hidden', toSignup);
+            document.getElementById('signup-form').classList.toggle('hidden', !toSignup);
+            document.getElementById('auth-subtitle').textContent = toSignup ? 'Create Account' : 'Enter the Circle';
+        }
 
-            onlineList.innerHTML = '';
-            offlineList.innerHTML = '';
-            let count = 0;
-
-            registeredNames.forEach(name => {
-                const isOnline = onlineUsernames.includes(name);
-                const isMe = name === currentUser;
-                const userEl = document.createElement('div');
-                userEl.className = `user-row flex items-center gap-3 p-2 rounded-lg ${isOnline ? 'bg-zinc-900/40 border border-zinc-800/50' : 'opacity-30'}`;
-                userEl.innerHTML = `
-                    <div class="relative">
-                        <img src="${PFP_URL}" class="w-8 h-8 rounded-full border border-zinc-800 pfp-image">
-                        ${isOnline ? '<div class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-black"></div>' : ''}
-                    </div>
-                    <div class="flex-1 overflow-hidden">
-                        <div class="text-[10px] font-bold uppercase tracking-widest truncate ${isOnline ? 'text-zinc-100' : 'text-zinc-500'}">
-                            ${name} ${isMe ? '<span class="text-[7px] opacity-40 ml-1">(YOU)</span>' : ''}
-                        </div>
-                    </div>`;
-                if (isOnline) { onlineList.appendChild(userEl); count++; } 
-                else { offlineList.appendChild(userEl); }
-            });
-            onlineCount.textContent = count;
+        // --- EVENT LISTENERS ---
+        window.addEventListener('load', () => {
+            const savedUser = sessionStorage.getItem('lumiere_active_user');
+            if (savedUser) { enterLounge(savedUser); }
+            loadSavedChat();
         });
 
-        function saveMessage(data) {
-            let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
-            history.push(data);
-            if (history.length > 100) history.shift(); 
-            localStorage.setItem('lumiere_chat_history', JSON.stringify(history));
-        }
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('login-identifier').value.trim();
+            // In a real app we'd verify password here. For this demo we just log in.
+            enterLounge(identifier); 
+        });
 
-        function loadSavedChat() {
-            messagesContainer.innerHTML = '';
-            let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
-            history.forEach(data => {
-                if (data.type === 'bank_card') {
-                    appendBankCard(data, true);
-                    if(data.username === currentUser) lastBankData = { gold: data.gold, rubies: data.rubies };
-                } else if (data.user === 'System') {
-                    appendMessage('System', data.text, '', false, true, true);
-                } else {
-                    appendMessage(data.user, data.text, data.time, data.user === currentUser, false, true);
-                }
-            });
-        }
+        document.getElementById('signup-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signup-username').value.trim();
+            enterLounge(username);
+        });
 
         document.getElementById('chat-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const text = document.getElementById('chat-input').value.trim();
             if (text) {
-                // If user manually types /bank, we want the card to show
                 if (text.toLowerCase() === '/bank') isSyncingWallet = false;
                 socket.emit('chat_message', { text });
                 document.getElementById('chat-input').value = '';
             }
         });
 
-        socket.on('chat_message', (data) => {
-            appendMessage(data.user, data.text, data.time, data.user === currentUser);
-            saveMessage(data);
-        });
+        // --- SOCKET EVENTS ---
+        socket.on('user_update', (users) => {
+            onlineList.innerHTML = '';
+            let count = 0;
 
-        socket.on('system_message', (text) => {
-            if (text.includes('VAULT ACCESS:')) return;
-            const data = { user: 'System', text: text, time: '' };
-            appendMessage('System', text, '', false, true);
-            saveMessage(data);
-        });
+            users.forEach(user => {
+                const isMe = user.username === currentUser;
+                if(isMe) {
+                    // Update my sidebar PFP
+                    document.getElementById('my-pfp').src = user.pfp;
+                }
 
-        function appendBankCard(data, isFromHistory = false) {
-            const div = document.createElement('div');
-            const isMe = data.username === currentUser;
-            div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500`;
-            div.innerHTML = `
-                <div class="flex flex-row ${isMe ? 'flex-row-reverse' : ''} items-start gap-4 max-w-[85%]">
-                    <img src="${data.pfp}" class="w-8 h-8 rounded-full border border-zinc-800 mt-1 flex-shrink-0 shadow-lg pfp-image">
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-2">
-                        <div class="flex items-center gap-3 px-1">
-                            <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-600">${data.username}</span>
-                            <span class="text-[7px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded uppercase tracking-tighter">Vault Report</span>
-                        </div>
-                        <div class="stat-card p-4 rounded-xl border border-zinc-800/50 min-w-[200px] shadow-2xl">
-                             <div class="flex items-center justify-between mb-3 border-b border-zinc-800/50 pb-2">
-                                <span class="text-[10px] font-serif uppercase tracking-widest text-white">${data.username}</span>
-                                <span class="text-[8px] text-amber-200/50 tracking-widest">LVL ${data.level}</span>
-                             </div>
-                             <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-[7px] uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Gold</p>
-                                    <p class="text-sm font-serif text-amber-200">${data.gold.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[7px] uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Rubies</p>
-                                    <p class="text-sm font-serif text-rose-400">${data.rubies.toLocaleString()}</p>
-                                </div>
-                             </div>
+                const row = document.createElement('div');
+                row.className = `flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors group ${user.rank === 'DEV' ? 'bg-purple-900/10 border border-purple-500/20' : 'bg-transparent'}`;
+                row.onclick = () => viewProfile(user.username);
+                
+                row.innerHTML = `
+                    <div class="relative">
+                        <img src="${user.pfp}" class="w-8 h-8 rounded-full border ${user.rank === 'DEV' ? 'border-purple-500' : 'border-zinc-800'} pfp-image object-cover">
+                        <div class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-black"></div>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest truncate ${user.rank === 'DEV' ? 'text-purple-400' : 'text-zinc-300'}">${user.username}</span>
+                            ${user.rank === 'DEV' ? '<span class="text-[7px] bg-purple-500 text-black px-1 rounded font-bold">DEV</span>' : ''}
                         </div>
                     </div>
-                </div>
-            `;
-            messagesContainer.appendChild(div);
-            if (!isFromHistory) {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
-        }
+                `;
+                onlineList.appendChild(row);
+                count++;
+            });
+            document.getElementById('online-count').textContent = count;
+        });
 
-        function appendMessage(user, text, time, isMe, isSystem = false, isFromHistory = false) {
+        socket.on('chat_message', (data) => {
+            appendMessage(data);
+            saveMessage(data);
+        });
+
+        socket.on('command_response', (res) => {
+            if (isSyncingWallet && res.message.toLowerCase().includes("action complete")) return;
+            showAlert(res.message, res.success);
+        });
+
+        // --- HELPERS ---
+        function appendMessage(data) {
+            const isMe = data.user === currentUser;
+            const isSystem = data.user === 'System';
             const div = document.createElement('div');
-            div.className = `flex flex-col ${isMe && !isSystem ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full`;
+            
+            div.className = `flex flex-col ${isMe && !isSystem ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300`;
+            
             if (isSystem) {
-                div.innerHTML = `<div class="w-full text-center py-6"><span class="text-[9px] uppercase tracking-[0.4em] text-zinc-700 border-y border-zinc-900/50 py-2 px-4">${text}</span></div>`;
+                div.innerHTML = `<div class="w-full text-center py-4"><span class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 bg-zinc-900/50 border border-white/5 py-1.5 px-4 rounded-full">${data.text}</span></div>`;
             } else {
                 div.innerHTML = `
-                    <div class="group flex flex-row ${isMe ? 'flex-row-reverse' : ''} items-start gap-4 max-w-[85%]">
-                        <img src="${PFP_URL}" class="w-8 h-8 rounded-full border border-zinc-800 mt-1 flex-shrink-0 shadow-lg">
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-2">
-                            <div class="flex items-center gap-3 px-1">
-                                <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-600">${user}</span>
-                                <span class="text-[8px] text-zinc-800 font-mono">${time || ''}</span>
+                    <div class="group flex flex-row ${isMe ? 'flex-row-reverse' : ''} items-start gap-4 max-w-[90%]">
+                        <img src="${data.pfp || PFP_URL}" class="w-8 h-8 rounded-full border ${data.rank === 'DEV' ? 'border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]' : 'border-zinc-800'} mt-1 flex-shrink-0 shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform" onclick="viewProfile('${data.user}')">
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+                            <div class="flex items-center gap-2 px-1">
+                                <span class="text-[9px] font-bold uppercase tracking-widest ${data.rank === 'DEV' ? 'text-purple-400 drop-shadow-lg' : 'text-zinc-500'} cursor-pointer hover:text-white transition-colors" onclick="viewProfile('${data.user}')">${data.user}</span>
+                                <span class="text-[8px] text-zinc-800 font-mono">${data.time}</span>
                             </div>
-                            <div class="${isMe ? 'bg-zinc-100 text-black' : 'bg-zinc-900 border border-zinc-800/50 text-zinc-300'} px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm">
-                                ${text}
+                            <div class="${isMe ? 'bg-zinc-100 text-black' : 'bg-zinc-900/80 border border-white/10 text-zinc-300'} px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm backdrop-blur-sm">
+                                ${data.text}
                             </div>
                         </div>
                     </div>`;
             }
             messagesContainer.appendChild(div);
-            if (!isFromHistory) {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            } else {
-                setTimeout(() => { messagesContainer.scrollTop = messagesContainer.scrollHeight; }, 50);
-            }
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // --- LEGACY/COMPATIBILITY FUNCTIONS (Wallet etc) ---
+        function openWallet() {
+            // Reusing profile view for wallet check shortcut
+            viewProfile(currentUser);
+            isSyncingWallet = true;
+            socket.emit('chat_message', { text: '/bank' });
+        }
+
+        function saveMessage(data) {
+            let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
+            history.push(data);
+            if (history.length > 50) history.shift(); 
+            localStorage.setItem('lumiere_chat_history', JSON.stringify(history));
+        }
+
+        function loadSavedChat() {
+            messagesContainer.innerHTML = '';
+            let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
+            history.forEach(data => appendMessage(data));
         }
     </script>
 </body>
