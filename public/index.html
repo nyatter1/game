@@ -51,14 +51,35 @@
             border-radius: 50%;
         }
 
-        /* Smooth transition for sidebar items */
         .user-row {
             transition: all 0.2s ease;
+        }
+
+        /* Command Feedback Animation */
+        @keyframes fadeUpOut {
+            0% { opacity: 0; transform: translate(-50%, -40%); }
+            15% { opacity: 1; transform: translate(-50%, -50%); }
+            85% { opacity: 1; transform: translate(-50%, -50%); }
+            100% { opacity: 0; transform: translate(-50%, -60%); }
+        }
+
+        .command-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            animation: fadeUpOut 2s forwards ease-in-out;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
+    <!-- Floating Alert Container for Commands -->
+    <div id="alert-container"></div>
+
+    <!-- Auth Screen -->
     <div id="auth-screen" class="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-serif text-zinc-100">
         <div class="max-w-md w-full space-y-10 text-center">
             <div class="space-y-4">
@@ -94,6 +115,7 @@
         </div>
     </div>
 
+    <!-- Chat Screen -->
     <div id="chat-screen" class="flex h-screen bg-[#0d0d0d] text-zinc-300 font-sans overflow-hidden">
         
         <aside class="flex flex-col w-64 md:w-80 border-r border-zinc-900 bg-black/40 flex-shrink-0">
@@ -116,14 +138,12 @@
                         <span>Online</span>
                         <span id="online-count" class="text-emerald-500/50">0</span>
                     </h3>
-                    <div id="online-list" class="space-y-1">
-                        </div>
+                    <div id="online-list" class="space-y-1"></div>
                 </div>
 
                 <div class="space-y-4">
                     <h3 class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-bold px-2">Recently Seen</h3>
-                    <div id="offline-list" class="space-y-1">
-                        </div>
+                    <div id="offline-list" class="space-y-1"></div>
                 </div>
             </div>
 
@@ -162,16 +182,48 @@
         const onlineList = document.getElementById('online-list');
         const offlineList = document.getElementById('offline-list');
         const onlineCount = document.getElementById('online-count');
+        const alertContainer = document.getElementById('alert-container');
         
         const PFP_URL = "https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1";
 
         let currentUser = null;
 
+        /**
+         * COMMAND SYSTEM
+         */
+        const COMMANDS = {
+            "help": () => {
+                showAlert("ACTION COMPLETE: Check console for help", true);
+                console.log("Lumière Commands: /help, /clear");
+            },
+            "clear": () => {
+                clearSavedChat();
+                showAlert("ACTION COMPLETE: Chat cleared", true);
+            }
+            // Add more commands here
+        };
+
+        function showAlert(text, isSuccess = true) {
+            const alert = document.createElement('div');
+            alert.className = `command-alert px-8 py-4 rounded-sm font-serif text-[10px] uppercase tracking-[0.4em] shadow-2xl backdrop-blur-xl border ${isSuccess ? 'bg-zinc-100/90 text-black border-white' : 'bg-red-950/80 text-red-200 border-red-900/50'}`;
+            alert.textContent = text;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 2000);
+        }
+
+        function processCommand(input) {
+            const trigger = input.split(' ')[0].substring(1).toLowerCase();
+            if (COMMANDS[trigger]) {
+                COMMANDS[trigger]();
+            } else {
+                showAlert("INVALID COMMAND", false);
+            }
+        }
+
         window.addEventListener('load', () => {
             const savedUser = sessionStorage.getItem('lumiere_active_user');
-            if (savedUser) {
-                enterLounge(savedUser);
-            }
+            if (savedUser) { enterLounge(savedUser); }
             loadSavedChat();
         });
 
@@ -179,8 +231,6 @@
             loginForm.classList.toggle('hidden', toSignup);
             signupForm.classList.toggle('hidden', !toSignup);
             document.getElementById('auth-subtitle').textContent = toSignup ? 'Create Account' : 'Enter the Circle';
-            document.getElementById('login-error').classList.add('hidden');
-            document.getElementById('signup-error').classList.add('hidden');
         }
 
         signupForm.addEventListener('submit', (e) => {
@@ -188,14 +238,11 @@
             const username = document.getElementById('signup-username').value.trim();
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
-
             let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            
             if (users.find(u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase())) {
                 document.getElementById('signup-error').classList.remove('hidden');
                 return;
             }
-
             users.push({ username, email, password });
             localStorage.setItem('lumiere_users', JSON.stringify(users));
             enterLounge(username);
@@ -205,18 +252,10 @@
             e.preventDefault();
             const identifier = document.getElementById('login-identifier').value.trim().toLowerCase();
             const password = document.getElementById('login-password').value;
-
             let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            const user = users.find(u => 
-                (u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier) && 
-                u.password === password
-            );
-
-            if (user) {
-                enterLounge(user.username);
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-            }
+            const user = users.find(u => (u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier) && u.password === password);
+            if (user) { enterLounge(user.username); } 
+            else { document.getElementById('login-error').classList.remove('hidden'); }
         });
 
         function enterLounge(username) {
@@ -236,18 +275,14 @@
         socket.on('user_update', (onlineUsernames) => {
             const registeredUsers = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
             const registeredNames = registeredUsers.map(u => u.username);
-            
             onlineList.innerHTML = '';
             offlineList.innerHTML = '';
             let count = 0;
-
             registeredNames.forEach(name => {
                 const isOnline = onlineUsernames.includes(name);
                 const isMe = name === currentUser;
-                
                 const userEl = document.createElement('div');
                 userEl.className = `user-row flex items-center gap-3 p-2 rounded-lg ${isOnline ? 'bg-zinc-900/40 border border-zinc-800/50' : 'opacity-30'}`;
-                
                 userEl.innerHTML = `
                     <div class="relative">
                         <img src="${PFP_URL}" class="w-8 h-8 rounded-full border border-zinc-800 pfp-image">
@@ -257,17 +292,10 @@
                         <div class="text-[10px] font-bold uppercase tracking-widest truncate ${isOnline ? 'text-zinc-100' : 'text-zinc-500'}">
                             ${name} ${isMe ? '<span class="text-[7px] opacity-40 ml-1">(YOU)</span>' : ''}
                         </div>
-                    </div>
-                `;
-
-                if (isOnline) {
-                    onlineList.appendChild(userEl);
-                    count++;
-                } else {
-                    offlineList.appendChild(userEl);
-                }
+                    </div>`;
+                if (isOnline) { onlineList.appendChild(userEl); count++; } 
+                else { offlineList.appendChild(userEl); }
             });
-
             onlineCount.textContent = count;
         });
 
@@ -281,9 +309,7 @@
         function loadSavedChat() {
             messagesContainer.innerHTML = '';
             let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
-            history.forEach(data => {
-                appendMessage(data.user, data.text, data.time, data.user === currentUser, false, true);
-            });
+            history.forEach(data => appendMessage(data.user, data.text, data.time, data.user === currentUser, false, true));
         }
 
         function clearSavedChat() {
@@ -296,7 +322,11 @@
             e.preventDefault();
             const text = document.getElementById('chat-input').value.trim();
             if (text) {
-                socket.emit('chat_message', { text });
+                if (text.startsWith('/')) {
+                    processCommand(text);
+                } else {
+                    socket.emit('chat_message', { text });
+                }
                 document.getElementById('chat-input').value = '';
             }
         });
