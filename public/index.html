@@ -14,13 +14,13 @@
             --luxury-dark: #161a21;
             --border-color: #222222;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; }
+        body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; margin: 0; padding: 0; }
         .serif { font-family: 'Cormorant Garamond', serif; }
         
         .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .rank-tag { padding: 2px 6px; border-radius: 4px; font-size: 7px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; display: inline-block; }
+        .rank-tag { padding: 2px 6px; border-radius: 4px; font-size: 7px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; display: inline-block; vertical-align: middle; }
         
         /* Rank Styles */
         .rank-dev { background: linear-gradient(90deg, #00f2fe, #4facfe); color: #fff; box-shadow: 0 0 10px rgba(79, 172, 254, 0.4); }
@@ -107,6 +107,7 @@
             <h2 id="modal-name" class="serif text-4xl gold-gradient mb-2">Username</h2>
             <div id="modal-rank-container" class="flex justify-center mb-6"></div>
             
+            <!-- ADMIN CONTROLS: FIXED VISIBILITY -->
             <div id="admin-controls" class="hidden mb-6 p-4 border border-blue-500/30 bg-blue-500/5 rounded-2xl text-left">
                 <p class="text-[8px] text-blue-400 font-black uppercase tracking-[0.2em] mb-2">Developer Authority</p>
                 <select id="rank-selector" onchange="applyRankChange()" class="w-full bg-black border border-white/10 text-[10px] text-white p-2 rounded-lg outline-none uppercase font-black tracking-widest">
@@ -173,7 +174,7 @@
     </header>
 
     <div class="flex flex-1 overflow-hidden">
-        <!-- LEFT SIDEBAR: ACCOUNT ONLY -->
+        <!-- SIDEBAR -->
         <aside class="w-20 lg:w-64 border-r border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
             <div class="mb-10">
                 <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] mb-8 px-2">Account</p>
@@ -192,7 +193,7 @@
             </div>
         </aside>
 
-        <!-- MAIN CHAT -->
+        <!-- CHAT -->
         <main class="flex-1 flex flex-col bg-[#0d0f14] relative">
             <div id="messages" class="flex-1 overflow-y-auto p-10 lg:p-16 space-y-12 scroll-smooth"></div>
             <div class="p-10 pt-0">
@@ -203,13 +204,11 @@
             </div>
         </main>
 
-        <!-- RIGHT SIDEBAR: ONLINE USERS -->
+        <!-- ONLINE USERS -->
         <aside class="w-20 lg:w-72 border-l border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
             <div class="flex-1 overflow-y-auto">
                 <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] mb-6 px-2">Online Members</p>
-                <div id="online-users-list" class="space-y-3">
-                    <!-- Injected -->
-                </div>
+                <div id="online-users-list" class="space-y-3"></div>
             </div>
         </aside>
     </div>
@@ -360,6 +359,7 @@
             reader.readAsDataURL(file);
         };
 
+        // FIXED RANKING LOGIC
         function viewProfile(username) {
             const user = globalUsers.find(u => u.username === username) || (myProfile && myProfile.username === username ? myProfile : null);
             if(!user) return;
@@ -372,19 +372,13 @@
             document.getElementById('modal-status-dot').className = `status-dot status-${user.status}`;
             document.getElementById('modal-bio').innerText = `${user.age} Years • ${user.gender}`;
             
-            // ADMIN CHECK: If I am the DEVELOPER, I see the rank selector for anyone BUT other Developers
+            // IF YOU ARE DEVELOPER, YOU SEE CONTROLS REGARDLESS
             const isMeDev = myProfile && myProfile.rank === 'DEVELOPER';
-            const isTargetDev = user.rank === 'DEVELOPER';
             const isMe = myProfile && user.username === myProfile.username;
 
-            // Fix: If I'm dev, I should see controls unless target is another dev (and not myself)
             if (isMeDev) {
-                if (isTargetDev && !isMe) {
-                    document.getElementById('admin-controls').classList.add('hidden');
-                } else {
-                    document.getElementById('admin-controls').classList.remove('hidden');
-                    document.getElementById('rank-selector').value = user.rank;
-                }
+                document.getElementById('admin-controls').classList.remove('hidden');
+                document.getElementById('rank-selector').value = user.rank;
             } else {
                 document.getElementById('admin-controls').classList.add('hidden');
             }
@@ -399,17 +393,22 @@
             
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
             const idx = db.findIndex(u => u.username === viewingUser.username);
+            
             if(idx !== -1) {
                 db[idx].rank = newRank;
                 localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
                 
+                // Update local profile if it's you
                 if(viewingUser.username === myProfile.username) {
                     myProfile.rank = newRank;
                     enterApp();
                 }
                 
+                // Broadcast update so everyone else sees the rank change
                 socket.emit('admin update user', db[idx]);
-                viewProfile(viewingUser.username); 
+                
+                // Update modal visuals immediately
+                document.getElementById('modal-rank-container').innerHTML = getRankTag(newRank);
             }
         }
 
@@ -437,12 +436,18 @@
             renderUserList();
         });
 
+        // Listen for when someone else (the developer) updates your rank
         socket.on('force update profile', (updatedUser) => {
             if(myProfile && myProfile.username === updatedUser.username) {
                 myProfile = { ...updatedUser };
                 localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
                 enterApp();
             }
+            // Update global users array too
+            const uIdx = globalUsers.findIndex(u => u.username === updatedUser.username);
+            if(uIdx !== -1) globalUsers[uIdx] = updatedUser;
+            renderUserList();
+            renderMessages();
         });
 
         function renderUserList() {
