@@ -71,26 +71,16 @@
             min-width: 300px;
         }
 
-        /* Small Centered Bank Menu Animation */
-        @keyframes bankSlideIn {
-            0% { opacity: 0; transform: translate(-50%, -45%) scale(0.9); }
-            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-
-        .bank-menu {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9000;
-            animation: bankSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .stat-card {
+            background: linear-gradient(145deg, #18181b, #09090b);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
         }
     </style>
 </head>
 <body>
 
     <div id="alert-container"></div>
-    <div id="bank-overlay-container"></div>
 
     <!-- Auth Screen -->
     <div id="auth-screen" class="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-serif text-zinc-100">
@@ -196,7 +186,6 @@
         const offlineList = document.getElementById('offline-list');
         const onlineCount = document.getElementById('online-count');
         const alertContainer = document.getElementById('alert-container');
-        const bankOverlayContainer = document.getElementById('bank-overlay-container');
         
         const PFP_URL = "https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1";
 
@@ -214,42 +203,16 @@
             showAlert(res.message, res.success);
         });
 
-        // WIPE COMMAND HANDLER: Forces everyone to log out and clears all data
         socket.on('force_logout_all', () => {
             localStorage.clear();
             sessionStorage.clear();
             window.location.reload();
         });
 
+        // Triggered when someone does /bank
         socket.on('bank_display', (data) => {
-            const existing = document.querySelector('.bank-menu');
-            if (existing) existing.remove();
-
-            const menu = document.createElement('div');
-            // Small and centered menu UI
-            menu.className = "bank-menu w-64 bg-zinc-900/95 border border-zinc-800/80 backdrop-blur-xl shadow-2xl rounded-xl overflow-hidden text-center p-6";
-            
-            menu.innerHTML = `
-                <div class="flex flex-col items-center gap-4">
-                    <img src="${data.pfp}" class="w-16 h-16 rounded-full border-2 border-zinc-800 pfp-image shadow-md">
-                    <div>
-                        <h3 class="font-serif text-sm tracking-[0.2em] text-white uppercase">${data.username}</h3>
-                        <p class="text-[8px] tracking-[0.3em] text-amber-200/60 uppercase mt-1">LVL ${data.level}</p>
-                    </div>
-                    <div class="flex gap-6 border-t border-zinc-800/50 pt-4 w-full justify-center">
-                        <div class="text-center">
-                            <span class="text-[8px] uppercase tracking-widest text-zinc-500 block">Gold</span>
-                            <span class="text-amber-200 font-serif text-md">${data.gold}</span>
-                        </div>
-                        <div class="text-center">
-                            <span class="text-[8px] uppercase tracking-widest text-zinc-500 block">Rubies</span>
-                            <span class="text-rose-400 font-serif text-md">${data.rubies}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            bankOverlayContainer.appendChild(menu);
-            setTimeout(() => { if(menu) menu.remove(); }, 6000);
+            appendBankCard(data);
+            saveMessage({ type: 'bank_card', ...data });
         });
 
         window.addEventListener('load', () => {
@@ -345,7 +308,15 @@
         function loadSavedChat() {
             messagesContainer.innerHTML = '';
             let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
-            history.forEach(data => appendMessage(data.user, data.text, data.time, data.user === currentUser, false, true));
+            history.forEach(data => {
+                if (data.type === 'bank_card') {
+                    appendBankCard(data, true);
+                } else if (data.user === 'System') {
+                    appendMessage('System', data.text, '', false, true, true);
+                } else {
+                    appendMessage(data.user, data.text, data.time, data.user === currentUser, false, true);
+                }
+            });
         }
 
         function clearSavedChat() {
@@ -371,8 +342,46 @@
         socket.on('system_message', (text) => {
             const data = { user: 'System', text: text, time: '' };
             appendMessage('System', text, '', false, true);
-            saveMessage(data); // Ensures system messages (like bank alerts) persist on reload
+            saveMessage(data);
         });
+
+        function appendBankCard(data, isFromHistory = false) {
+            const div = document.createElement('div');
+            const isMe = data.username === currentUser;
+            div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500`;
+            
+            div.innerHTML = `
+                <div class="flex flex-row ${isMe ? 'flex-row-reverse' : ''} items-start gap-4 max-w-[85%]">
+                    <img src="${data.pfp}" class="w-8 h-8 rounded-full border border-zinc-800 mt-1 flex-shrink-0 shadow-lg pfp-image">
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-2">
+                        <div class="flex items-center gap-3 px-1">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-600">${data.username}</span>
+                            <span class="text-[7px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded uppercase tracking-tighter">Vault Report</span>
+                        </div>
+                        <div class="stat-card p-4 rounded-xl border border-zinc-800/50 min-w-[200px] shadow-2xl">
+                             <div class="flex items-center justify-between mb-3 border-b border-zinc-800/50 pb-2">
+                                <span class="text-[10px] font-serif uppercase tracking-widest text-white">${data.username}</span>
+                                <span class="text-[8px] text-amber-200/50 tracking-widest">LVL ${data.level}</span>
+                             </div>
+                             <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-[7px] uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Gold</p>
+                                    <p class="text-sm font-serif text-amber-200">${data.gold.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[7px] uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Rubies</p>
+                                    <p class="text-sm font-serif text-rose-400">${data.rubies.toLocaleString()}</p>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(div);
+            if (!isFromHistory) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
 
         function appendMessage(user, text, time, isMe, isSystem = false, isFromHistory = false) {
             const div = document.createElement('div');
