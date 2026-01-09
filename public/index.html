@@ -13,6 +13,11 @@
         .avatar-sm { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .online-dot { width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid white; }
         .message-blob { max-width: 75%; }
+        
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans h-screen overflow-hidden">
@@ -33,7 +38,7 @@
                 <div id="login-form" class="space-y-4">
                     <input type="text" id="login-user" placeholder="Username" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                     <input type="password" id="login-pass" placeholder="Password" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                    <button id="btn-login-action" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Enter Chat</button>
+                    <button id="btn-login-action" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition active:scale-95">Enter Chat</button>
                     <p id="login-error" class="text-red-500 text-xs text-center hidden font-medium">Invalid username or password.</p>
                 </div>
 
@@ -46,14 +51,18 @@
                         <input type="number" id="reg-age" placeholder="Age (8-1000)" min="8" max="1000" class="w-1/2 p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                         <select id="reg-gender" class="w-1/2 p-3 border rounded-lg outline-none bg-white focus:ring-2 focus:ring-blue-500">
                             <option value="">Gender...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                            <option disabled>──────────</option>
                         </select>
                     </div>
                     <div class="text-center">
                         <p class="text-xs text-gray-500 mb-2">Click photo to upload</p>
                         <input type="file" id="reg-pfp" accept="image/*" class="hidden">
-                        <img id="pfp-preview" src="https://ui-avatars.com/api/?name=?" class="avatar-lg mx-auto cursor-pointer border-4 border-blue-50 hover:opacity-80" onclick="document.getElementById('reg-pfp').click()">
+                        <img id="pfp-preview" src="https://ui-avatars.com/api/?name=?" class="avatar-lg mx-auto cursor-pointer border-4 border-blue-50 hover:opacity-80 transition" onclick="document.getElementById('reg-pfp').click()">
                     </div>
-                    <button id="btn-signup-action" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">Create Account</button>
+                    <button id="btn-signup-action" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition active:scale-95">Create Account</button>
                 </div>
             </div>
         </div>
@@ -82,11 +91,13 @@
                 </button>
             </div>
 
-            <div class="p-4 bg-gray-50 border-b flex justify-around text-xs font-black uppercase text-gray-400 tracking-tighter">
-                <button onclick="switchChat('global')" id="view-global-btn" class="active-tab pb-2 flex items-center gap-1">🌍 Public</button>
-                <button onclick="switchChat('private')" id="view-private-btn" class="pb-2 flex items-center gap-1">💬 PMs</button>
+            <div class="p-4 bg-gray-50 border-b flex items-center gap-2">
+                <button onclick="switchChat('global')" id="view-global-btn" class="flex-1 py-2 text-xs font-black uppercase text-center rounded-lg transition-all active-tab">
+                    🌍 Global Chat
+                </button>
             </div>
-
+            
+            <div class="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Users</div>
             <div id="sidebar-list" class="flex-1 overflow-y-auto">
                 <!-- Users populate here -->
             </div>
@@ -99,7 +110,7 @@
                     <div id="target-icon" class="text-3xl">🌍</div>
                     <div>
                         <h2 id="chat-title" class="font-bold text-gray-800 text-lg">Global Square</h2>
-                        <p id="chat-status" class="text-xs text-green-500 font-medium">Online Now</p>
+                        <p id="chat-status" class="text-xs text-green-500 font-medium">Public Lobby</p>
                     </div>
                 </div>
             </div>
@@ -109,7 +120,7 @@
             </div>
 
             <form id="chat-form" class="p-4 bg-white border-t flex gap-3 items-center">
-                <input type="text" id="msg-input" placeholder="Type something..." class="flex-1 bg-gray-100 p-3 rounded-full px-6 outline-none focus:ring-2 focus:ring-blue-400">
+                <input type="text" id="msg-input" placeholder="Type a message..." class="flex-1 bg-gray-100 p-3 rounded-full px-6 outline-none focus:ring-2 focus:ring-blue-400 transition-all">
                 <button type="submit" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 shadow-lg transform transition active:scale-90">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
@@ -126,11 +137,10 @@
         let chatHistory = { 'global': [] };
         let pfpBase64 = null;
         
-        // Client-side account storage (Simulated Database)
         let registeredUsers = [];
 
-        const genders = [
-            "Male", "Female", "Non-binary", "Agender", "Table", "UFO", "Attack Helicopter", "Walrus", "Potato", "Wireless Router", 
+        const extraGenders = [
+            "Non-binary", "Agender", "Table", "UFO", "Attack Helicopter", "Walrus", "Potato", "Wireless Router", 
             "Cloud", "Void", "Glitch", "Cyber-organic", "Nebula", "Pizza", "Dinosaur", "Unicorn", "Wizard", "Toaster", 
             "Shadow", "Particle", "Vibe", "AI Consciousness", "Time Traveler", "Space Dust", "Binary Code", "Nature Spirit", 
             "Dragon", "Cat", "Dog", "Meme Lord", "Gamer", "Ghost", "Alien", "Pixel", "Echo", "Spectrum", "Myth", "Legend", 
@@ -140,15 +150,29 @@
         // --- Init ---
         window.onload = () => {
             const genderSelect = document.getElementById('reg-gender');
-            genders.sort().forEach(g => {
+            extraGenders.sort().forEach(g => {
                 const opt = document.createElement('option');
                 opt.value = g; opt.textContent = g;
                 genderSelect.appendChild(opt);
             });
 
-            // Load saved accounts from localStorage if available
             const saved = localStorage.getItem('aura_users');
             if(saved) registeredUsers = JSON.parse(saved);
+
+            // Auto-login logic
+            const currentSession = localStorage.getItem('aura_current_session');
+            if (currentSession) {
+                const sessionData = JSON.parse(currentSession);
+                // Re-verify the user still exists in our simulated DB
+                const account = registeredUsers.find(u => 
+                    u.username === sessionData.username && u.password === sessionData.password
+                );
+                if (account) {
+                    myProfile = account;
+                    socket.emit('register user', myProfile);
+                    enterApp();
+                }
+            }
         };
 
         // --- Auth UI Toggles ---
@@ -173,7 +197,6 @@
             reader.readAsDataURL(e.target.files[0]);
         };
 
-        // --- In-App PFP Update Logic ---
         document.getElementById('update-pfp-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -182,13 +205,13 @@
                 const newPfp = ev.target.result;
                 myProfile.pfp = newPfp;
                 document.getElementById('my-pfp').src = newPfp;
-                // Update local storage record if logged in
                 const idx = registeredUsers.findIndex(u => u.username === myProfile.username);
                 if(idx !== -1) {
                     registeredUsers[idx].pfp = newPfp;
                     localStorage.setItem('aura_users', JSON.stringify(registeredUsers));
+                    // Update session data too
+                    localStorage.setItem('aura_current_session', JSON.stringify(registeredUsers[idx]));
                 }
-                // Emit update to server
                 socket.emit('update pfp', newPfp);
             };
             reader.readAsDataURL(file);
@@ -201,16 +224,15 @@
             const gender = document.getElementById('reg-gender').value;
             const pass = document.getElementById('reg-pass').value;
 
-            if (!user || !pass || !email || age < 8 || age > 1000 || !gender) return alert("Fill everything! Age 8-1000.");
+            if (!user || !pass || !email || isNaN(age) || age < 8 || age > 1000 || !gender) return alert("Please fill all fields correctly!");
             
-            // Check if user already exists
             if (registeredUsers.some(u => u.username.toLowerCase() === user.toLowerCase())) {
                 return alert("Username already taken!");
             }
 
             const newUser = {
                 username: user,
-                password: pass, // Simple plain text for demo
+                password: pass,
                 email: email,
                 age: age,
                 gender: gender,
@@ -219,6 +241,7 @@
 
             registeredUsers.push(newUser);
             localStorage.setItem('aura_users', JSON.stringify(registeredUsers));
+            localStorage.setItem('aura_current_session', JSON.stringify(newUser)); // Save session
             
             myProfile = newUser;
             socket.emit('register user', myProfile);
@@ -230,23 +253,16 @@
             const pass = document.getElementById('login-pass').value;
             const errorEl = document.getElementById('login-error');
 
-            if (!user || !pass) {
-                errorEl.innerText = "Please enter both fields.";
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            
-            // Validate against "database"
             const account = registeredUsers.find(u => 
                 u.username.toLowerCase() === user.toLowerCase() && u.password === pass
             );
 
             if (account) {
                 myProfile = account;
+                localStorage.setItem('aura_current_session', JSON.stringify(account)); // Save session
                 socket.emit('register user', myProfile);
                 enterApp();
             } else {
-                errorEl.innerText = "Invalid username or password.";
                 errorEl.classList.remove('hidden');
             }
         };
@@ -256,10 +272,13 @@
             document.getElementById('app-screen').classList.remove('hidden');
             document.getElementById('my-pfp').src = myProfile.pfp;
             document.getElementById('my-username-display').innerText = myProfile.username;
-            document.getElementById('my-gender-display').innerText = myProfile.gender || "Online";
+            document.getElementById('my-gender-display').innerText = myProfile.gender;
         }
 
-        document.getElementById('btn-logout').onclick = () => location.reload();
+        document.getElementById('btn-logout').onclick = () => {
+            localStorage.removeItem('aura_current_session'); // Clear session on logout
+            location.reload();
+        };
 
         // --- Socket Listeners ---
         socket.on('update user list', (users) => {
@@ -268,16 +287,16 @@
             users.forEach(u => {
                 if (u.id === socket.id) return;
                 const div = document.createElement('div');
-                div.className = `p-4 flex items-center gap-3 hover:bg-blue-50 cursor-pointer border-b transition ${targetId === u.id ? 'bg-blue-50' : ''}`;
+                div.className = `p-4 flex items-center gap-3 hover:bg-white cursor-pointer border-b transition ${targetId === u.id ? 'bg-white shadow-inner' : ''}`;
                 div.onclick = () => switchChat(u.id, u.username, u.pfp, u.gender, u.age);
                 div.innerHTML = `
                     <div class="relative">
-                        <img src="${u.pfp}" class="avatar-sm shadow-sm">
+                        <img src="${u.pfp}" class="avatar-sm shadow-sm object-cover">
                         <div class="online-dot absolute bottom-0 right-0 scale-75"></div>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="font-bold text-gray-800 truncate">${u.username}</p>
-                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-tight">${u.gender || 'User'}</p>
+                        <p class="text-[9px] text-gray-400 uppercase font-black tracking-widest">${u.gender}</p>
                     </div>
                 `;
                 list.appendChild(div);
@@ -286,13 +305,15 @@
 
         function switchChat(id, name = "Global Square", pfp = null, gender = null, age = null) {
             targetId = id;
+            document.getElementById('view-global-btn').classList.toggle('active-tab', id === 'global');
+            
             if (id === 'global') {
                 document.getElementById('chat-title').innerText = "Global Square";
                 document.getElementById('target-icon').innerText = "🌍";
-                document.getElementById('chat-status').innerText = "Public Channel";
+                document.getElementById('chat-status').innerText = "Public Lobby";
             } else {
                 document.getElementById('chat-title').innerText = name;
-                document.getElementById('target-icon').innerHTML = `<img src="${pfp}" class="avatar-sm">`;
+                document.getElementById('target-icon').innerHTML = `<img src="${pfp}" class="avatar-sm object-cover">`;
                 document.getElementById('chat-status').innerText = `${gender} • Age ${age}`;
             }
             renderMessages();
