@@ -1,55 +1,53 @@
-/**
- * Aura | The Sovereign Hub - Node.js Server
- * * This server handles static file delivery for index.html and chat.html.
- * It is designed to be lightweight, serving the frontend while the
- * client-side code manages real-time state via Firebase.
- */
-
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
-// Middleware for parsing and logging
-app.use(express.json());
+// Serve static files from the root directory
+app.use(express.static(__dirname));
 
-// Serve static assets (CSS, Images, JS) if you split them later
-app.use(express.static(path.join(__dirname, 'public')));
-
-/**
- * Route: Root
- * Delivers the initialization wizard / landing page.
- */
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-/**
- * Route: Chat Hub
- * Delivers the main Aura social interface.
- */
-app.get('/chat', (req, res) => {
-    res.sendFile(path.join(__dirname, 'chat.html'));
+// Real-time communication logic
+io.on('connection', (socket) => {
+  console.log('A guest has entered the lounge');
+
+  // Handle joining the room
+  socket.on('join', (username) => {
+    socket.username = username;
+    // Broadcast to everyone else that someone joined
+    socket.broadcast.emit('system_message', `${username} has joined the circle.`);
+  });
+
+  // Handle chat messages
+  socket.on('chat_message', (msg) => {
+    // Send message to everyone including the sender
+    io.emit('chat_message', {
+      user: socket.username || 'Anonymous',
+      text: msg.text,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+  });
+
+  socket.on('disconnect', () => {
+    if (socket.username) {
+      io.emit('system_message', `${socket.username} has left the gallery.`);
+    }
+  });
 });
 
-/**
- * Error Handling for 404s
- * Maintains the aesthetic by redirecting unknown paths to the hub.
- */
-app.use((req, res) => {
-    res.status(404).redirect('/');
-});
-
-/**
- * Server Activation
- */
-app.listen(PORT, () => {
-    console.log(`
-    -------------------------------------------
-    AURA | THE SOVEREIGN HUB
-    Status: Online
-    Port: ${PORT}
-    Environment: Production-Stable
-    -------------------------------------------
-    `);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Lumière Lounge operating on port ${PORT}`);
 });
