@@ -45,35 +45,45 @@
 
         .modal-animate { animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-        .pfp-hover { transition: transform 0.3s ease, border-color 0.3s; }
-        .pfp-hover:hover { transform: scale(1.05); border-color: var(--luxury-gold); }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- HIDDEN INPUT FOR PFP -->
+    <input type="file" id="pfp-input" class="hidden" accept="image/*">
 
     <!-- AUTH OVERLAY -->
     <div id="auth-screen" class="fixed inset-0 flex items-center justify-center auth-overlay p-4">
         <div class="w-full max-w-md text-center">
             <h1 class="serif text-7xl gold-gradient mb-2">Chatlaxy</h1>
-            <p class="text-gray-500 uppercase tracking-[0.5em] text-[9px] mb-12">Restricted Access Portal</p>
+            <p class="text-gray-500 uppercase tracking-[0.5em] text-[9px] mb-8">Restricted Access Portal</p>
             
             <div id="auth-alert" class="hidden mb-6 p-3 bg-red-900/20 border border-red-500/50 text-red-400 text-[10px] rounded-xl font-bold uppercase tracking-widest"></div>
 
             <div id="login-form-box" class="glass p-10 rounded-[2.5rem] space-y-6">
                 <h2 class="text-white font-bold uppercase tracking-widest text-[10px] mb-4">Identity Verification</h2>
-                <input type="text" id="login-user" autocomplete="off" class="luxury-input mt-1" placeholder="Username">
-                <input type="password" id="login-pass" class="luxury-input mt-1" placeholder="Master Key">
+                <input type="text" id="login-user" autocomplete="off" class="luxury-input" placeholder="Username">
+                <input type="password" id="login-pass" class="luxury-input" placeholder="Master Key">
                 <button id="btn-login" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-xl text-black font-black uppercase tracking-[0.2em] text-xs hover:brightness-110 transition active:scale-95">Authorize</button>
                 <p class="text-[10px] text-gray-500 pt-2 tracking-widest uppercase">Unauthorized? <button onclick="toggleAuth('signup')" class="text-[#d4af37] hover:underline font-black">Register Profile</button></p>
             </div>
 
-            <div id="signup-form-box" class="hidden glass p-10 rounded-[2.5rem] space-y-6">
-                <h2 class="text-white font-bold uppercase tracking-widest text-[10px] mb-4">Apply for Membership</h2>
-                <input type="text" id="reg-user" class="luxury-input mt-1" placeholder="Choose Username">
-                <input type="password" id="reg-pass" class="luxury-input mt-1" placeholder="Master Key">
+            <div id="signup-form-box" class="hidden glass p-10 rounded-[2.5rem] space-y-4 text-left">
+                <h2 class="text-white font-bold text-center uppercase tracking-widest text-[10px] mb-2">Apply for Membership</h2>
+                <input type="text" id="reg-user" class="luxury-input" placeholder="Username">
+                <input type="password" id="reg-pass" class="luxury-input" placeholder="Master Key">
+                <div class="flex gap-2">
+                    <input type="number" id="reg-age" class="luxury-input w-1/3" placeholder="Age">
+                    <select id="reg-gender" class="luxury-input flex-1 appearance-none bg-black">
+                        <option value="" disabled selected>Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                        <option value="Hidden">Confidential</option>
+                    </select>
+                </div>
                 <button id="btn-signup" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-xl text-black font-black uppercase tracking-[0.2em] text-xs hover:brightness-110 transition active:scale-95">Register</button>
-                <p class="text-[10px] text-gray-500 pt-2 tracking-widest uppercase">Have Credentials? <button onclick="toggleAuth('login')" class="text-[#d4af37] hover:underline font-black">Back to Portal</button></p>
+                <p class="text-[10px] text-center text-gray-500 pt-2 tracking-widest uppercase">Have Credentials? <button onclick="toggleAuth('login')" class="text-[#d4af37] hover:underline font-black">Back to Portal</button></p>
             </div>
         </div>
     </div>
@@ -81,22 +91,27 @@
     <!-- PROFILE MODAL -->
     <div id="profile-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl hidden" onclick="closeProfile()">
         <div class="w-full max-w-sm glass rounded-[3rem] p-10 text-center modal-animate" onclick="event.stopPropagation()">
-            <div class="relative group mx-auto w-32 h-32 mb-6">
+            <div class="relative group mx-auto w-32 h-32 mb-6 cursor-pointer" id="modal-pfp-trigger">
                 <img id="modal-pfp" src="" class="w-full h-full rounded-[2rem] object-cover border-2 border-gold/30 shadow-2xl">
-                <div id="pfp-edit-overlay" class="hidden absolute inset-0 bg-black/60 rounded-[2rem] flex items-center justify-center cursor-pointer group-hover:flex" onclick="triggerPfpUpload()">
-                    <span class="text-[9px] text-white font-black uppercase tracking-widest">Change PFP</span>
+                <div id="pfp-edit-overlay" class="hidden absolute inset-0 bg-black/60 rounded-[2rem] flex items-center justify-center group-hover:flex">
+                    <span class="text-[9px] text-white font-black uppercase tracking-widest text-center px-2">Update Image</span>
                 </div>
-                <input type="file" id="pfp-input" class="hidden" accept="image/*" onchange="handlePfpChange(event)">
             </div>
             
             <h2 id="modal-name" class="serif text-4xl gold-gradient mb-2">Username</h2>
             <div id="modal-rank-container" class="flex justify-center mb-6"></div>
             
-            <div class="py-8 border-y border-white/5 my-6 text-left">
-                <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black">Status</p>
-                <div class="flex items-center gap-2 mt-2">
-                    <div id="modal-status-dot" class="status-dot"></div>
-                    <p id="modal-status" class="text-white font-black uppercase tracking-widest text-[10px]">-</p>
+            <div class="py-6 border-y border-white/5 my-6 space-y-4 text-left">
+                <div>
+                    <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black">Bio Data</p>
+                    <p id="modal-bio" class="text-white font-black uppercase tracking-widest text-[10px] mt-1">-</p>
+                </div>
+                <div>
+                    <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black">Current Status</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div id="modal-status-dot" class="status-dot"></div>
+                        <p id="modal-status" class="text-white font-black uppercase tracking-widest text-[10px]">-</p>
+                    </div>
                 </div>
             </div>
 
@@ -126,8 +141,8 @@
             <div class="mb-10">
                 <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] mb-8 px-2">Account</p>
                 <button id="status-toggle-btn" class="flex items-center gap-4 w-full p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-gold/30 transition-all">
-                    <div id="my-status-dot" class="status-dot status-online"></div>
-                    <span id="my-status-text" class="text-[10px] font-black uppercase tracking-[0.2em] text-white hidden lg:block">Online</span>
+                    <div id="my-status-dot" class="status-dot"></div>
+                    <span id="my-status-text" class="text-[10px] font-black uppercase tracking-[0.2em] text-white hidden lg:block">-</span>
                 </button>
                 <div id="status-dropdown" class="hidden absolute left-8 w-56 mt-2 glass rounded-2xl overflow-hidden shadow-2xl z-50">
                     <button onclick="setStatus('online')" class="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition border-b border-white/5"><div class="status-dot status-online"></div><span class="text-[10px] font-bold text-white uppercase tracking-widest">Online</span></button>
@@ -142,13 +157,6 @@
 
         <main class="flex-1 flex flex-col bg-[#0d0f14] relative">
             <div id="messages" class="flex-1 overflow-y-auto p-10 lg:p-16 space-y-12 scroll-smooth"></div>
-            <div id="quote-preview" class="hidden mx-10 px-8 py-4 border-l-2 border-gold bg-gold/5 rounded-tr-3xl flex items-center justify-between">
-                <div class="flex flex-col overflow-hidden">
-                    <p id="quote-preview-name" class="text-[9px] text-gold font-black uppercase tracking-widest mb-1"></p>
-                    <p id="quote-preview-text" class="text-xs text-gray-400 truncate italic font-medium"></p>
-                </div>
-                <button onclick="clearQuote()" class="text-gray-600 hover:text-white transition ml-4">✕</button>
-            </div>
             <div class="p-10 pt-0">
                 <form id="chat-form" class="bg-[#161a21] border border-[#222] rounded-[2rem] flex items-center px-6 py-2 gap-4">
                     <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" class="flex-1 bg-transparent py-5 outline-none text-white text-sm font-medium">
@@ -156,20 +164,11 @@
                 </form>
             </div>
         </main>
-
-        <aside class="w-80 border-l border-[#222] bg-[#0a0c10] hidden xl:flex flex-col shrink-0">
-            <div class="p-10 border-b border-white/5 flex items-center justify-between">
-                <span class="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">Participants</span>
-                <span id="active-count" class="text-[10px] font-black text-gold bg-gold/5 px-4 py-1.5 rounded-full">0</span>
-            </div>
-            <div id="sidebar-list" class="flex-1 overflow-y-auto p-8 space-y-3"></div>
-        </aside>
     </div>
 
     <script>
         const socket = io();
         let myProfile = null;
-        let quotingMessage = null;
         let chatHistory = [];
         let globalUsers = [];
 
@@ -184,19 +183,23 @@
             return `<span class="rank-tag ${r.class}">${r.name}</span>`;
         }
 
-        // AUTH & PERSISTENCE
+        // LOAD PERSISTENT DATA
         window.onload = () => {
-            const savedHistory = localStorage.getItem('chatlaxy_history_v3');
+            const savedHistory = localStorage.getItem('chatlaxy_history_v4');
             if(savedHistory) {
                 chatHistory = JSON.parse(savedHistory);
                 renderMessages();
             }
 
-            const session = localStorage.getItem('chatlaxy_session_v3');
+            const session = localStorage.getItem('chatlaxy_session_v4');
             if(session) {
-                myProfile = JSON.parse(session);
-                socket.emit('register user', myProfile);
-                enterApp();
+                try {
+                    myProfile = JSON.parse(session);
+                    socket.emit('register user', myProfile);
+                    enterApp();
+                } catch (e) {
+                    localStorage.removeItem('chatlaxy_session_v4');
+                }
             }
         };
 
@@ -212,91 +215,109 @@
             alert.classList.remove('hidden');
         }
 
+        function saveEverything() {
+            if (!myProfile) return;
+            // Save active session
+            localStorage.setItem('chatlaxy_session_v4', JSON.stringify(myProfile));
+            // Update account DB
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v4') || "[]");
+            const idx = db.findIndex(u => u.username === myProfile.username);
+            if (idx !== -1) {
+                db[idx] = { ...myProfile };
+                localStorage.setItem('chatlaxy_accounts_v4', JSON.stringify(db));
+            }
+        }
+
+        // LOGIN
         document.getElementById('btn-login').onclick = () => {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v3') || "[]");
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v4') || "[]");
             const found = db.find(u => u.username.toLowerCase() === user.toLowerCase() && u.password === pass);
 
-            if(!found) return showAlert("Verification Failed.");
+            if(!found) return showAlert("Identity Verification Failed.");
+            
             myProfile = { ...found };
-            delete myProfile.password;
-            saveSession();
+            saveEverything();
             socket.emit('register user', myProfile);
             enterApp();
         };
 
+        // SIGNUP
         document.getElementById('btn-signup').onclick = () => {
             const user = document.getElementById('reg-user').value.trim();
             const pass = document.getElementById('reg-pass').value;
-            if(!user || !pass) return showAlert("Fields missing.");
+            const age = document.getElementById('reg-age').value;
+            const gender = document.getElementById('reg-gender').value;
 
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v3') || "[]");
-            if(db.some(u => u.username.toLowerCase() === user.toLowerCase())) return showAlert("Taken.");
+            if(!user || !pass || !age || !gender) return showAlert("Fill all fields.");
 
-            const newAcc = {
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v4') || "[]");
+            if(db.some(u => u.username.toLowerCase() === user.toLowerCase())) return showAlert("Name taken.");
+
+            myProfile = {
                 username: user,
                 password: pass,
+                age: age,
+                gender: gender,
                 rank: user.toLowerCase().includes('admin') ? 'GM' : 'MEMBER',
                 status: "online",
                 pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`
             };
-            db.push(newAcc);
-            localStorage.setItem('chatlaxy_accounts_v3', JSON.stringify(db));
-            myProfile = { ...newAcc };
-            delete myProfile.password;
-            saveSession();
+            db.push(myProfile);
+            localStorage.setItem('chatlaxy_accounts_v4', JSON.stringify(db));
+            saveEverything();
             socket.emit('register user', myProfile);
             enterApp();
         };
-
-        function saveSession() {
-            localStorage.setItem('chatlaxy_session_v3', JSON.stringify(myProfile));
-            // Also update the persistent DB if it exists
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v3') || "[]");
-            const idx = db.findIndex(u => u.username === myProfile.username);
-            if (idx !== -1) {
-                db[idx] = { ...db[idx], pfp: myProfile.pfp, rank: myProfile.rank };
-                localStorage.setItem('chatlaxy_accounts_v3', JSON.stringify(db));
-            }
-        }
 
         function enterApp() {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('header-username').innerText = myProfile.username;
             document.getElementById('header-pfp').src = myProfile.pfp;
             document.getElementById('header-rank-container').innerHTML = getRankTag(myProfile.rank);
+            document.getElementById('my-status-dot').className = `status-dot status-${myProfile.status}`;
+            document.getElementById('my-status-text').innerText = myProfile.status.toUpperCase();
             renderMessages();
         }
 
+        // LOGOUT
         document.getElementById('btn-logout').onclick = () => {
-            localStorage.removeItem('chatlaxy_session_v3');
+            localStorage.removeItem('chatlaxy_session_v4');
             location.reload();
         };
 
-        // PROFILE & PFP LOGIC
-        function triggerPfpUpload() {
-            document.getElementById('pfp-input').click();
-        }
+        // PFP CHANGE LOGIC (FIXED TRIGGER)
+        const pfpInput = document.getElementById('pfp-input');
+        
+        // Trigger from Header OR Modal
+        document.getElementById('header-pfp').parentElement.onclick = () => viewMyProfile();
+        document.getElementById('modal-pfp-trigger').onclick = () => {
+            const isMe = myProfile && document.getElementById('modal-name').innerText === myProfile.username;
+            if(isMe) pfpInput.click();
+        };
 
-        function handlePfpChange(e) {
+        pfpInput.onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
                 const base64 = event.target.result;
                 myProfile.pfp = base64;
+                
+                // Update UI
                 document.getElementById('modal-pfp').src = base64;
                 document.getElementById('header-pfp').src = base64;
-                saveSession();
+                
+                saveEverything();
                 socket.emit('register user', myProfile);
-                renderMessages(); // Refresh chat images
+                renderMessages(); 
             };
             reader.readAsDataURL(file);
-        }
+        };
 
         function viewProfile(username) {
-            const user = globalUsers.find(u => u.username === username) || (myProfile.username === username ? myProfile : null);
+            const user = globalUsers.find(u => u.username === username) || (myProfile && myProfile.username === username ? myProfile : null);
             if(!user) return;
 
             document.getElementById('modal-pfp').src = user.pfp;
@@ -304,114 +325,74 @@
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
             document.getElementById('modal-status').innerText = user.status.toUpperCase();
             document.getElementById('modal-status-dot').className = `status-dot status-${user.status}`;
+            document.getElementById('modal-bio').innerText = `${user.age} Years • ${user.gender}`;
             
-            // Only show edit overlay if it's my profile
-            document.getElementById('pfp-edit-overlay').style.display = (user.username === myProfile.username) ? 'flex' : 'none';
-            
+            const isMe = myProfile && user.username === myProfile.username;
+            document.getElementById('pfp-edit-overlay').classList.toggle('hidden', !isMe);
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
         function closeProfile() { document.getElementById('profile-modal').classList.add('hidden'); }
         function viewMyProfile() { viewProfile(myProfile.username); }
 
-        // STATUS
-        const statusBtn = document.getElementById('status-toggle-btn');
-        const statusDropdown = document.getElementById('status-dropdown');
-        statusBtn.onclick = (e) => { e.stopPropagation(); statusDropdown.classList.toggle('hidden'); };
-        window.onclick = () => statusDropdown.classList.add('hidden');
-
         function setStatus(s) {
             myProfile.status = s;
             document.getElementById('my-status-dot').className = `status-dot status-${s}`;
             document.getElementById('my-status-text').innerText = s.toUpperCase();
-            saveSession();
+            saveEverything();
             socket.emit('register user', myProfile);
         }
 
-        // SYNC
+        // STATUS TOGGLE
+        const statusBtn = document.getElementById('status-toggle-btn');
+        const statusDropdown = document.getElementById('status-dropdown');
+        statusBtn.onclick = (e) => { e.stopPropagation(); statusDropdown.classList.toggle('hidden'); };
+        window.onclick = () => { statusDropdown.classList.add('hidden'); };
+
+        // SOCKETS
         socket.on('update user list', (users) => {
             globalUsers = users;
-            const list = document.getElementById('sidebar-list');
-            document.getElementById('active-count').innerText = users.length;
-            list.innerHTML = '';
-            users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = "flex items-center gap-4 p-4 rounded-2xl cursor-pointer hover:bg-white/5 transition";
-                div.onclick = () => viewProfile(u.username);
-                div.innerHTML = `
-                    <div class="relative shrink-0">
-                        <img src="${u.pfp}" class="w-12 h-12 rounded-xl object-cover border border-white/10">
-                        <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0a0c10] status-${u.status}"></div>
-                    </div>
-                    <div class="overflow-hidden">
-                        <p class="text-xs font-black text-white truncate serif uppercase">${u.username}</p>
-                        <div class="mt-1">${getRankTag(u.rank)}</div>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
         });
 
-        // CHAT
         document.getElementById('chat-form').onsubmit = (e) => {
             e.preventDefault();
             const input = document.getElementById('msg-input');
             if(!input.value.trim()) return;
             socket.emit('global message', {
                 id: Date.now(),
-                sender: myProfile,
+                sender: { ...myProfile },
                 text: input.value.trim(),
-                quote: quotingMessage,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
             });
             input.value = '';
-            clearQuote();
         };
 
         socket.on('global message', (msg) => {
             chatHistory.push(msg);
             if(chatHistory.length > 100) chatHistory.shift();
-            localStorage.setItem('chatlaxy_history_v3', JSON.stringify(chatHistory));
+            localStorage.setItem('chatlaxy_history_v4', JSON.stringify(chatHistory));
             renderMessages();
         });
-
-        function quoteMessage(id) {
-            const msg = chatHistory.find(m => m.id === id);
-            if(msg) {
-                quotingMessage = { name: msg.sender.username, text: msg.text };
-                document.getElementById('quote-preview-name').innerText = msg.sender.username;
-                document.getElementById('quote-preview-text').innerText = msg.text;
-                document.getElementById('quote-preview').classList.remove('hidden');
-                document.getElementById('msg-input').focus();
-            }
-        }
-        function clearQuote() { quotingMessage = null; document.getElementById('quote-preview').classList.add('hidden'); }
 
         function renderMessages() {
             const container = document.getElementById('messages');
             container.innerHTML = '';
             chatHistory.forEach(m => {
-                const isMe = m.sender.username === myProfile.username;
+                const isMe = myProfile && m.sender.username === myProfile.username;
                 const div = document.createElement('div');
                 div.className = `message-row flex gap-8 group`;
                 div.innerHTML = `
                     <div class="shrink-0 pt-1">
                         <img src="${m.sender.pfp}" onclick="viewProfile('${m.sender.username}')" 
-                             class="w-14 h-14 rounded-2xl object-cover border border-white/5 cursor-pointer pfp-hover shadow-2xl">
+                             class="w-14 h-14 rounded-2xl object-cover border border-white/5 cursor-pointer shadow-2xl">
                     </div>
                     <div class="flex-1">
                         <div class="flex items-center gap-4 mb-3">
                             <span class="serif text-xl font-bold ${isMe ? 'gold-gradient' : 'text-white'}">${m.sender.username}</span>
                             ${getRankTag(m.sender.rank)}
                             <span class="text-[9px] text-gray-800 font-black uppercase tracking-[0.3em]">${m.timestamp}</span>
-                            <button onclick="quoteMessage(${m.id})" class="ml-auto opacity-0 group-hover:opacity-100 transition p-1 hover:text-gold text-gray-700">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                            </button>
                         </div>
-                        <div class="no-bubble-content">
-                            ${m.quote ? `<div class="quote-box"><span class="font-black text-[9px] opacity-40 uppercase">${m.quote.name}</span><p class="mt-1 font-medium">${m.quote.text}</p></div>` : ''}
-                            <p class="text-[15px] leading-relaxed text-gray-300 font-medium">${m.text}</p>
-                        </div>
+                        <p class="text-[15px] leading-relaxed text-gray-300 font-medium">${m.text}</p>
                     </div>
                 `;
                 container.appendChild(div);
