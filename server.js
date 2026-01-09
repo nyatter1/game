@@ -25,6 +25,7 @@ app.get('/', (req, res) => {
 
 /**
  * HELPER: Broadcast updated user list
+ * We ensure we send the array of unique usernames to EVERYONE
  */
 function broadcastUserUpdate() {
     const onlineNames = Array.from(new Set(Object.values(onlineUsers)));
@@ -34,11 +35,19 @@ function broadcastUserUpdate() {
 io.on('connection', (socket) => {
     console.log('New connection:', socket.id);
 
+    // When a user connects, we immediately send them the current online list
+    // so they aren't looking at an empty sidebar while waiting for the next update
+    const currentOnlineNames = Array.from(new Set(Object.values(onlineUsers)));
+    socket.emit('user_update', currentOnlineNames);
+
     // Handle user joining
     socket.on('join', (username) => {
+        if (!username) return;
+        
         socket.username = username;
         onlineUsers[socket.id] = username;
         
+        // Force a global refresh for everyone
         broadcastUserUpdate();
         
         // System notification
@@ -52,9 +61,6 @@ io.on('connection', (socket) => {
         // Check if the message is a command
         if (data.text.startsWith('/')) {
             const result = handleCommand(data.text, socket, io);
-            
-            // Emit a private response to the user who sent the command
-            // The client index.html is set up to show these as alerts
             socket.emit('command_response', result);
             return;
         }
@@ -78,6 +84,7 @@ io.on('connection', (socket) => {
         const username = onlineUsers[socket.id];
         if (username) {
             delete onlineUsers[socket.id];
+            // Immediately inform others that this user left
             broadcastUserUpdate();
             io.emit('system_message', `${username.toUpperCase()} HAS LEFT THE CIRCLE`);
         }
