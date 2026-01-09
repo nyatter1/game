@@ -1,109 +1,148 @@
 /**
  * server.js
- * A robust Express.js server template featuring middleware setup,
- * health checks, and a clean structure for API development.
+ * Real-time backend for Elite Circle Luxury Chat.
+ * * TO RUN THIS SERVER:
+ * 1. Ensure you have a package.json with these dependencies:
+ * "dependencies": {
+ * "express": "^4.18.2",
+ * "socket.io": "^4.7.2",
+ * "cors": "^2.8.5"
+ * }
+ * 2. Run: npm install
+ * 3. Run: npm start (ensure scripts.start is "node server.js")
  */
 
 const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
+const http = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
+const cors = require('cors');
 
-// Initialize the Express application
 const app = express();
+const server = http.createServer(app);
 
-// --- Configuration ---
+// Initialize Socket.io with CORS configured for web clients
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Adjust this to your specific domain in production
+        methods: ["GET", "POST"]
+    }
+});
+
 const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // --- Middleware ---
-
-// Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors());
-
-// HTTP request logger (morgan)
-app.use(morgan(NODE_ENV === 'development' ? 'dev' : 'combined'));
-
-// Parse incoming JSON payloads
 app.use(express.json());
 
-// Parse URL-encoded bodies
-app.use(express.urlencoded({ extended: true }));
-
-// Serve static files from a "public" directory if needed
+// Serve static files from the 'public' directory
+// Make sure your frontend files (index.html, etc.) are inside a folder named 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Routes ---
-
-/**
- * @route   GET /health
- * @desc    Health check endpoint for monitoring and uptime services
- */
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
-});
-
-/**
- * @route   GET /api/example
- * @desc    A sample API route
- */
-app.get('/api/example', (req, res) => {
-  res.status(200).json({
-    message: 'Hello from the server!',
-    data: {
-      items: [1, 2, 3, 4, 5]
+// --- In-Memory State ---
+let messages = [
+    { 
+        id: 1, 
+        senderName: 'System', 
+        text: 'Secure connection established. Welcome to the Elite Circle.', 
+        time: new Date().toLocaleTimeString(), 
+        isSystem: true 
     }
-  });
+];
+let onlineUsers = new Map(); // Key: socket.id, Value: user object
+
+// --- Socket.io Logic ---
+io.on('connection', (socket) => {
+    console.log(`New connection established: ${socket.id}`);
+
+    // When a user joins the session
+    socket.on('join', (userData) => {
+        // Store user info associated with this specific socket
+        onlineUsers.set(socket.id, {
+            ...userData,
+            socketId: socket.id,
+            joinedAt: new Date().toISOString()
+        });
+
+        // Send existing chat history to the newly connected user
+        socket.emit('chat_history', messages);
+
+        // Broadcast the updated online user list to all connected clients
+        io.emit('user_list', Array.from(onlineUsers.values()));
+        
+        console.log(`${userData.name || 'Anonymous'} joined. Total active: ${onlineUsers.size}`);
+    });
+
+    // Handle profile updates (name changes, avatar swaps)
+    socket.on('update_profile', (updatedData) => {
+        if (onlineUsers.has(socket.id)) {
+            const currentUser = onlineUsers.get(socket.id);
+            onlineUsers.set(socket.id, { ...currentUser, ...updatedData });
+            io.emit('user_list', Array.from(onlineUsers.values()));
+        }
+    });
+
+    // Handle incoming chat messages
+    socket.on('send_message', (msgData) => {
+        const message = {
+            ...msgData,
+            id: Date.now(),
+            timestamp: new Date().toISOString()
+        };
+        
+        messages.push(message);
+        
+        // Keep memory usage low: limit history to last 100 messages
+        if (messages.length > 100) {
+            messages.shift();
+        }
+
+        // Send the message to everyone (including sender)
+        io.emit('new_message', message);
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', (reason) => {
+        if (onlineUsers.has(socket.id)) {
+            const user = onlineUsers.get(socket.id);
+            onlineUsers.delete(socket.id);
+            
+            // Update the user list for remaining clients
+            io.emit('user_list', Array.from(onlineUsers.values()));
+            console.log(`${user.name || 'User'} left (${reason}). Remaining: ${onlineUsers.size}`);
+        }
+    });
 });
 
-// --- Error Handling ---
+// --- API Routes ---
 
-/**
- * 404 Handler
- * Catch-all for any request that doesn't match a defined route
- */
-app.use((req, res, next) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
-  res.status(404);
-  next(error);
+// Health check for deployment monitoring
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'active', 
+        usersOnline: onlineUsers.size,
+        memoryUsage: process.memoryUsage().rss
+    });
 });
 
-/**
- * Global Error Handler
- * Catches all errors passed via next(error)
- */
-app.use((err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  
-  res.status(statusCode).json({
-    message: err.message,
-    // Only show stack trace in development mode
-    stack: NODE_ENV === 'development' ? err.stack : '🥞',
-  });
+// Fallback: Serve index.html for any unknown routes (supports SPA routing)
+app.get('*', (req, res) => {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            res.status(404).send("Front-end 'public/index.html' not found. Please ensure your frontend files are in the 'public' folder.");
+        }
+    });
 });
 
-// --- Server Startup ---
-
-const server = app.listen(PORT, () => {
-  console.log(`
-  🚀 Server running in ${NODE_ENV} mode
-  📡 Listening on port: ${PORT}
-  🔗 Health check: http://localhost:${PORT}/health
-  `);
-});
-
-/**
- * Graceful Shutdown
- * Ensures the server closes connections before exiting
- */
-process.on('SIGTERM', () => {
-  console.info('SIGTERM signal received. Closing HTTP server...');
-  server.close(() => {
-    console.log('HTTP server closed.');
-    process.exit(0);
-  });
+// --- Start Server ---
+server.listen(PORT, () => {
+    console.log(`
+    =========================================
+    ELITE CIRCLE BACKEND RUNNING
+    Port: ${PORT}
+    Status: Online
+    Ready for npm start connections.
+    =========================================
+    `);
 });
