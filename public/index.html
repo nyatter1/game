@@ -368,8 +368,12 @@
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
-            document.getElementById('modal-status').innerText = user.status.toUpperCase();
-            document.getElementById('modal-status-dot').className = `status-dot status-${user.status}`;
+            
+            // Fix: Add fallback for status to prevent 'toUpperCase' undefined error
+            const userStatus = user.status || "online";
+            document.getElementById('modal-status').innerText = userStatus.toUpperCase();
+            document.getElementById('modal-status-dot').className = `status-dot status-${userStatus}`;
+            
             document.getElementById('modal-bio').innerText = `${user.age} Years • ${user.gender}`;
             
             // IF YOU ARE DEVELOPER, YOU SEE CONTROLS REGARDLESS
@@ -460,7 +464,7 @@
                 div.innerHTML = `
                     <div class="relative">
                         <img src="${u.pfp}" class="w-10 h-10 rounded-xl object-cover border border-white/5">
-                        <div class="absolute -bottom-1 -right-1 status-dot status-${u.status} border border-black scale-75"></div>
+                        <div class="absolute -bottom-1 -right-1 status-dot status-${u.status || 'online'} border border-black scale-75"></div>
                     </div>
                     <div class="hidden lg:block overflow-hidden">
                         <p class="text-[11px] font-black text-white uppercase truncate">${u.username}</p>
