@@ -20,9 +20,15 @@
         .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .rank-tag { padding: 2px 8px; border-radius: 4px; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
-        .rank-grandmaster { background: linear-gradient(90deg, #ff4d4d, #f9e29c); color: #000; }
-        .rank-elite { background: linear-gradient(90deg, #d4af37, #f9e29c); color: #000; }
+        .rank-tag { padding: 2px 6px; border-radius: 4px; font-size: 7px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; display: inline-block; }
+        
+        /* Rank Styles */
+        .rank-dev { background: linear-gradient(90deg, #00f2fe, #4facfe); color: #fff; box-shadow: 0 0 10px rgba(79, 172, 254, 0.4); }
+        .rank-ceo { background: #ff0055; color: #fff; }
+        .rank-owner { background: #ffd700; color: #000; }
+        .rank-admin { background: #ff4d4d; color: #fff; }
+        .rank-mod { background: #2ecc71; color: #fff; }
+        .rank-vip { background: #9b59b6; color: #fff; }
         .rank-member { background: #333; color: #aaa; }
 
         ::-webkit-scrollbar { width: 4px; }
@@ -50,7 +56,6 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- HIDDEN INPUT FOR PFP -->
     <input type="file" id="pfp-input" class="hidden" accept="image/*">
 
     <!-- AUTH OVERLAY -->
@@ -89,7 +94,7 @@
         </div>
     </div>
 
-    <!-- PROFILE MODAL -->
+    <!-- PROFILE / ADMIN MODAL -->
     <div id="profile-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl hidden" onclick="closeProfile()">
         <div class="w-full max-w-sm glass rounded-[3rem] p-10 text-center modal-animate" onclick="event.stopPropagation()">
             <div class="relative group mx-auto w-32 h-32 mb-6 cursor-pointer" id="modal-pfp-trigger">
@@ -102,6 +107,31 @@
             <h2 id="modal-name" class="serif text-4xl gold-gradient mb-2">Username</h2>
             <div id="modal-rank-container" class="flex justify-center mb-6"></div>
             
+            <div id="admin-controls" class="hidden mb-6 p-4 border border-blue-500/30 bg-blue-500/5 rounded-2xl text-left">
+                <p class="text-[8px] text-blue-400 font-black uppercase tracking-[0.2em] mb-2">Developer Authority</p>
+                <select id="rank-selector" onchange="applyRankChange()" class="w-full bg-black border border-white/10 text-[10px] text-white p-2 rounded-lg outline-none uppercase font-black tracking-widest">
+                    <optgroup label="Staff Tier" class="bg-black text-gray-500">
+                        <option value="DEVELOPER">Developer</option>
+                        <option value="CEO">CEO</option>
+                        <option value="SITE_HELPER">Site-Helper</option>
+                        <option value="OWNER">Owner</option>
+                        <option value="CO_OWNER">Co-Owner</option>
+                        <option value="HEAD_OWNER">Head-Owner</option>
+                        <option value="SUPER_ADMIN">Super-Admin</option>
+                        <option value="ADMIN">Admin</option>
+                        <option value="MOD">Mod</option>
+                    </optgroup>
+                    <optgroup label="User Tier" class="bg-black text-gray-500">
+                        <option value="LEGEND">Legend</option>
+                        <option value="BEAST">Beast</option>
+                        <option value="PREMIUM">Premium</option>
+                        <option value="SUPER_VIP">Super-VIP</option>
+                        <option value="VIP">VIP</option>
+                        <option value="MEMBER">Member</option>
+                    </optgroup>
+                </select>
+            </div>
+
             <div class="py-6 border-y border-white/5 my-6 space-y-4 text-left">
                 <div>
                     <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black">Bio Data</p>
@@ -128,7 +158,6 @@
             <p class="text-[10px] text-white font-black uppercase tracking-[0.4em] hidden md:block">Elite Network</p>
         </div>
         
-        <!-- Header PFP now triggers File Upload directly -->
         <div class="flex items-center gap-4 group cursor-pointer" onclick="document.getElementById('pfp-input').click()">
             <div class="text-right hidden sm:block">
                 <p id="header-username" class="text-xs font-black text-white uppercase tracking-widest">Guest</p>
@@ -144,7 +173,8 @@
     </header>
 
     <div class="flex flex-1 overflow-hidden">
-        <aside class="w-20 lg:w-72 border-r border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
+        <!-- LEFT SIDEBAR: ACCOUNT ONLY -->
+        <aside class="w-20 lg:w-64 border-r border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
             <div class="mb-10">
                 <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] mb-8 px-2">Account</p>
                 <button id="status-toggle-btn" class="flex items-center gap-4 w-full p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-gold/30 transition-all">
@@ -157,20 +187,12 @@
                     <button onclick="setStatus('dnd')" class="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition"><div class="status-dot status-dnd"></div><span class="text-[10px] font-bold text-white uppercase tracking-widest">Busy</span></button>
                 </div>
             </div>
-
-            <!-- PLAYERS ONLINE LIST RESTORED -->
-            <div class="flex-1 overflow-y-auto mt-4 pr-2">
-                <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] mb-6 px-2">Online Members</p>
-                <div id="online-users-list" class="space-y-2">
-                    <!-- Users injected here -->
-                </div>
-            </div>
-
-            <div class="mt-8">
-                <button id="btn-logout" class="w-full p-5 rounded-2xl border border-red-900/10 text-red-500/80 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-red-900/10 hover:text-red-500 transition">Disconnect</button>
+            <div class="mt-auto">
+                <button id="btn-logout" class="w-full p-5 rounded-2xl border border-red-900/10 text-red-500/80 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-red-900/10 hover:text-red-500 transition">Logoff</button>
             </div>
         </aside>
 
+        <!-- MAIN CHAT -->
         <main class="flex-1 flex flex-col bg-[#0d0f14] relative">
             <div id="messages" class="flex-1 overflow-y-auto p-10 lg:p-16 space-y-12 scroll-smooth"></div>
             <div class="p-10 pt-0">
@@ -180,6 +202,16 @@
                 </form>
             </div>
         </main>
+
+        <!-- RIGHT SIDEBAR: ONLINE USERS -->
+        <aside class="w-20 lg:w-72 border-l border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
+            <div class="flex-1 overflow-y-auto">
+                <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] mb-6 px-2">Online Members</p>
+                <div id="online-users-list" class="space-y-3">
+                    <!-- Injected -->
+                </div>
+            </div>
+        </aside>
     </div>
 
     <script>
@@ -187,34 +219,51 @@
         let myProfile = null;
         let chatHistory = [];
         let globalUsers = [];
+        let viewingUser = null; // for admin changes
 
-        const RANKS = {
-            GM: { name: 'Grandmaster', class: 'rank-grandmaster' },
-            ELITE: { name: 'Elite', class: 'rank-elite' },
-            MEMBER: { name: 'Member', class: 'rank-member' }
+        const RANK_CONFIG = {
+            DEVELOPER: { name: 'Developer', class: 'rank-dev', weight: 100 },
+            CEO: { name: 'CEO', class: 'rank-ceo', weight: 99 },
+            HEAD_OWNER: { name: 'Head-Owner', class: 'rank-owner', weight: 98 },
+            OWNER: { name: 'Owner', class: 'rank-owner', weight: 97 },
+            CO_OWNER: { name: 'Co-Owner', class: 'rank-owner', weight: 96 },
+            SITE_HELPER: { name: 'Site-Helper', class: 'rank-mod', weight: 95 },
+            SUPER_ADMIN: { name: 'Super-Admin', class: 'rank-admin', weight: 94 },
+            ADMIN: { name: 'Admin', class: 'rank-admin', weight: 93 },
+            MOD: { name: 'Mod', class: 'rank-mod', weight: 92 },
+            LEGEND: { name: 'Legend', class: 'rank-vip', weight: 50 },
+            BEAST: { name: 'Beast', class: 'rank-vip', weight: 40 },
+            PREMIUM: { name: 'Premium', class: 'rank-vip', weight: 30 },
+            SUPER_VIP: { name: 'Super-VIP', class: 'rank-vip', weight: 20 },
+            VIP: { name: 'VIP', class: 'rank-vip', weight: 10 },
+            MEMBER: { name: 'Member', class: 'rank-member', weight: 0 }
         };
 
         function getRankTag(rankKey) {
-            const r = RANKS[rankKey] || RANKS.MEMBER;
+            const r = RANK_CONFIG[rankKey] || RANK_CONFIG.MEMBER;
             return `<span class="rank-tag ${r.class}">${r.name}</span>`;
         }
 
-        // LOAD PERSISTENT DATA
         window.onload = () => {
-            const savedHistory = localStorage.getItem('chatlaxy_history_v4');
+            const savedHistory = localStorage.getItem('chatlaxy_history_v5');
             if(savedHistory) {
                 chatHistory = JSON.parse(savedHistory);
                 renderMessages();
             }
 
-            const session = localStorage.getItem('chatlaxy_session_v4');
+            const session = localStorage.getItem('chatlaxy_session_v5');
             if(session) {
                 try {
                     myProfile = JSON.parse(session);
+                    // Force refresh rank from "database" in case it was changed while offline
+                    const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
+                    const updated = db.find(u => u.username === myProfile.username);
+                    if(updated) myProfile = updated;
+                    
                     socket.emit('register user', myProfile);
                     enterApp();
                 } catch (e) {
-                    localStorage.removeItem('chatlaxy_session_v4');
+                    localStorage.removeItem('chatlaxy_session_v5');
                 }
             }
         };
@@ -233,20 +282,19 @@
 
         function saveEverything() {
             if (!myProfile) return;
-            localStorage.setItem('chatlaxy_session_v4', JSON.stringify(myProfile));
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v4') || "[]");
+            localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
             const idx = db.findIndex(u => u.username === myProfile.username);
             if (idx !== -1) {
                 db[idx] = { ...myProfile };
-                localStorage.setItem('chatlaxy_accounts_v4', JSON.stringify(db));
+                localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
             }
         }
 
-        // LOGIN
         document.getElementById('btn-login').onclick = () => {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v4') || "[]");
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
             const found = db.find(u => u.username.toLowerCase() === user.toLowerCase() && u.password === pass);
 
             if(!found) return showAlert("Identity Verification Failed.");
@@ -257,7 +305,6 @@
             enterApp();
         };
 
-        // SIGNUP
         document.getElementById('btn-signup').onclick = () => {
             const user = document.getElementById('reg-user').value.trim();
             const pass = document.getElementById('reg-pass').value;
@@ -266,7 +313,7 @@
 
             if(!user || !pass || !age || !gender) return showAlert("Fill all fields.");
 
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v4') || "[]");
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
             if(db.some(u => u.username.toLowerCase() === user.toLowerCase())) return showAlert("Name taken.");
 
             myProfile = {
@@ -274,12 +321,12 @@
                 password: pass,
                 age: age,
                 gender: gender,
-                rank: user.toLowerCase().includes('admin') ? 'GM' : 'MEMBER',
+                rank: user.toLowerCase() === 'developer' ? 'DEVELOPER' : 'MEMBER',
                 status: "online",
                 pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`
             };
             db.push(myProfile);
-            localStorage.setItem('chatlaxy_accounts_v4', JSON.stringify(db));
+            localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
             saveEverything();
             socket.emit('register user', myProfile);
             enterApp();
@@ -295,30 +342,19 @@
             renderMessages();
         }
 
-        // LOGOUT
         document.getElementById('btn-logout').onclick = () => {
-            localStorage.removeItem('chatlaxy_session_v4');
+            localStorage.removeItem('chatlaxy_session_v5');
             location.reload();
         };
 
-        // PFP CHANGE LOGIC
-        const pfpInput = document.getElementById('pfp-input');
-        
-        // Modal Trigger
-        document.getElementById('modal-pfp-trigger').onclick = () => {
-            const isMe = myProfile && document.getElementById('modal-name').innerText === myProfile.username;
-            if(isMe) pfpInput.click();
-        };
-
-        pfpInput.onchange = (e) => {
+        // PFP 
+        document.getElementById('pfp-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                const base64 = event.target.result;
-                myProfile.pfp = base64;
-                document.getElementById('modal-pfp').src = base64;
-                document.getElementById('header-pfp').src = base64;
+                myProfile.pfp = event.target.result;
+                document.getElementById('header-pfp').src = myProfile.pfp;
                 saveEverything();
                 socket.emit('register user', myProfile);
                 renderMessages(); 
@@ -330,6 +366,7 @@
             const user = globalUsers.find(u => u.username === username) || (myProfile && myProfile.username === username ? myProfile : null);
             if(!user) return;
 
+            viewingUser = user;
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
@@ -337,13 +374,44 @@
             document.getElementById('modal-status-dot').className = `status-dot status-${user.status}`;
             document.getElementById('modal-bio').innerText = `${user.age} Years • ${user.gender}`;
             
+            // ADMIN CHECK: If I am the DEVELOPER, I see the rank selector
+            const isMeDev = myProfile && myProfile.rank === 'DEVELOPER';
+            const isTargetDev = user.rank === 'DEVELOPER';
+            
+            document.getElementById('admin-controls').classList.toggle('hidden', !isMeDev || (isMeDev && isTargetDev && user.username !== myProfile.username));
+            if(isMeDev) {
+                document.getElementById('rank-selector').value = user.rank;
+            }
+
             const isMe = myProfile && user.username === myProfile.username;
             document.getElementById('pfp-edit-overlay').classList.toggle('hidden', !isMe);
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
+        function applyRankChange() {
+            if(!myProfile || myProfile.rank !== 'DEVELOPER' || !viewingUser) return;
+            const newRank = document.getElementById('rank-selector').value;
+            
+            // Update "Database"
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
+            const idx = db.findIndex(u => u.username === viewingUser.username);
+            if(idx !== -1) {
+                db[idx].rank = newRank;
+                localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
+                
+                // If I updated myself
+                if(viewingUser.username === myProfile.username) {
+                    myProfile.rank = newRank;
+                    enterApp();
+                }
+                
+                // Notify server to broadcast update
+                socket.emit('admin update user', db[idx]);
+                viewProfile(viewingUser.username); // Refresh modal view
+            }
+        }
+
         function closeProfile() { document.getElementById('profile-modal').classList.add('hidden'); }
-        function viewMyProfile() { viewProfile(myProfile.username); }
 
         function setStatus(s) {
             myProfile.status = s;
@@ -353,7 +421,6 @@
             socket.emit('register user', myProfile);
         }
 
-        // STATUS TOGGLE
         const statusBtn = document.getElementById('status-toggle-btn');
         const statusDropdown = document.getElementById('status-dropdown');
         statusBtn.onclick = (e) => { e.stopPropagation(); statusDropdown.classList.toggle('hidden'); };
@@ -361,8 +428,22 @@
 
         // SOCKETS
         socket.on('update user list', (users) => {
-            globalUsers = users;
+            // Sort by Rank Weight
+            globalUsers = users.sort((a, b) => {
+                const wA = RANK_CONFIG[a.rank]?.weight || 0;
+                const wB = RANK_CONFIG[b.rank]?.weight || 0;
+                return wB - wA || a.username.localeCompare(b.username);
+            });
             renderUserList();
+        });
+
+        // Server might broadcast an update when dev changes someone's rank
+        socket.on('force update profile', (updatedUser) => {
+            if(myProfile && myProfile.username === updatedUser.username) {
+                myProfile = { ...updatedUser };
+                localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
+                enterApp();
+            }
         });
 
         function renderUserList() {
@@ -379,7 +460,7 @@
                     </div>
                     <div class="hidden lg:block overflow-hidden">
                         <p class="text-[11px] font-black text-white uppercase truncate">${u.username}</p>
-                        <p class="text-[8px] font-bold text-gray-500 uppercase tracking-widest">${u.status}</p>
+                        <div class="mt-0.5">${getRankTag(u.rank)}</div>
                     </div>
                 `;
                 list.appendChild(div);
@@ -402,7 +483,7 @@
         socket.on('global message', (msg) => {
             chatHistory.push(msg);
             if(chatHistory.length > 100) chatHistory.shift();
-            localStorage.setItem('chatlaxy_history_v4', JSON.stringify(chatHistory));
+            localStorage.setItem('chatlaxy_history_v5', JSON.stringify(chatHistory));
             renderMessages();
         });
 
