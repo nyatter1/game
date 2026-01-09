@@ -6,7 +6,6 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.io with CORS handling
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -16,9 +15,9 @@ const io = new Server(server, {
 
 /**
  * PRESENCE TRACKING
- * Keeps track of active usernames mapped to their socket IDs
+ * Map<SocketID, Username>
  */
-const activeUsers = new Map(); // Map<SocketID, Username>
+const activeUsers = new Map(); 
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -28,33 +27,31 @@ app.get('/', (req, res) => {
 
 /**
  * HELPER: Broadcast updated user list
+ * Sends a unique list of usernames to all clients
  */
 function broadcastUserUpdate() {
   const onlineUsernames = Array.from(new Set(activeUsers.values()));
   io.emit('user_update', onlineUsernames);
 }
 
-/**
- * SOCKET.IO REAL-TIME LOGIC
- */
 io.on('connection', (socket) => {
-  console.log('A connection has been established.');
+  console.log('New connection established:', socket.id);
 
-  // When a user successfully logs in/signs up on the client and emits 'join'
   socket.on('join', (username) => {
+    // CLEANUP: If this user is already connected on another tab/device, 
+    // you might want to allow it, but we ensure the username is tracked.
     socket.username = username;
     activeUsers.set(socket.id, username);
     
-    console.log(`${username} has entered the Main Gallery.`);
+    console.log(`${username} entered the lounge.`);
     
-    // Notify all clients of the new online list immediately
+    // Send the full list to everyone (including the person who just joined)
     broadcastUserUpdate();
     
-    // Notify other connected clients (system message)
-    socket.broadcast.emit('system_message', `${username.toUpperCase()} HAS ENTERED THE CIRCLE.`);
+    // System notification
+    socket.broadcast.emit('system_message', `${username.toUpperCase()} HAS ENTERED THE CIRCLE`);
   });
 
-  // Handle incoming chat messages
   socket.on('chat_message', (msg) => {
     if (!socket.username) return;
 
@@ -71,28 +68,24 @@ io.on('connection', (socket) => {
     io.emit('chat_message', messageData);
   });
 
-  // Handle disconnection
   socket.on('disconnect', () => {
     if (socket.username) {
-      console.log(`${socket.username} has departed.`);
+      console.log(`${socket.username} disconnected.`);
       
-      // Remove from active tracking
+      // Remove this specific socket session
       activeUsers.delete(socket.id);
       
-      // Update everyone's online/offline list
+      // Update the UI for everyone else
       broadcastUserUpdate();
       
-      io.emit('system_message', `${socket.username.toUpperCase()} HAS LEFT THE GALLERY.`);
+      io.emit('system_message', `${socket.username.toUpperCase()} HAS DEPARTED`);
     }
   });
 });
 
-/**
- * SERVER STARTUP
- */
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`-------------------------------------------`);
-  console.log(`Lumière Live Lounge operating on port ${PORT}`);
+  console.log(`Lumière Server: Active on Port ${PORT}`);
   console.log(`-------------------------------------------`);
 });
