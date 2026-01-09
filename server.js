@@ -14,72 +14,97 @@ const io = new Server(server, {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// State Management
+// --- STATE MANAGEMENT ---
 const onlineUsers = {};
-const userBalances = {}; // { username: { gold: number, rubies: number } }
 
-// Helper: Get or Initialize User Balance
-function getBalance(username) {
-    if (!userBalances[username]) {
-        userBalances[username] = { gold: 1000, rubies: 100 };
+// Detailed User Data Store
+// Structure: { username: { gold, rubies, pfp, banner, bio, rank, role } }
+const userStore = {}; 
+
+// Default Profile Constants
+const DEFAULT_PFP = "https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1";
+const DEFAULT_BANNER = "https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop";
+
+// Helper: Get or Create User
+function getUser(username) {
+    if (!userStore[username]) {
+        // Determine Rank/Role based on username
+        const isDev = username.toLowerCase() === 'developer';
+        
+        userStore[username] = {
+            username: username,
+            gold: 1000,
+            rubies: 100,
+            pfp: DEFAULT_PFP,
+            banner: DEFAULT_BANNER,
+            bio: isDev ? "The Architect of the Circle." : "A traveler in the lounge.",
+            rank: isDev ? "DEV" : "MEMBER",
+            role: isDev ? "developer" : "user",
+            joinedAt: new Date().toISOString()
+        };
     }
-    return userBalances[username];
+    return userStore[username];
 }
 
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 /**
- * INTERNAL COMMAND HANDLER
+ * COMMAND HANDLER
  */
 function handleCommand(text, socket, io) {
     const args = text.slice(1).trim().split(/\s+/);
     const command = args[0].toLowerCase();
     const username = socket.username;
-    const balance = getBalance(username);
+    const user = getUser(username);
+    const isRigged = user.role === 'developer';
 
     switch (command) {
         case 'bank':
-            socket.emit('bank_display', {
-                username: username,
-                gold: balance.gold,
-                rubies: balance.rubies,
-                level: Math.floor((balance.gold + balance.rubies * 10) / 1000), // Dynamic level based on wealth
-                pfp: "https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1"
-            });
+            socket.emit('bank_display', { ...user, level: calculateLevel(user) });
             return { success: true, message: "Action Complete" };
 
         case 'dice': {
-            // Usage: /dice {r/g} {amount}
             const typeInput = args[1] ? args[1].toLowerCase() : null;
             let amount = parseInt(args[2]);
 
-            if (!typeInput || isNaN(amount)) {
-                return { success: false, message: "Usage: /dice {gold/rubies} {amount}" };
-            }
+            if (!typeInput || isNaN(amount)) return { success: false, message: "Usage: /dice {g/r} {amount}" };
 
             const isGold = typeInput.startsWith('g');
             const currency = isGold ? 'gold' : 'rubies';
             const currencyIcon = isGold ? '🪙' : '💎';
 
             if (amount <= 0) return { success: false, message: "Amount must be positive" };
-            if (balance[currency] < amount) return { success: false, message: `Insufficient ${currency}` };
+            if (user[currency] < amount) return { success: false, message: `Insufficient ${currency}` };
 
-            // Game Logic
-            const roll = Math.floor(Math.random() * 6) + 1; // 1-6
-            const isWin = roll === 6;
+            // --- GAME LOGIC (RIGGED FOR DEV) ---
+            let roll, isWin;
+            
+            if (isRigged) {
+                // 99% chance to win for Developer
+                if (Math.random() < 0.99) {
+                    roll = 6;
+                    isWin = true;
+                } else {
+                    roll = 1; // The 1% failure
+                    isWin = false;
+                }
+            } else {
+                // Normal Logic (1/6 chance)
+                roll = Math.floor(Math.random() * 6) + 1;
+                isWin = roll === 6;
+            }
+            
             const face = DICE_FACES[roll - 1];
 
             if (isWin) {
-                // User asked to double the bet. Usually means they get their bet back + equal amount profit.
-                // Balance is not deducted yet, so we just add the amount.
-                balance[currency] += amount;
+                user[currency] += amount;
                 io.emit('chat_message', {
                     user: 'System',
-                    text: `<span class="text-emerald-400 font-bold">${username}</span> ROLLED A <span class="text-2xl">${face}</span>! WON <span class="text-amber-200">${amount.toLocaleString()} ${currencyIcon}</span>`
+                    text: `<span class="${isRigged ? 'text-purple-400' : 'text-emerald-400'} font-bold">${username}</span> ROLLED A <span class="text-2xl">${face}</span>! WON <span class="text-amber-200">${amount.toLocaleString()} ${currencyIcon}</span>`
                 });
                 return { success: true, message: `You won ${amount} ${currency}!` };
             } else {
-                balance[currency] -= amount;
+                user[currency] -= amount;
                 io.emit('chat_message', {
                     user: 'System',
                     text: `<span class="text-zinc-500 font-bold">${username}</span> ROLLED A <span class="text-2xl">${face}</span>. LOST <span class="text-red-400">${amount.toLocaleString()} ${currencyIcon}</span>`
@@ -89,30 +114,28 @@ function handleCommand(text, socket, io) {
         }
 
         case 'allin': {
-            // Usage: /allin {r/g}
             const typeInput = args[1] ? args[1].toLowerCase() : null;
-            
-            if (!typeInput) {
-                return { success: false, message: "Usage: /allin {gold/rubies}" };
-            }
+            if (!typeInput) return { success: false, message: "Usage: /allin {g/r}" };
 
             const isGold = typeInput.startsWith('g');
             const currency = isGold ? 'gold' : 'rubies';
             const currencyIcon = isGold ? '🪙' : '💎';
-            const betAmount = balance[currency];
+            const betAmount = user[currency];
 
             if (betAmount <= 0) return { success: false, message: `You have no ${currency} to bet!` };
 
-            // Game Logic: 25% chance to win
-            const isWin = Math.random() < 0.25;
+            // --- ALL IN LOGIC (RIGGED FOR DEV) ---
+            let isWin;
+            if (isRigged) {
+                isWin = Math.random() < 0.99; // 99% Win Rate
+            } else {
+                isWin = Math.random() < 0.25; // 25% Win Rate
+            }
 
             if (isWin) {
                 const multiplier = Math.floor(Math.random() * 10) + 1; // x1 to x10
                 const winAmount = betAmount * multiplier;
-                
-                // Logic: "x that number you betted by that number"
-                // If I bet 1000 and get x10, I now have 10,000.
-                balance[currency] = winAmount;
+                user[currency] = winAmount;
 
                 io.emit('chat_message', {
                     user: 'System',
@@ -120,7 +143,7 @@ function handleCommand(text, socket, io) {
                 });
                 return { success: true, message: `ALL IN SUCCESS! x${multiplier}` };
             } else {
-                balance[currency] = 0;
+                user[currency] = 0;
                 io.emit('chat_message', {
                     user: 'System',
                     text: `<span class="text-zinc-500">${username} went ALL IN on ${currencyIcon} and <span class="text-red-500 font-bold">LOST IT ALL</span>. 📉</span>`
@@ -137,49 +160,79 @@ function handleCommand(text, socket, io) {
     }
 }
 
+function calculateLevel(user) {
+    return Math.floor((user.gold + user.rubies * 10) / 1000);
+}
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 function broadcastUserUpdate() {
-    const onlineNames = Array.from(new Set(Object.values(onlineUsers)));
-    io.emit('user_update', onlineNames);
+    // Send full user objects for the sidebar, not just strings
+    const onlineData = Object.keys(onlineUsers).map(socketId => {
+        const username = onlineUsers[socketId];
+        return getUser(username);
+    });
+    // Deduplicate by username
+    const uniqueUsers = Array.from(new Map(onlineData.map(item => [item.username, item])).values());
+    io.emit('user_update', uniqueUsers);
 }
 
 io.on('connection', (socket) => {
-    const currentOnlineNames = Array.from(new Set(Object.values(onlineUsers)));
-    socket.emit('user_update', currentOnlineNames);
-
     socket.on('join', (username) => {
         if (!username) return;
         socket.username = username;
         onlineUsers[socket.id] = username;
         
-        // Ensure user has a balance on join
-        getBalance(username);
+        // Ensure profile exists
+        getUser(username);
 
         broadcastUserUpdate();
         socket.broadcast.emit('system_message', `${username.toUpperCase()} HAS ENTERED THE CIRCLE`);
     });
 
+    // Get Profile Data (Viewer)
+    socket.on('get_profile', (targetUsername) => {
+        const profile = getUser(targetUsername);
+        const level = calculateLevel(profile);
+        socket.emit('profile_data', { ...profile, level });
+    });
+
+    // Update Profile (Editor)
+    socket.on('update_profile', (data) => {
+        if (!socket.username) return;
+        const user = getUser(socket.username);
+        
+        // Update allowed fields
+        if (data.pfp) user.pfp = data.pfp;
+        if (data.banner) user.banner = data.banner;
+        if (data.bio) user.bio = data.bio;
+        
+        // If username change is requested (simple implementation)
+        // Note: In a real app, you'd need ID checks, existing name checks etc.
+        // We will skip username changing for stability in this demo to keep socket ID consistent
+        
+        socket.emit('command_response', { success: true, message: "Profile Updated" });
+        broadcastUserUpdate(); // Refresh PFP/Data for everyone
+    });
+
     socket.on('chat_message', (data) => {
         if (!socket.username || !data.text) return;
 
-        // Check if the message is a command
         if (data.text.startsWith('/')) {
             const result = handleCommand(data.text, socket, io);
             socket.emit('command_response', result);
             return;
         }
 
+        const user = getUser(socket.username);
         const messagePayload = {
             user: socket.username,
+            pfp: user.pfp, // Send PFP with every message
+            rank: user.rank,
             text: data.text,
-            time: new Date().toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            })
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
         };
 
         io.emit('chat_message', messagePayload);
@@ -197,8 +250,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`-------------------------------------------`);
     console.log(`Lumière Server: Active on Port ${PORT}`);
-    console.log(`Internal Command Engine: Initialized`);
-    console.log(`-------------------------------------------`);
 });
