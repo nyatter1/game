@@ -83,12 +83,17 @@
             z-index: 1000; animation: toastIn 0.5s forwards;
         }
         @keyframes toastIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        
+        .edit-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(212, 175, 55, 0.3); color: white; border-radius: 8px; padding: 4px 8px; font-size: 10px; width: 100%; }
+        .banner-box { width: 100%; height: 80px; background-size: cover; background-position: center; border-radius: 1.5rem 1.5rem 0 0; background-color: #1a1a1a; margin-top: -32px; margin-left: -32px; margin-right: -32px; width: calc(100% + 64px); }
     </style>
 </head>
 <body>
 
     <input type="file" id="pfp-input" class="hidden" accept="image/*">
+    <input type="file" id="banner-input" class="hidden" accept="image/*">
     <div id="toast-container"></div>
+    <audio id="profile-audio" class="hidden" loop></audio>
 
     <!-- AUTH OVERLAY -->
     <div id="auth-screen" class="fixed inset-0 flex items-center justify-center auth-overlay p-4">
@@ -126,16 +131,34 @@
 
     <!-- PROFILE MODAL -->
     <div id="profile-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden" onclick="closeProfile()">
-        <div class="w-full max-w-xs glass rounded-[2rem] p-8 text-center modal-animate" onclick="event.stopPropagation()">
-            <div class="relative group mx-auto w-20 h-20 mb-4 cursor-pointer" id="modal-pfp-trigger">
-                <img id="modal-pfp" src="" class="w-full h-full rounded-[1.2rem] object-cover border border-gold/20 shadow-xl">
-                <div id="pfp-edit-overlay" class="hidden absolute inset-0 bg-black/60 rounded-[1.2rem] flex items-center justify-center group-hover:flex">
-                    <span class="text-[7px] text-white font-black uppercase tracking-widest text-center px-1">Edit</span>
+        <div class="w-full max-w-xs glass rounded-[2rem] p-8 text-center modal-animate relative" onclick="event.stopPropagation()">
+            <!-- Edit/View Toggle Button -->
+            <button id="profile-edit-toggle" class="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-white/5 transition hidden">
+                <svg id="pencil-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gold-gradient"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gold-gradient hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+
+            <!-- Banner Area -->
+            <div id="modal-banner" class="banner-box cursor-pointer" onclick="triggerBannerUpload()"></div>
+
+            <div class="relative -mt-10 group mx-auto w-20 h-20 mb-4 cursor-pointer" id="modal-pfp-trigger" onclick="triggerPfpUpload()">
+                <img id="modal-pfp" src="" class="w-full h-full rounded-[1.2rem] object-cover border-2 border-[#0a0c10] shadow-xl bg-black">
+                <div id="pfp-edit-overlay-modal" class="hidden absolute inset-0 bg-black/60 rounded-[1.2rem] flex items-center justify-center group-hover:flex">
+                    <span class="text-[7px] text-white font-black uppercase tracking-widest text-center px-1">Change</span>
                 </div>
             </div>
             
-            <h2 id="modal-name" class="serif text-2xl gold-gradient mb-1">Username</h2>
-            <div id="modal-rank-container" class="flex justify-center mb-4"></div>
+            <!-- Display Mode -->
+            <div id="profile-display-mode">
+                <h2 id="modal-name" class="serif text-2xl gold-gradient mb-1">Username</h2>
+                <div id="modal-rank-container" class="flex justify-center mb-4"></div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div id="profile-edit-mode" class="hidden space-y-3 mb-4">
+                <input type="text" id="edit-username" placeholder="New Username" class="edit-input text-center font-bold" oninput="autoSaveProfile()">
+                <input type="text" id="edit-music" placeholder="Music URL (mp3/direct)" class="edit-input" oninput="autoSaveProfile()">
+            </div>
             
             <div id="admin-controls" class="hidden mb-4 p-3 border border-blue-500/20 bg-blue-500/5 rounded-xl text-left">
                 <p class="text-[7px] text-blue-400 font-black uppercase tracking-[0.1em] mb-1">Dev Tools</p>
@@ -166,8 +189,9 @@
                 <div>
                     <p class="text-[8px] text-gray-600 uppercase font-black">Bio Data</p>
                     <p id="modal-bio" class="text-white font-bold uppercase text-[9px] mt-0.5">-</p>
+                    <textarea id="edit-bio" placeholder="Update your biography..." class="edit-input mt-1 hidden h-12 resize-none" oninput="autoSaveProfile()"></textarea>
                 </div>
-                <div>
+                <div id="modal-status-section">
                     <p class="text-[8px] text-gray-600 uppercase font-black">Status</p>
                     <div class="flex items-center gap-1.5 mt-0.5">
                         <div id="modal-status-dot" class="status-dot"></div>
@@ -188,7 +212,7 @@
                 <p class="text-[8px] text-white/40 font-black uppercase tracking-[0.3em] hidden md:block">Elite</p>
             </div>
             
-            <div class="flex items-center gap-3 group cursor-pointer" onclick="document.getElementById('pfp-input').click()">
+            <div class="flex items-center gap-3 group cursor-pointer" onclick="viewProfile(myProfile.username)">
                 <div class="text-right hidden sm:block">
                     <p id="header-username" class="text-[10px] font-black text-white uppercase tracking-wider leading-none">Guest</p>
                     <div id="header-rank-container" class="mt-0.5"></div>
@@ -244,6 +268,7 @@
         let chatHistory = [];
         let globalUsers = [];
         let viewingUser = null; 
+        let isEditingProfile = false;
 
         const RANK_CONFIG = {
             DEVELOPER: { name: 'Dev', class: 'rank-dev', weight: 100 },
@@ -345,7 +370,11 @@
             myProfile = {
                 username: user, password: pass, age: age, gender: gender,
                 rank: user.toLowerCase() === 'developer' ? 'DEVELOPER' : 'MEMBER',
-                status: "online", pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`
+                status: "online", 
+                pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`,
+                banner: '',
+                music: '',
+                customBio: ''
             };
             db.push(myProfile);
             localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
@@ -369,37 +398,161 @@
             location.reload();
         };
 
+        // PROFILE EDIT LOGIC
+        function triggerPfpUpload() {
+            if(!isEditingProfile) return;
+            document.getElementById('pfp-input').click();
+        }
+
+        function triggerBannerUpload() {
+            if(!isEditingProfile) return;
+            document.getElementById('banner-input').click();
+        }
+
         document.getElementById('pfp-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                myProfile.pfp = event.target.result;
-                document.getElementById('header-pfp').src = myProfile.pfp;
-                saveEverything();
-                socket.emit('register user', myProfile);
-                renderMessages(); 
+                const b64 = event.target.result;
+                if(isEditingProfile) {
+                    myProfile.pfp = b64;
+                    document.getElementById('modal-pfp').src = b64;
+                    document.getElementById('header-pfp').src = b64;
+                    saveEverything();
+                    socket.emit('register user', myProfile);
+                    renderMessages();
+                }
             };
             reader.readAsDataURL(file);
         };
+
+        document.getElementById('banner-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const b64 = event.target.result;
+                if(isEditingProfile) {
+                    myProfile.banner = b64;
+                    document.getElementById('modal-banner').style.backgroundImage = `url(${b64})`;
+                    saveEverything();
+                    socket.emit('register user', myProfile);
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('profile-edit-toggle').onclick = () => {
+            isEditingProfile = !isEditingProfile;
+            const pencil = document.getElementById('pencil-icon');
+            const eye = document.getElementById('eye-icon');
+            const displayMode = document.getElementById('profile-display-mode');
+            const editMode = document.getElementById('profile-edit-mode');
+            const bioDisplay = document.getElementById('modal-bio');
+            const bioEdit = document.getElementById('edit-bio');
+            const statusSection = document.getElementById('modal-status-section');
+
+            if(isEditingProfile) {
+                pencil.classList.add('hidden');
+                eye.classList.remove('hidden');
+                displayMode.classList.add('hidden');
+                editMode.classList.remove('hidden');
+                bioDisplay.classList.add('hidden');
+                bioEdit.classList.remove('hidden');
+                statusSection.classList.add('hidden');
+
+                // Populate fields
+                document.getElementById('edit-username').value = myProfile.username;
+                document.getElementById('edit-music').value = myProfile.music || '';
+                document.getElementById('edit-bio').value = myProfile.customBio || '';
+            } else {
+                pencil.classList.remove('hidden');
+                eye.classList.add('hidden');
+                displayMode.classList.remove('hidden');
+                editMode.classList.add('hidden');
+                bioDisplay.classList.remove('hidden');
+                bioEdit.classList.add('hidden');
+                statusSection.classList.remove('hidden');
+                
+                // Update local visual after exiting edit
+                document.getElementById('modal-name').innerText = myProfile.username;
+                document.getElementById('modal-bio').innerText = myProfile.customBio || `${myProfile.age}Y • ${myProfile.gender}`;
+                enterApp();
+                renderMessages();
+            }
+        };
+
+        function autoSaveProfile() {
+            if(!isEditingProfile || !myProfile) return;
+            
+            const oldUsername = myProfile.username;
+            const newUsername = document.getElementById('edit-username').value.trim() || myProfile.username;
+            
+            // Check for duplicate username if changing
+            if(newUsername !== oldUsername) {
+                const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
+                if(db.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
+                    // Don't save username if taken, but save others
+                } else {
+                    myProfile.username = newUsername;
+                }
+            }
+            
+            myProfile.music = document.getElementById('edit-music').value;
+            myProfile.customBio = document.getElementById('edit-bio').value;
+            
+            saveEverything();
+            socket.emit('register user', myProfile);
+        }
 
         function viewProfile(username) {
             const user = globalUsers.find(u => u.username === username) || (myProfile && myProfile.username === username ? myProfile : null);
             if(!user) return;
             viewingUser = user;
+            isEditingProfile = false;
+
+            // Reset UI states
+            document.getElementById('pencil-icon').classList.remove('hidden');
+            document.getElementById('eye-icon').classList.add('hidden');
+            document.getElementById('profile-display-mode').classList.remove('hidden');
+            document.getElementById('profile-edit-mode').classList.add('hidden');
+            document.getElementById('modal-bio').classList.remove('hidden');
+            document.getElementById('edit-bio').classList.add('hidden');
+            document.getElementById('modal-status-section').classList.remove('hidden');
+
+            // Set Data
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
+            
             const userStatus = user.status || "online";
             document.getElementById('modal-status').innerText = userStatus.toUpperCase();
             document.getElementById('modal-status-dot').className = `status-dot status-${userStatus}`;
-            document.getElementById('modal-bio').innerText = `${user.age}Y • ${user.gender}`;
+            document.getElementById('modal-bio').innerText = user.customBio || `${user.age}Y • ${user.gender}`;
             
-            const isMeDev = myProfile && myProfile.rank === 'DEVELOPER';
+            // Handle Banner
+            const banner = document.getElementById('modal-banner');
+            if(user.banner) banner.style.backgroundImage = `url(${user.banner})`;
+            else banner.style.backgroundImage = 'none';
+
+            // Handle Music
+            const audio = document.getElementById('profile-audio');
+            if(user.music) {
+                audio.src = user.music;
+                audio.play().catch(e => console.log("Music blocked until user interacts"));
+            } else {
+                audio.pause();
+                audio.src = "";
+            }
+
             const isMe = myProfile && user.username === myProfile.username;
+            const isMeDev = myProfile && myProfile.rank === 'DEVELOPER';
+            
+            document.getElementById('profile-edit-toggle').classList.toggle('hidden', !isMe);
             document.getElementById('admin-controls').classList.toggle('hidden', !isMeDev);
             if(isMeDev) document.getElementById('rank-selector').value = user.rank;
-            document.getElementById('pfp-edit-overlay').classList.toggle('hidden', !isMe);
+            
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
@@ -418,10 +571,7 @@
                     enterApp();
                 }
                 
-                // Success feedback
                 showToast(`RANK UPDATED: ${viewingUser.username} is now ${newRank}`);
-                
-                // Force sync and specific signal for target to reload
                 socket.emit('admin update user', db[idx]);
                 socket.emit('force reload user', viewingUser.username);
                 
@@ -431,7 +581,12 @@
             }
         }
 
-        function closeProfile() { document.getElementById('profile-modal').classList.add('hidden'); }
+        function closeProfile() { 
+            document.getElementById('profile-modal').classList.add('hidden');
+            const audio = document.getElementById('profile-audio');
+            audio.pause();
+            audio.src = "";
+        }
 
         function setStatus(s) {
             myProfile.status = s;
@@ -455,7 +610,6 @@
             renderUserList();
         });
 
-        // Target user receives this signal to reload
         socket.on('reload client', (targetName) => {
             if(myProfile && myProfile.username === targetName) {
                 location.reload();
