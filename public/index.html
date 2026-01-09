@@ -314,43 +314,45 @@
             const newUsername = document.getElementById('edit-username').value.trim();
             const newBio = document.getElementById('edit-bio').value.trim();
             
+            // Database accounts array
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
+            
             // Check for username collision if changed
             if(newUsername && newUsername !== myProfile.username) {
-                const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
                 if(db.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
                     document.getElementById('loading-overlay').style.display = 'none';
                     alert("Username already taken.");
                     return;
                 }
+                // Update username in history if it exists
                 myProfile.username = newUsername;
             }
 
-            // Map pending changes to myProfile
-            myProfile.customBio = newBio;
+            // Map pending changes to myProfile object
+            if(newBio !== undefined) myProfile.customBio = newBio;
             if(pendingPfp) myProfile.pfp = pendingPfp;
             if(pendingBanner) myProfile.banner = pendingBanner;
             if(pendingMusic) myProfile.music = pendingMusic;
 
-            // Update Database with strict matching
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-            // Find by original credentials to ensure we update the correct record
-            const idx = db.findIndex(u => u.password === myProfile.password && u.age === myProfile.age && (u.gender === myProfile.gender));
+            // Find index using the unique combination of original credentials to be safe
+            const idx = db.findIndex(u => u.password === myProfile.password && u.age === myProfile.age && u.gender === myProfile.gender);
             
             if(idx !== -1) {
+                // Update existing record
                 db[idx] = { ...myProfile };
-                localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
             } else {
-                // Fallback: If for some reason index isn't found, push as new or find by user
+                // Should not happen, but safety fallback
                 db.push(myProfile);
-                localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
             }
 
+            // Save database and current session
+            localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
             localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
             
-            // Give browser time to commit storage before reload
+            // Force refresh to apply all UI and audio changes
             setTimeout(() => {
                 location.reload();
-            }, 500);
+            }, 600);
         }
 
         document.getElementById('btn-login').onclick = () => {
@@ -436,7 +438,6 @@
             const reader = new FileReader();
             reader.onload = (event) => {
                 pendingMusic = event.target.result;
-                // Preview the music immediately
                 const audio = document.getElementById('profile-audio');
                 audio.src = pendingMusic;
                 audio.play();
@@ -484,12 +485,10 @@
             viewingUser = user;
             isEditingProfile = false;
             
-            // Reset pending state
             pendingPfp = null;
             pendingBanner = null;
             pendingMusic = null;
 
-            // Reset UI components
             document.getElementById('pencil-icon').classList.remove('hidden');
             document.getElementById('eye-icon').classList.add('hidden');
             document.getElementById('profile-display-mode').classList.remove('hidden');
@@ -500,7 +499,6 @@
             document.getElementById('modal-banner').classList.remove('cursor-pointer');
             document.getElementById('music-filename-label').innerText = "Update Music (.mp3)";
 
-            // Set Data
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
@@ -509,16 +507,14 @@
             const banner = document.getElementById('modal-banner');
             banner.style.backgroundImage = user.banner ? `url(${user.banner})` : 'none';
 
-            // Profile Audio Playback Logic
             const audio = document.getElementById('profile-audio');
             audio.pause();
             if(user.music) {
                 audio.src = user.music;
                 audio.load();
-                // Browsers often block auto-play. Since this is triggered by a click (viewing profile), it should work.
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => console.warn("Audio playback deferred or blocked."));
+                    playPromise.catch(e => console.warn("Audio deferred."));
                 }
             } else {
                 audio.src = "";
