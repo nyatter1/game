@@ -86,6 +86,9 @@
         
         .edit-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(212, 175, 55, 0.3); color: white; border-radius: 8px; padding: 4px 8px; font-size: 10px; width: 100%; }
         .banner-box { width: 100%; height: 90px; background-size: cover; background-position: center; background-color: #1a1a1a; border-bottom: 1px solid var(--border-color); }
+        
+        .save-btn { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border-radius: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
+        .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
     </style>
 </head>
 <body>
@@ -94,7 +97,7 @@
     <input type="file" id="banner-input" class="hidden" accept="image/*">
     <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
     <div id="toast-container"></div>
-    <audio id="profile-audio" class="hidden" loop></audio>
+    <audio id="profile-audio" class="hidden" loop preload="auto"></audio>
 
     <!-- AUTH OVERLAY -->
     <div id="auth-screen" class="fixed inset-0 flex items-center justify-center auth-overlay p-4">
@@ -140,12 +143,12 @@
             </button>
 
             <!-- Banner Area -->
-            <div id="modal-banner" class="banner-box cursor-pointer" onclick="triggerBannerUpload()"></div>
+            <div id="modal-banner" class="banner-box" onclick="triggerBannerUpload()"></div>
 
             <div class="px-8 pb-8 text-center">
-                <div class="relative -mt-12 group mx-auto w-24 h-24 mb-4 cursor-pointer" id="modal-pfp-trigger" onclick="triggerPfpUpload()">
+                <div class="relative -mt-12 group mx-auto w-24 h-24 mb-4" id="modal-pfp-trigger" onclick="triggerPfpUpload()">
                     <img id="modal-pfp" src="" class="w-full h-full rounded-[1.5rem] object-cover border-4 border-[#161a21] shadow-2xl bg-black">
-                    <div id="pfp-edit-overlay-modal" class="hidden absolute inset-0 bg-black/60 rounded-[1.5rem] flex items-center justify-center group-hover:flex">
+                    <div id="pfp-edit-overlay-modal" class="hidden absolute inset-0 bg-black/60 rounded-[1.5rem] flex items-center justify-center">
                         <span class="text-[7px] text-white font-black uppercase tracking-widest text-center px-1">Change</span>
                     </div>
                 </div>
@@ -158,10 +161,11 @@
 
                 <!-- Edit Mode -->
                 <div id="profile-edit-mode" class="hidden space-y-3 mb-4">
-                    <input type="text" id="edit-username" placeholder="New Username" class="edit-input text-center font-bold" oninput="autoSaveProfile()">
+                    <input type="text" id="edit-username" placeholder="New Username" class="edit-input text-center font-bold">
                     <button onclick="triggerMusicUpload()" class="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-[8px] text-white font-black uppercase tracking-widest hover:bg-white/10 transition">
-                        <span id="music-filename-label">Upload Profile Music (.mp3)</span>
+                        <span id="music-filename-label">Update Music (.mp3)</span>
                     </button>
+                    <button id="final-save-btn" onclick="saveAndRefresh()" class="w-full py-2 save-btn shadow-lg">Save & Refresh</button>
                 </div>
                 
                 <div id="admin-controls" class="hidden mb-4 p-3 border border-blue-500/20 bg-blue-500/5 rounded-xl text-left">
@@ -179,7 +183,7 @@
                     <div>
                         <p class="text-[8px] text-gray-600 uppercase font-black">Bio Data</p>
                         <p id="modal-bio" class="text-white font-bold uppercase text-[9px] mt-0.5 break-words">-</p>
-                        <textarea id="edit-bio" placeholder="Update your biography..." class="edit-input mt-1 hidden h-16 resize-none" oninput="autoSaveProfile()"></textarea>
+                        <textarea id="edit-bio" placeholder="Update your biography..." class="edit-input mt-1 hidden h-16 resize-none"></textarea>
                     </div>
                     <div id="modal-status-section">
                         <p class="text-[8px] text-gray-600 uppercase font-black">Status</p>
@@ -207,7 +211,7 @@
                     <p id="header-username" class="text-[10px] font-black text-white uppercase tracking-wider leading-none">Guest</p>
                     <div id="header-rank-container" class="mt-0.5"></div>
                 </div>
-                <img id="header-pfp" src="" class="w-10 h-10 rounded-xl border border-transparent group-hover:border-gold/30 transition-all object-cover shadow-lg">
+                <img id="header-pfp" src="" class="w-10 h-10 rounded-xl border border-transparent group-hover:border-gold/30 transition-all object-cover shadow-lg bg-black">
             </div>
         </header>
 
@@ -258,6 +262,11 @@
         let viewingUser = null; 
         let isEditingProfile = false;
 
+        // Pending changes used during edit mode
+        let pendingPfp = null;
+        let pendingBanner = null;
+        let pendingMusic = null;
+
         const RANK_CONFIG = {
             DEVELOPER: { name: 'Dev', class: 'rank-dev', weight: 100 },
             CEO: { name: 'CEO', class: 'rank-ceo', weight: 99 },
@@ -269,14 +278,6 @@
         function getRankTag(rankKey) {
             const r = RANK_CONFIG[rankKey] || RANK_CONFIG.MEMBER;
             return `<span class="rank-tag ${r.class}">${r.name}</span>`;
-        }
-
-        function showToast(text) {
-            const toast = document.createElement('div');
-            toast.className = 'success-toast';
-            toast.innerText = text;
-            document.getElementById('toast-container').appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
         }
 
         window.onload = () => {
@@ -314,15 +315,38 @@
             alert.classList.remove('hidden');
         }
 
-        function saveEverything() {
-            if (!myProfile) return;
-            localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
+        function saveAndRefresh() {
+            if(!myProfile) return;
+            
+            const newUsername = document.getElementById('edit-username').value.trim();
+            const newBio = document.getElementById('edit-bio').value.trim();
+            
+            // Check for username collision if changed
+            if(newUsername && newUsername !== myProfile.username) {
+                const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
+                if(db.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
+                    alert("Username already taken.");
+                    return;
+                }
+                myProfile.username = newUsername;
+            }
+
+            myProfile.customBio = newBio;
+            if(pendingPfp) myProfile.pfp = pendingPfp;
+            if(pendingBanner) myProfile.banner = pendingBanner;
+            if(pendingMusic) myProfile.music = pendingMusic;
+
+            // Final local storage update
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
-            const idx = db.findIndex(u => u.username === myProfile.username);
-            if (idx !== -1) {
+            const idx = db.findIndex(u => u.password === myProfile.password && u.age === myProfile.age); // more stable match
+            if(idx !== -1) {
                 db[idx] = { ...myProfile };
                 localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
             }
+            localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
+            
+            // Reload to apply all changes globally
+            location.reload();
         }
 
         document.getElementById('btn-login').onclick = () => {
@@ -332,7 +356,7 @@
             const found = db.find(u => u.username.toLowerCase() === user.toLowerCase() && u.password === pass);
             if(!found) return showAlert("Failed.");
             myProfile = { ...found };
-            saveEverything();
+            localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
             socket.emit('register user', myProfile);
             enterApp();
         };
@@ -354,7 +378,7 @@
             };
             db.push(myProfile);
             localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
-            saveEverything();
+            localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
             socket.emit('register user', myProfile);
             enterApp();
         };
@@ -384,10 +408,8 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                myProfile.pfp = event.target.result;
-                document.getElementById('modal-pfp').src = myProfile.pfp;
-                document.getElementById('header-pfp').src = myProfile.pfp;
-                autoSaveProfile();
+                pendingPfp = event.target.result;
+                document.getElementById('modal-pfp').src = pendingPfp;
             };
             reader.readAsDataURL(file);
         };
@@ -397,9 +419,8 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                myProfile.banner = event.target.result;
-                document.getElementById('modal-banner').style.backgroundImage = `url(${myProfile.banner})`;
-                autoSaveProfile();
+                pendingBanner = event.target.result;
+                document.getElementById('modal-banner').style.backgroundImage = `url(${pendingBanner})`;
             };
             reader.readAsDataURL(file);
         };
@@ -407,11 +428,14 @@
         document.getElementById('music-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            document.getElementById('music-filename-label').innerText = file.name;
+            document.getElementById('music-filename-label').innerText = "Music Loaded: " + file.name;
             const reader = new FileReader();
             reader.onload = (event) => {
-                myProfile.music = event.target.result;
-                autoSaveProfile();
+                pendingMusic = event.target.result;
+                // Preview the music immediately
+                const audio = document.getElementById('profile-audio');
+                audio.src = pendingMusic;
+                audio.play();
             };
             reader.readAsDataURL(file);
         };
@@ -424,6 +448,7 @@
             const editMode = document.getElementById('profile-edit-mode');
             const bioDisplay = document.getElementById('modal-bio');
             const bioEdit = document.getElementById('edit-bio');
+            const pfpOverlay = document.getElementById('pfp-edit-overlay-modal');
 
             if(isEditingProfile) {
                 pencil.classList.add('hidden');
@@ -432,8 +457,10 @@
                 editMode.classList.remove('hidden');
                 bioDisplay.classList.add('hidden');
                 bioEdit.classList.remove('hidden');
+                pfpOverlay.classList.remove('hidden');
                 document.getElementById('edit-username').value = myProfile.username;
                 document.getElementById('edit-bio').value = myProfile.customBio || '';
+                document.getElementById('modal-banner').classList.add('cursor-pointer');
             } else {
                 pencil.classList.remove('hidden');
                 eye.classList.add('hidden');
@@ -441,45 +468,34 @@
                 editMode.classList.add('hidden');
                 bioDisplay.classList.remove('hidden');
                 bioEdit.classList.add('hidden');
+                pfpOverlay.classList.add('hidden');
+                document.getElementById('modal-banner').classList.remove('cursor-pointer');
                 viewProfile(myProfile.username);
             }
         };
-
-        function autoSaveProfile() {
-            if(!isEditingProfile || !myProfile) return;
-            
-            const newUsername = document.getElementById('edit-username').value.trim();
-            if(newUsername && newUsername !== myProfile.username) {
-                const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
-                if(!db.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
-                    myProfile.username = newUsername;
-                }
-            }
-            
-            myProfile.customBio = document.getElementById('edit-bio').value;
-            saveEverything();
-            socket.emit('register user', myProfile);
-            
-            // Local Immediate Updates
-            document.getElementById('header-username').innerText = myProfile.username;
-            renderMessages();
-        }
 
         function viewProfile(username) {
             const user = globalUsers.find(u => u.username === username) || (myProfile && myProfile.username === username ? myProfile : null);
             if(!user) return;
             viewingUser = user;
             isEditingProfile = false;
+            
+            // Reset pending state
+            pendingPfp = null;
+            pendingBanner = null;
+            pendingMusic = null;
 
-            // Reset UI
+            // Reset UI components
             document.getElementById('pencil-icon').classList.remove('hidden');
             document.getElementById('eye-icon').classList.add('hidden');
             document.getElementById('profile-display-mode').classList.remove('hidden');
             document.getElementById('profile-edit-mode').classList.add('hidden');
             document.getElementById('modal-bio').classList.remove('hidden');
             document.getElementById('edit-bio').classList.add('hidden');
+            document.getElementById('pfp-edit-overlay-modal').classList.add('hidden');
+            document.getElementById('modal-banner').classList.remove('cursor-pointer');
 
-            // Data
+            // Set Data
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
@@ -490,11 +506,19 @@
             const banner = document.getElementById('modal-banner');
             banner.style.backgroundImage = user.banner ? `url(${user.banner})` : 'none';
 
-            // Music
+            // Profile Audio Playback
             const audio = document.getElementById('profile-audio');
             if(user.music) {
+                audio.pause();
                 audio.src = user.music;
-                audio.play().catch(() => {});
+                audio.load();
+                // We use a user interaction check internally, but since this is called via click, it should work
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Audio playback was prevented by browser. User must click on the page first.");
+                    });
+                }
             } else {
                 audio.pause();
                 audio.src = "";
@@ -517,7 +541,7 @@
                 localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
                 if(viewingUser.username === myProfile.username) {
                     myProfile.rank = newRank;
-                    enterApp();
+                    localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
                 }
                 socket.emit('register user', db[idx]);
                 viewProfile(viewingUser.username);
@@ -526,14 +550,23 @@
 
         function closeProfile() { 
             document.getElementById('profile-modal').classList.add('hidden');
-            document.getElementById('profile-audio').pause();
+            const audio = document.getElementById('profile-audio');
+            audio.pause();
+            audio.currentTime = 0;
         }
 
         function setStatus(s) {
             myProfile.status = s;
             document.getElementById('my-status-dot').className = `status-dot status-${s}`;
             document.getElementById('my-status-text').innerText = s.toUpperCase();
-            saveEverything();
+            
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
+            const idx = db.findIndex(u => u.username === myProfile.username);
+            if(idx !== -1) {
+                db[idx].status = s;
+                localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
+            }
+            localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
             socket.emit('register user', myProfile);
         }
 
@@ -546,6 +579,7 @@
         socket.on('update user list', (users) => {
             globalUsers = users;
             renderUserList();
+            renderMessages(); // Re-render to update PFPs/Names in chat
         });
 
         function renderUserList() {
@@ -557,7 +591,7 @@
                 div.onclick = () => viewProfile(u.username);
                 div.innerHTML = `
                     <div class="relative shrink-0">
-                        <img src="${u.pfp}" class="w-7 h-7 rounded-lg object-cover">
+                        <img src="${u.pfp}" class="w-7 h-7 rounded-lg object-cover bg-black">
                         <div class="absolute -bottom-0.5 -right-0.5 status-dot status-${u.status || 'online'} scale-[0.6]"></div>
                     </div>
                     <div class="hidden lg:block overflow-hidden">
@@ -584,7 +618,7 @@
 
         socket.on('global message', (msg) => {
             chatHistory.push(msg);
-            if(chatHistory.length > 50) chatHistory.shift();
+            if(chatHistory.length > 100) chatHistory.shift();
             localStorage.setItem('chatlaxy_history_v5', JSON.stringify(chatHistory));
             renderMessages();
         });
@@ -593,12 +627,11 @@
             const container = document.getElementById('messages');
             container.innerHTML = '';
             chatHistory.forEach(m => {
-                // Find current version of sender in global list to show latest pfp/rank
                 const liveSender = globalUsers.find(u => u.username === m.sender.username) || m.sender;
                 const div = document.createElement('div');
                 div.className = `message-row flex gap-4`;
                 div.innerHTML = `
-                    <img src="${liveSender.pfp}" onclick="viewProfile('${liveSender.username}')" class="w-10 h-10 rounded-xl object-cover cursor-pointer">
+                    <img src="${liveSender.pfp}" onclick="viewProfile('${liveSender.username}')" class="w-10 h-10 rounded-xl object-cover cursor-pointer bg-black">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="serif text-sm font-bold text-white">${liveSender.username}</span>
