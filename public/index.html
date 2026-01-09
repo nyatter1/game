@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraChat - Private Messaging</title>
+    <title>AuraChat - Profile Customization</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { height: 100vh; overflow: hidden; }
         .active-chat { background-color: #3b82f6 !important; color: white; }
         .message-blob { max-width: 80%; word-wrap: break-word; }
+        .avatar-preview { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid white; }
+        .chat-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col">
@@ -16,7 +18,12 @@
     <!-- Navbar -->
     <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
         <h1 class="text-xl font-bold">AuraChat</h1>
-        <div id="my-name-display" class="text-sm italic"></div>
+        <div class="flex items-center gap-3">
+            <div id="my-name-display" class="text-sm font-medium"></div>
+            <!-- Clickable PFP to change -->
+            <input type="file" id="pfp-input" accept="image/*" class="hidden">
+            <img id="my-pfp-display" src="https://ui-avatars.com/api/?name=?" class="avatar-preview" title="Click to change profile picture">
+        </div>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
@@ -24,10 +31,9 @@
         <aside class="w-64 bg-white border-r flex flex-col">
             <div class="p-4 border-b font-semibold bg-gray-50">Online Users</div>
             <div id="user-list" class="flex-1 overflow-y-auto">
-                <button onclick="switchChat('global')" id="btn-global" class="w-full text-left p-4 hover:bg-gray-100 border-b active-chat">
-                    🌍 Global Chat
+                <button onclick="switchChat('global')" id="btn-global" class="w-full text-left p-4 hover:bg-gray-100 border-b active-chat flex items-center gap-2">
+                    <span>🌍</span> Global Chat
                 </button>
-                <!-- Dynamic users go here -->
             </div>
         </aside>
 
@@ -52,62 +58,80 @@
         </main>
     </div>
 
-    <!-- Socket.io Script -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         let currentUsername = "";
-        let targetUserId = "global"; // Default to global
+        let currentPfp = "";
+        let targetUserId = "global";
         let targetUserName = "Global Chat";
         
-        // Store messages in memory to switch views
-        const chatHistory = {
-            'global': []
-        };
+        const chatHistory = { 'global': [] };
 
-        // 1. Join with name
-        window.onload = () => {
-            currentUsername = prompt("Enter your nickname:") || "User_" + Math.floor(Math.random() * 1000);
-            document.getElementById('my-name-display').innerText = `Logged in as: ${currentUsername}`;
-            socket.emit('register user', currentUsername);
-        };
-
+        const pfpInput = document.getElementById('pfp-input');
+        const myPfpDisplay = document.getElementById('my-pfp-display');
         const userListDiv = document.getElementById('user-list');
         const messagesContainer = document.getElementById('messages-container');
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
         const chatHeader = document.getElementById('chat-header');
 
-        // 2. Handle User List Updates
+        // 1. Initial Join
+        window.onload = () => {
+            currentUsername = prompt("Enter your nickname:") || "User_" + Math.floor(Math.random() * 1000);
+            document.getElementById('my-name-display').innerText = currentUsername;
+            myPfpDisplay.src = `https://ui-avatars.com/api/?name=${currentUsername}&background=random`;
+            
+            socket.emit('register user', { username: currentUsername, pfp: null });
+        };
+
+        // 2. Profile Picture Upload Logic
+        myPfpDisplay.onclick = () => pfpInput.click();
+        
+        pfpInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    currentPfp = event.target.result;
+                    myPfpDisplay.src = currentPfp;
+                    socket.emit('update pfp', currentPfp);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // 3. User List with Avatars
         socket.on('update user list', (users) => {
-            // Clear but keep global
-            userListDiv.innerHTML = `<button onclick="switchChat('global')" id="btn-global" class="w-full text-left p-4 hover:bg-gray-100 border-b ${targetUserId === 'global' ? 'active-chat' : ''}">🌍 Global Chat</button>`;
+            userListDiv.innerHTML = `<button onclick="switchChat('global')" id="btn-global" class="w-full text-left p-4 hover:bg-gray-100 border-b ${targetUserId === 'global' ? 'active-chat' : ''} flex items-center gap-2"><span>🌍</span> Global Chat</button>`;
             
             users.forEach(user => {
                 if (user.id !== socket.id) {
+                    const avatarSrc = user.pfp || `https://ui-avatars.com/api/?name=${user.username}&background=random`;
                     const btn = document.createElement('button');
-                    btn.className = `w-full text-left p-4 hover:bg-gray-100 border-b ${targetUserId === user.id ? 'active-chat' : ''}`;
-                    btn.innerHTML = `👤 ${user.username}`;
-                    btn.onclick = () => switchChat(user.id, user.username);
+                    btn.className = `w-full text-left p-4 hover:bg-gray-100 border-b ${targetUserId === user.id ? 'active-chat' : ''} flex items-center gap-3`;
+                    btn.innerHTML = `
+                        <img src="${avatarSrc}" class="chat-avatar">
+                        <span class="truncate">${user.username}</span>
+                    `;
+                    btn.onclick = (e) => switchChat(user.id, user.username, e);
                     userListDiv.appendChild(btn);
                 }
             });
         });
 
-        // 3. Switch Chat View
-        function switchChat(id, name = "Global Chat") {
+        function switchChat(id, name = "Global Chat", event) {
             targetUserId = id;
             targetUserName = name;
             chatHeader.innerText = id === 'global' ? '🌍 Global Chat' : `💬 Private: ${name}`;
             
-            // Highlight active button
             document.querySelectorAll('#user-list button').forEach(btn => btn.classList.remove('active-chat'));
-            event.currentTarget.classList.add('active-chat');
+            if(event) event.currentTarget.classList.add('active-chat');
+            else document.getElementById('btn-global').classList.add('active-chat');
 
             renderMessages();
         }
 
-        // 4. Send Message
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const text = chatInput.value.trim();
@@ -116,41 +140,33 @@
             const messageData = {
                 senderId: socket.id,
                 senderName: currentUsername,
+                senderPfp: currentPfp,
                 text: text,
-                targetId: targetUserId, // 'global' or a specific socket.id
+                targetId: targetUserId,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
             if (targetUserId === 'global') {
                 socket.emit('global message', messageData);
             } else {
-                // For private messages, we add to our own history immediately
                 if (!chatHistory[targetUserId]) chatHistory[targetUserId] = [];
                 chatHistory[targetUserId].push(messageData);
                 socket.emit('private message', messageData);
                 renderMessages();
             }
-
             chatInput.value = '';
         });
 
-        // 5. Receive Global Message
         socket.on('global message', (data) => {
             chatHistory['global'].push(data);
             if (targetUserId === 'global') renderMessages();
         });
 
-        // 6. Receive Private Message
         socket.on('private message', (data) => {
             const senderId = data.senderId;
             if (!chatHistory[senderId]) chatHistory[senderId] = [];
             chatHistory[senderId].push(data);
-            
-            if (targetUserId === senderId) {
-                renderMessages();
-            } else {
-                // Optional: add a notification visual on the sidebar here
-            }
+            if (targetUserId === senderId) renderMessages();
         });
 
         function renderMessages() {
@@ -159,13 +175,16 @@
             
             messages.forEach(msg => {
                 const isMe = msg.senderId === socket.id;
+                const avatarSrc = msg.senderPfp || `https://ui-avatars.com/api/?name=${msg.senderName}&background=random`;
+                
                 const wrapper = document.createElement('div');
-                wrapper.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+                wrapper.className = `flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
                 
                 wrapper.innerHTML = `
+                    <img src="${avatarSrc}" class="chat-avatar mb-1">
                     <div class="${isMe ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'} rounded-lg p-3 message-blob shadow-sm">
-                        <div class="text-xs opacity-75 mb-1">${isMe ? 'You' : msg.senderName} • ${msg.timestamp}</div>
-                        <div>${msg.text}</div>
+                        <div class="text-[10px] opacity-75 mb-1 uppercase font-bold tracking-wider">${msg.senderName} • ${msg.timestamp}</div>
+                        <div class="text-sm">${msg.text}</div>
                     </div>
                 `;
                 messagesContainer.appendChild(wrapper);
