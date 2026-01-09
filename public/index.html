@@ -55,12 +55,12 @@
             transition: all 0.2s ease;
         }
 
-        /* Command Feedback Animation */
-        @keyframes fadeUpOut {
-            0% { opacity: 0; transform: translate(-50%, -40%); }
-            15% { opacity: 1; transform: translate(-50%, -50%); }
-            85% { opacity: 1; transform: translate(-50%, -50%); }
-            100% { opacity: 0; transform: translate(-50%, -60%); }
+        /* Command Feedback Animation - Focused in Middle */
+        @keyframes centerFadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -60%) scale(1.05); }
         }
 
         .command-alert {
@@ -68,9 +68,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 100;
-            animation: fadeUpOut 2s forwards ease-in-out;
+            z-index: 9999;
+            animation: centerFadeInOut 2s forwards ease-in-out;
             pointer-events: none;
+            text-align: center;
+            min-width: 300px;
         }
     </style>
 </head>
@@ -193,19 +195,18 @@
          */
         const COMMANDS = {
             "help": () => {
-                showAlert("ACTION COMPLETE: Check console for help", true);
+                showAlert("ACTION COMPLETE", true);
                 console.log("Lumière Commands: /help, /clear");
             },
             "clear": () => {
                 clearSavedChat();
-                showAlert("ACTION COMPLETE: Chat cleared", true);
+                showAlert("ACTION COMPLETE", true);
             }
-            // Add more commands here
         };
 
         function showAlert(text, isSuccess = true) {
             const alert = document.createElement('div');
-            alert.className = `command-alert px-8 py-4 rounded-sm font-serif text-[10px] uppercase tracking-[0.4em] shadow-2xl backdrop-blur-xl border ${isSuccess ? 'bg-zinc-100/90 text-black border-white' : 'bg-red-950/80 text-red-200 border-red-900/50'}`;
+            alert.className = `command-alert px-10 py-6 rounded-lg font-serif text-[12px] uppercase tracking-[0.5em] shadow-2xl backdrop-blur-2xl border ${isSuccess ? 'bg-zinc-100/95 text-black border-white' : 'bg-red-950/90 text-red-100 border-red-800'}`;
             alert.textContent = text;
             alertContainer.appendChild(alert);
             
@@ -238,13 +239,18 @@
             const username = document.getElementById('signup-username').value.trim();
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
+            
             let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
+            
             if (users.find(u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase())) {
                 document.getElementById('signup-error').classList.remove('hidden');
                 return;
             }
+            
             users.push({ username, email, password });
             localStorage.setItem('lumiere_users', JSON.stringify(users));
+            
+            // Explicitly sync this user to the socket server immediately
             enterLounge(username);
         });
 
@@ -272,15 +278,20 @@
             window.location.reload();
         }
 
+        // IMPROVED: Logic to ensure your friend appears if they are online
         socket.on('user_update', (onlineUsernames) => {
+            // Re-fetch all registered users from local storage
             const registeredUsers = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
             const registeredNames = registeredUsers.map(u => u.username);
+            
             onlineList.innerHTML = '';
             offlineList.innerHTML = '';
             let count = 0;
+
             registeredNames.forEach(name => {
                 const isOnline = onlineUsernames.includes(name);
                 const isMe = name === currentUser;
+                
                 const userEl = document.createElement('div');
                 userEl.className = `user-row flex items-center gap-3 p-2 rounded-lg ${isOnline ? 'bg-zinc-900/40 border border-zinc-800/50' : 'opacity-30'}`;
                 userEl.innerHTML = `
@@ -293,8 +304,13 @@
                             ${name} ${isMe ? '<span class="text-[7px] opacity-40 ml-1">(YOU)</span>' : ''}
                         </div>
                     </div>`;
-                if (isOnline) { onlineList.appendChild(userEl); count++; } 
-                else { offlineList.appendChild(userEl); }
+
+                if (isOnline) { 
+                    onlineList.appendChild(userEl); 
+                    count++; 
+                } else { 
+                    offlineList.appendChild(userEl); 
+                }
             });
             onlineCount.textContent = count;
         });
