@@ -1,344 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <title>Simple Chat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Circle Luxury Chat</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Include Socket.io Client -->
-    <script src="/socket.io/socket.io.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0a0a0a;
-            color: #e5e7eb;
-            overflow: hidden;
-            height: 100vh;
-        }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes pulse-emerald {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-        .animate-pulse-emerald {
-            animation: pulse-emerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        .fade-in-up {
-            animation: fadeInUp 0.7s ease-out forwards;
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        #messages { list-style-type: none; margin: 0; padding: 0; flex-grow: 1; overflow-y: auto; }
+        #messages li { padding: 8px 15px; border-bottom: 1px solid #eee; }
+        #form { background: #333; padding: 10px; display: flex; }
+        #input { border: none; padding: 10px; flex-grow: 1; border-radius: 5px; }
+        #send { background: #00cc66; border: none; padding: 10px 20px; margin-left: 10px; color: white; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
-<body class="flex">
+<body>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+        <input id="input" autocomplete="off" placeholder="Type a message..." /><button id="send">Send</button>
+    </form>
 
-    <!-- HIDDEN INPUTS -->
-    <input type="file" id="pfpInput" class="hidden" accept="image/*">
-    <input type="file" id="bannerInput" class="hidden" accept="image/*">
-
-    <!-- LEFT SIDEBAR: NAVIGATION -->
-    <nav class="w-20 border-r border-white/5 flex flex-col items-center py-8 space-y-8 bg-[#0d0d0d]">
-        <div class="w-12 h-12 rounded-full border border-amber-500/30 flex items-center justify-center bg-gradient-to-tr from-amber-900/20 to-transparent shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-            <span class="text-amber-500 font-serif text-2xl font-bold italic">E</span>
-        </div>
-        
-        <button onclick="switchView('chat')" id="nav-chat" class="p-3 rounded-xl transition-all bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.05)]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        </button>
-
-        <button onclick="openProfileEditor()" id="nav-settings" class="p-3 rounded-xl transition-all text-gray-500 hover:text-gray-300">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-        </button>
-
-        <div class="mt-auto flex flex-col space-y-4 pb-4">
-            <button onclick="openProfileEditor()" class="w-10 h-10 rounded-full border border-white/10 p-0.5 overflow-hidden hover:border-amber-500/50 transition-colors">
-                <img id="nav-avatar" src="" class="rounded-full bg-neutral-800 w-full h-full object-cover" alt="Me">
-            </button>
-        </div>
-    </nav>
-
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 flex flex-col relative">
-        <header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-[#0d0d0d]/50 backdrop-blur-md z-10">
-            <h1 id="view-title" class="text-[10px] font-medium tracking-[0.4em] uppercase text-amber-500/80">Public Frequency</h1>
-            <div class="flex items-center space-x-4">
-                <button onclick="clearChat()" id="clear-btn" class="text-[9px] uppercase tracking-widest text-gray-700 hover:text-red-500 transition-colors">Wipe History</button>
-                <div class="flex items-center space-x-2">
-                    <div class="w-1 h-1 rounded-full bg-emerald-500 animate-pulse-emerald"></div>
-                    <span class="text-[9px] uppercase tracking-widest text-gray-500">Live</span>
-                </div>
-            </div>
-        </header>
-
-        <div id="content-viewport" class="flex-1 overflow-y-auto p-8 flex justify-center">
-            <!-- Content Injected via JS -->
-        </div>
-    </main>
-
-    <!-- RIGHT SIDEBAR: USERS ONLINE -->
-    <aside class="w-80 border-l border-white/5 bg-[#0d0d0d] hidden xl:flex flex-col">
-        <div class="p-8 border-b border-white/5">
-            <h3 class="text-[9px] uppercase tracking-[0.5em] font-black text-amber-500/60 tracking-[0.4em]">Players Online</h3>
-            <p id="online-count" class="text-[10px] text-gray-600 mt-2 tracking-widest uppercase">0 Presences Active</p>
-        </div>
-        
-        <div id="users-list" class="flex-1 overflow-y-auto p-6 space-y-4">
-            <!-- User List Injected via JS -->
-        </div>
-
-        <div class="p-8 border-t border-white/5 opacity-30 hover:opacity-100 transition-opacity">
-            <div class="text-[8px] uppercase tracking-[0.4em] text-center text-gray-600 leading-relaxed">
-                Everything is recorded.<br>Nothing is forgotten.
-            </div>
-        </div>
-    </aside>
-
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // --- SOCKET CONNECTION ---
         const socket = io();
+        const name = prompt("Enter your name to join:") || "Anonymous";
 
-        // --- CONSTANTS & INITIAL STATE ---
-        const DEFAULT_AVATAR = "https://api.dicebear.com/7.x/initials/svg?seed=Elite&backgroundColor=1a1a1a&textColor=c5a059";
-        
-        // Generate a random ID if not exists to track sessions
-        let localId = localStorage.getItem('elite_session_id') || Math.random().toString(36).substring(7);
-        localStorage.setItem('elite_session_id', localId);
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const messages = document.getElementById('messages');
 
-        let user = JSON.parse(localStorage.getItem('elite_circle_user')) || {
-            id: localId,
-            name: 'Anonymous',
-            bio: 'New Presence.',
-            avatar: DEFAULT_AVATAR,
-            banner: null, 
-            bannerColor: '#1a1a1a',
-            status: 'online',
-            rank: 'Guest'
-        };
-
-        let messages = [];
-        let onlineUsers = [];
-        let currentView = 'chat';
-
-        // --- CORE FUNCTIONS ---
-        function saveState() {
-            localStorage.setItem('elite_circle_user', JSON.stringify(user));
-            document.getElementById('nav-avatar').src = user.avatar;
-            // Tell server our profile updated
-            socket.emit('update_profile', user);
-        }
-
-        // --- SOCKET HANDLERS ---
-        socket.on('connect', () => {
-            socket.emit('join', user);
-        });
-
-        socket.on('chat_history', (history) => {
-            messages = history;
-            if (currentView === 'chat') renderChat();
-        });
-
-        socket.on('new_message', (msg) => {
-            messages.push(msg);
-            if (currentView === 'chat') {
-                renderChat();
-            }
-        });
-
-        socket.on('user_list', (users) => {
-            onlineUsers = users;
-            renderUsersList();
-        });
-
-        function switchView(view) {
-            currentView = view;
-            const title = document.getElementById('view-title');
-            const clearBtn = document.getElementById('clear-btn');
-            
-            document.getElementById('nav-chat').className = view === 'chat' 
-                ? 'p-3 rounded-xl transition-all bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.05)]'
-                : 'p-3 rounded-xl transition-all text-gray-500 hover:text-gray-300';
-            document.getElementById('nav-settings').className = (view === 'profile-edit')
-                ? 'p-3 rounded-xl transition-all bg-amber-500/10 text-amber-500'
-                : 'p-3 rounded-xl transition-all text-gray-500 hover:text-gray-300';
-
-            if (view === 'chat') {
-                title.innerText = 'Public Frequency';
-                clearBtn.style.display = 'block';
-                renderChat();
-            } else {
-                title.innerText = 'Identity Matrix';
-                clearBtn.style.display = 'none';
-                renderProfileEditor();
-            }
-        }
-
-        function renderChat() {
-            const viewport = document.getElementById('content-viewport');
-            viewport.innerHTML = `
-                <div class="w-full max-w-3xl flex flex-col h-full">
-                    <div id="chat-scroll" class="flex-1 space-y-8 overflow-y-auto pb-4 scrollbar-hide px-4">
-                        ${messages.map(msg => `
-                            <div class="flex flex-col ${msg.senderId === user.id ? 'items-end' : 'items-start'}">
-                                <div class="flex items-center space-x-3 mb-2 px-1">
-                                    <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-500/40">${msg.senderName}</span>
-                                    <span class="text-[9px] text-gray-700">${msg.time}</span>
-                                </div>
-                                <div class="px-5 py-3 rounded-2xl max-w-md text-sm font-light leading-relaxed border transition-all duration-500 ${
-                                    msg.senderId === user.id 
-                                    ? 'bg-amber-600/5 text-amber-50/90 border-amber-500/10 shadow-[0_5px_15px_rgba(0,0,0,0.2)]' 
-                                    : msg.isSystem ? 'bg-white/[0.01] text-amber-500/40 border-transparent italic text-center w-full' : 'bg-white/[0.02] text-gray-400 border-white/5'
-                                }">
-                                    ${msg.text}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <form id="chat-form" class="mt-8 relative px-4 pb-4">
-                        <input id="chat-input" type="text" autocomplete="off" placeholder="Transmit thought..." 
-                            class="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 px-8 pr-16 text-sm focus:outline-none focus:border-amber-500/20 focus:bg-white/[0.05] transition-all placeholder:text-gray-700 placeholder:tracking-widest">
-                        <button type="submit" class="absolute right-8 top-3.5 p-2.5 text-amber-500/50 hover:text-amber-500 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        </button>
-                    </form>
-                </div>
-            `;
-            
-            const scroll = document.getElementById('chat-scroll');
-            if (scroll) scroll.scrollTop = scroll.scrollHeight;
-
-            document.getElementById('chat-form').onsubmit = (e) => {
-                e.preventDefault();
-                const input = document.getElementById('chat-input');
-                if (!input.value.trim()) return;
-
-                const msgData = {
-                    senderId: user.id,
-                    senderName: user.name,
-                    text: input.value,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isSystem: false
-                };
-
-                socket.emit('send_message', msgData);
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value) {
+                // Send name and message to the server
+                socket.emit('chat message', { name: name, msg: input.value });
                 input.value = '';
-            };
-        }
-
-        function renderProfileEditor() {
-            const viewport = document.getElementById('content-viewport');
-            const bannerStyle = user.banner 
-                ? `background-image: url(${user.banner}); background-size: cover; background-position: center;`
-                : `background-color: ${user.bannerColor || '#1a1a1a'}`;
-
-            viewport.innerHTML = `
-                <div class="w-full max-w-xl fade-in-up">
-                    <div class="bg-[#0f0f0f] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
-                        <div class="h-48 w-full transition-all duration-700 relative group overflow-hidden bg-neutral-900" style="${bannerStyle}">
-                            <div class="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
-                            <div class="absolute inset-0 flex items-center justify-center space-x-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                                <button onclick="document.getElementById('bannerInput').click()" class="flex items-center space-x-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10 hover:bg-black/80 transition-all">
-                                    <span class="text-[10px] uppercase tracking-widest font-bold">Upload Banner</span>
-                                </button>
-                                <label class="flex items-center space-x-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10 hover:bg-black/80 transition-all cursor-pointer">
-                                    <span class="text-[10px] uppercase tracking-widest font-bold">Color</span>
-                                    <input type="color" class="hidden" value="${user.bannerColor}" onchange="updateBannerColor(this.value)">
-                                </label>
-                            </div>
-                        </div>
-                        <div class="px-10 pb-12 -mt-16 relative z-20">
-                            <div class="relative inline-block group">
-                                <div class="w-32 h-32 rounded-[2rem] border-[6px] border-[#0f0f0f] overflow-hidden bg-neutral-900 shadow-2xl relative">
-                                    <img src="${user.avatar}" class="w-full h-full object-cover">
-                                    <button onclick="document.getElementById('pfpInput').click()" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="mt-8 space-y-8">
-                                <div class="space-y-2">
-                                    <label class="text-[9px] uppercase tracking-[0.4em] text-gray-600 font-black px-1">Nomenclature</label>
-                                    <input type="text" id="edit-name" value="${user.name}" oninput="updateUserName(this.value)"
-                                        class="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 px-6 focus:outline-none focus:border-amber-500/20 text-lg font-serif">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[9px] uppercase tracking-[0.4em] text-gray-600 font-black px-1">Statement</label>
-                                    <textarea id="edit-bio" rows="2" oninput="updateUserBio(this.value)"
-                                        class="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 px-6 focus:outline-none focus:border-amber-500/20 resize-none font-light italic text-gray-400">${user.bio}</textarea>
-                                </div>
-                                <button onclick="switchView('chat')"
-                                    class="w-full py-5 bg-amber-500 text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl hover:bg-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)] transition-all active:scale-[0.98]">
-                                    Save Identity
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderUsersList() {
-            const list = document.getElementById('users-list');
-            document.getElementById('online-count').innerText = `${onlineUsers.length} Presences Active`;
-
-            let html = '';
-            onlineUsers.forEach(u => {
-                const isMe = u.id === user.id;
-                html += `
-                    <div ${isMe ? 'onclick="openProfileEditor()"' : ''} class="flex items-center p-4 rounded-3xl hover:bg-white/[0.03] cursor-pointer group transition-all duration-500 border border-transparent hover:border-white/5 ${isMe ? '' : 'opacity-70 hover:opacity-100'}">
-                        <div class="relative">
-                            <div class="w-12 h-12 rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-amber-500/30 transition-colors shadow-lg">
-                                <img src="${u.avatar}" class="w-full h-full object-cover">
-                            </div>
-                            <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-[#0d0d0d] rounded-full shadow-lg"></div>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-xs font-bold ${isMe ? 'text-amber-500' : 'text-gray-400'} group-hover:text-amber-500 transition-colors uppercase tracking-widest">${u.name} ${isMe ? '(You)' : ''}</p>
-                            <p class="text-[9px] text-gray-700 mt-1 uppercase tracking-tighter">${u.rank || 'Member'}</p>
-                        </div>
-                    </div>
-                `;
-            });
-
-            list.innerHTML = html;
-        }
-
-        // --- HANDLERS ---
-        function updateUserName(val) { user.name = val; saveState(); }
-        function updateUserBio(val) { user.bio = val; saveState(); }
-        function updateBannerColor(val) { user.banner = null; user.bannerColor = val; saveState(); renderProfileEditor(); }
-        function openProfileEditor() { switchView('profile-edit'); }
-        
-        function clearChat() {
-            // Since this is live, we only "clear" for ourselves or trigger a server wipe if permitted
-            if (confirm("Permanently wipe your local view of frequency history?")) {
-                messages = [];
-                renderChat();
             }
-        }
+        });
 
-        // File upload handlers
-        document.getElementById('pfpInput').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = () => { user.avatar = reader.result; saveState(); renderProfileEditor(); };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-        document.getElementById('bannerInput').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = () => { user.banner = reader.result; saveState(); renderProfileEditor(); };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
-        // --- INIT ---
-        window.onload = () => {
-            saveState();
-            switchView('chat');
-        };
+        socket.on('chat message', (data) => {
+            const item = document.createElement('li');
+            item.innerHTML = `<strong>${data.name}:</strong> ${data.msg}`;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
     </script>
 </body>
 </html>
