@@ -219,7 +219,7 @@
         let myProfile = null;
         let chatHistory = [];
         let globalUsers = [];
-        let viewingUser = null; // for admin changes
+        let viewingUser = null; 
 
         const RANK_CONFIG = {
             DEVELOPER: { name: 'Developer', class: 'rank-dev', weight: 100 },
@@ -255,7 +255,6 @@
             if(session) {
                 try {
                     myProfile = JSON.parse(session);
-                    // Force refresh rank from "database" in case it was changed while offline
                     const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
                     const updated = db.find(u => u.username === myProfile.username);
                     if(updated) myProfile = updated;
@@ -347,7 +346,6 @@
             location.reload();
         };
 
-        // PFP 
         document.getElementById('pfp-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -374,16 +372,23 @@
             document.getElementById('modal-status-dot').className = `status-dot status-${user.status}`;
             document.getElementById('modal-bio').innerText = `${user.age} Years • ${user.gender}`;
             
-            // ADMIN CHECK: If I am the DEVELOPER, I see the rank selector
+            // ADMIN CHECK: If I am the DEVELOPER, I see the rank selector for anyone BUT other Developers
             const isMeDev = myProfile && myProfile.rank === 'DEVELOPER';
             const isTargetDev = user.rank === 'DEVELOPER';
-            
-            document.getElementById('admin-controls').classList.toggle('hidden', !isMeDev || (isMeDev && isTargetDev && user.username !== myProfile.username));
-            if(isMeDev) {
-                document.getElementById('rank-selector').value = user.rank;
+            const isMe = myProfile && user.username === myProfile.username;
+
+            // Fix: If I'm dev, I should see controls unless target is another dev (and not myself)
+            if (isMeDev) {
+                if (isTargetDev && !isMe) {
+                    document.getElementById('admin-controls').classList.add('hidden');
+                } else {
+                    document.getElementById('admin-controls').classList.remove('hidden');
+                    document.getElementById('rank-selector').value = user.rank;
+                }
+            } else {
+                document.getElementById('admin-controls').classList.add('hidden');
             }
 
-            const isMe = myProfile && user.username === myProfile.username;
             document.getElementById('pfp-edit-overlay').classList.toggle('hidden', !isMe);
             document.getElementById('profile-modal').classList.remove('hidden');
         }
@@ -392,22 +397,19 @@
             if(!myProfile || myProfile.rank !== 'DEVELOPER' || !viewingUser) return;
             const newRank = document.getElementById('rank-selector').value;
             
-            // Update "Database"
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
             const idx = db.findIndex(u => u.username === viewingUser.username);
             if(idx !== -1) {
                 db[idx].rank = newRank;
                 localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
                 
-                // If I updated myself
                 if(viewingUser.username === myProfile.username) {
                     myProfile.rank = newRank;
                     enterApp();
                 }
                 
-                // Notify server to broadcast update
                 socket.emit('admin update user', db[idx]);
-                viewProfile(viewingUser.username); // Refresh modal view
+                viewProfile(viewingUser.username); 
             }
         }
 
@@ -426,9 +428,7 @@
         statusBtn.onclick = (e) => { e.stopPropagation(); statusDropdown.classList.toggle('hidden'); };
         window.onclick = () => { statusDropdown.classList.add('hidden'); };
 
-        // SOCKETS
         socket.on('update user list', (users) => {
-            // Sort by Rank Weight
             globalUsers = users.sort((a, b) => {
                 const wA = RANK_CONFIG[a.rank]?.weight || 0;
                 const wB = RANK_CONFIG[b.rank]?.weight || 0;
@@ -437,7 +437,6 @@
             renderUserList();
         });
 
-        // Server might broadcast an update when dev changes someone's rank
         socket.on('force update profile', (updatedUser) => {
             if(myProfile && myProfile.username === updatedUser.username) {
                 myProfile = { ...updatedUser };
