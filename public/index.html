@@ -17,6 +17,9 @@
 </head>
 <body class="bg-slate-100 font-sans h-screen overflow-hidden">
 
+    <!-- Hidden File Input for PFP Updates -->
+    <input type="file" id="update-pfp-input" accept="image/*" class="hidden">
+
     <!-- AUTH SECTION -->
     <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 p-4">
         <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
@@ -31,6 +34,7 @@
                     <input type="text" id="login-user" placeholder="Username" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                     <input type="password" id="login-pass" placeholder="Password" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                     <button id="btn-login-action" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Enter Chat</button>
+                    <p id="login-error" class="text-red-500 text-xs text-center hidden font-medium">Invalid username or password.</p>
                 </div>
 
                 <!-- Signup Form -->
@@ -61,9 +65,12 @@
         <aside class="w-80 glass-sidebar border-r flex flex-col shadow-xl">
             <div class="p-6 bg-blue-600 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <img id="my-pfp" src="" class="w-12 h-12 rounded-full border-2 border-white object-cover">
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('update-pfp-input').click()">
+                        <img id="my-pfp" src="" class="w-12 h-12 rounded-full border-2 border-white object-cover transition group-hover:brightness-75">
                         <div class="online-dot absolute bottom-0 right-0"></div>
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
                     </div>
                     <div>
                         <p id="my-username-display" class="font-bold leading-none text-lg">User</p>
@@ -77,7 +84,7 @@
 
             <div class="p-4 bg-gray-50 border-b flex justify-around text-xs font-black uppercase text-gray-400 tracking-tighter">
                 <button onclick="switchChat('global')" id="view-global-btn" class="active-tab pb-2 flex items-center gap-1">🌍 Public</button>
-                <button onclick="switchChat('private')" id="view-private-btn" class="pb-2 flex items-center gap-1">💬 Friends</button>
+                <button onclick="switchChat('private')" id="view-private-btn" class="pb-2 flex items-center gap-1">💬 PMs</button>
             </div>
 
             <div id="sidebar-list" class="flex-1 overflow-y-auto">
@@ -118,6 +125,9 @@
         let targetId = 'global';
         let chatHistory = { 'global': [] };
         let pfpBase64 = null;
+        
+        // Client-side account storage (Simulated Database)
+        let registeredUsers = [];
 
         const genders = [
             "Male", "Female", "Non-binary", "Agender", "Table", "UFO", "Attack Helicopter", "Walrus", "Potato", "Wireless Router", 
@@ -135,6 +145,10 @@
                 opt.value = g; opt.textContent = g;
                 genderSelect.appendChild(opt);
             });
+
+            // Load saved accounts from localStorage if available
+            const saved = localStorage.getItem('aura_users');
+            if(saved) registeredUsers = JSON.parse(saved);
         };
 
         // --- Auth UI Toggles ---
@@ -146,6 +160,7 @@
             document.getElementById('signup-form').classList.toggle('hidden', mode === 'login');
             document.getElementById('tab-login').className = mode === 'login' ? 'flex-1 py-4 font-bold active-tab' : 'flex-1 py-4 font-bold text-gray-400';
             document.getElementById('tab-signup').className = mode === 'signup' ? 'flex-1 py-4 font-bold active-tab' : 'flex-1 py-4 font-bold text-gray-400';
+            document.getElementById('login-error').classList.add('hidden');
         }
 
         // --- Signup Logic ---
@@ -158,35 +173,82 @@
             reader.readAsDataURL(e.target.files[0]);
         };
 
+        // --- In-App PFP Update Logic ---
+        document.getElementById('update-pfp-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const newPfp = ev.target.result;
+                myProfile.pfp = newPfp;
+                document.getElementById('my-pfp').src = newPfp;
+                // Update local storage record if logged in
+                const idx = registeredUsers.findIndex(u => u.username === myProfile.username);
+                if(idx !== -1) {
+                    registeredUsers[idx].pfp = newPfp;
+                    localStorage.setItem('aura_users', JSON.stringify(registeredUsers));
+                }
+                // Emit update to server
+                socket.emit('update pfp', newPfp);
+            };
+            reader.readAsDataURL(file);
+        };
+
         document.getElementById('btn-signup-action').onclick = () => {
             const user = document.getElementById('reg-user').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
             const age = parseInt(document.getElementById('reg-age').value);
             const gender = document.getElementById('reg-gender').value;
             const pass = document.getElementById('reg-pass').value;
 
-            if (!user || !pass || age < 8 || age > 1000 || !gender) return alert("Fill everything! Age 8-1000.");
+            if (!user || !pass || !email || age < 8 || age > 1000 || !gender) return alert("Fill everything! Age 8-1000.");
+            
+            // Check if user already exists
+            if (registeredUsers.some(u => u.username.toLowerCase() === user.toLowerCase())) {
+                return alert("Username already taken!");
+            }
 
-            myProfile = {
+            const newUser = {
                 username: user,
+                password: pass, // Simple plain text for demo
+                email: email,
                 age: age,
                 gender: gender,
                 pfp: pfpBase64 || `https://ui-avatars.com/api/?name=${user}&background=random`
             };
 
+            registeredUsers.push(newUser);
+            localStorage.setItem('aura_users', JSON.stringify(registeredUsers));
+            
+            myProfile = newUser;
             socket.emit('register user', myProfile);
             enterApp();
         };
 
         document.getElementById('btn-login-action').onclick = () => {
             const user = document.getElementById('login-user').value.trim();
-            if (!user) return alert("Enter username");
+            const pass = document.getElementById('login-pass').value;
+            const errorEl = document.getElementById('login-error');
+
+            if (!user || !pass) {
+                errorEl.innerText = "Please enter both fields.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
             
-            myProfile = {
-                username: user,
-                pfp: `https://ui-avatars.com/api/?name=${user}&background=random`
-            };
-            socket.emit('register user', myProfile);
-            enterApp();
+            // Validate against "database"
+            const account = registeredUsers.find(u => 
+                u.username.toLowerCase() === user.toLowerCase() && u.password === pass
+            );
+
+            if (account) {
+                myProfile = account;
+                socket.emit('register user', myProfile);
+                enterApp();
+            } else {
+                errorEl.innerText = "Invalid username or password.";
+                errorEl.classList.remove('hidden');
+            }
         };
 
         function enterApp() {
