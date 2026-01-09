@@ -24,6 +24,7 @@
         
         .avatar-border { border: 2px solid var(--luxury-gold); padding: 2px; }
         .online-glow { box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .unread-glow { box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--luxury-black); }
@@ -108,17 +109,17 @@
 
             <div class="flex-1 overflow-y-auto px-4 py-6">
                 <button onclick="switchChat('global')" id="view-global-btn" class="w-full flex items-center gap-4 p-4 rounded-xl transition-all mb-6 group active-tab">
-                    <div class="w-10 h-10 gold-bg rounded-lg flex items-center justify-center text-black font-bold shadow-lg shadow-gold/20">GL</div>
+                    <div class="w-10 h-10 gold-bg rounded-lg flex items-center justify-center text-black font-bold shadow-lg shadow-gold/20">A</div>
                     <div class="text-left hidden lg:block">
-                        <p class="text-xs font-bold uppercase tracking-widest">Global Square</p>
-                        <p class="text-[10px] text-gray-500">The Grand Hall</p>
+                        <p class="text-xs font-bold uppercase tracking-widest">Aura</p>
+                        <p class="text-[10px] text-gray-500">Main Social Hub</p>
                     </div>
                 </button>
 
-                <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4 hidden lg:block">Private Links</p>
+                <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4 hidden lg:block">Direct Exchanges</p>
                 <div id="pm-list" class="space-y-2">
                     <!-- Conversations will populate here -->
-                    <p class="text-[10px] text-gray-700 italic px-4 hidden lg:block">No active direct messages...</p>
+                    <p class="text-[10px] text-gray-700 italic px-4 hidden lg:block">No active messages...</p>
                 </div>
             </div>
 
@@ -132,10 +133,10 @@
         <main class="flex-1 flex flex-col bg-[#0f1115]">
             <header class="h-20 border-b border-white/5 flex items-center px-8 justify-between bg-[#0f1115]/50 backdrop-blur-md">
                 <div class="flex items-center gap-4">
-                    <div id="target-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-2xl gold-bg">🏛️</div>
+                    <div id="target-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-2xl gold-bg text-black font-bold">A</div>
                     <div>
-                        <h2 id="chat-title" class="serif text-xl gold-gradient">Global Square</h2>
-                        <p id="chat-status" class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Public Reception</p>
+                        <h2 id="chat-title" class="serif text-xl gold-gradient">Aura</h2>
+                        <p id="chat-status" class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Elite Social Circle</p>
                     </div>
                 </div>
             </header>
@@ -146,7 +147,7 @@
 
             <div class="p-6 bg-[#0f1115]">
                 <form id="chat-form" class="luxury-input rounded-2xl p-2 flex items-center gap-4">
-                    <input type="text" id="msg-input" placeholder="Type your message..." class="flex-1 bg-transparent p-3 px-6 outline-none text-white text-sm">
+                    <input type="text" id="msg-input" placeholder="Whisper something elegant..." class="flex-1 bg-transparent p-3 px-6 outline-none text-white text-sm">
                     <button type="submit" class="gold-bg p-3 rounded-xl hover:brightness-110 transition-all shadow-lg shadow-gold/10">
                         <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                     </button>
@@ -171,13 +172,17 @@
         let myProfile = null;
         let targetId = 'global';
         let chatHistory = { 'global': [] };
+        let unreadCounts = {};
         let pfpBase64 = null;
         let registeredUsers = [];
 
-        // --- Init & Auto Login ---
+        // --- Init & Persistence ---
         window.onload = () => {
-            const saved = localStorage.getItem('aura_users');
-            if(saved) registeredUsers = JSON.parse(saved);
+            const savedUsers = localStorage.getItem('aura_users');
+            if(savedUsers) registeredUsers = JSON.parse(savedUsers);
+
+            const savedHistory = localStorage.getItem('aura_chat_history');
+            if(savedHistory) chatHistory = JSON.parse(savedHistory);
 
             const currentSession = localStorage.getItem('aura_current_session');
             if (currentSession) {
@@ -190,6 +195,10 @@
                 }
             }
         };
+
+        function saveState() {
+            localStorage.setItem('aura_chat_history', JSON.stringify(chatHistory));
+        }
 
         function toggleAuth(mode) {
             document.getElementById('login-form').classList.toggle('hidden', mode === 'signup');
@@ -243,7 +252,7 @@
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
             document.getElementById('my-pfp').src = myProfile.pfp;
-            document.getElementById('my-username-display')?.remove(); // Cleanup old logic if any
+            renderMessages();
         }
 
         document.getElementById('btn-logout').onclick = () => {
@@ -259,34 +268,38 @@
             pmList.innerHTML = '';
 
             users.forEach(u => {
-                if (u.id === socket.id) return;
+                const isMe = u.id === socket.id;
 
-                // Right Sidebar List (Online Users)
+                // Right Sidebar List (Online Users - Including Self)
                 const div = document.createElement('div');
                 div.className = "flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition group";
-                div.onclick = () => switchChat(u.id, u.username, u.pfp, u.gender, u.age);
+                if (!isMe) div.onclick = () => switchChat(u.id, u.username, u.pfp, u.gender, u.age);
                 div.innerHTML = `
                     <div class="relative">
                         <img src="${u.pfp}" class="w-10 h-10 rounded-full border border-white/10 group-hover:border-gold transition object-cover">
                         <div class="w-2.5 h-2.5 bg-green-500 border-2 border-[#0a0c10] absolute bottom-0 right-0 rounded-full online-glow"></div>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-200">${u.username}</p>
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-bold text-gray-200 truncate">${u.username} ${isMe ? '<span class="text-gold text-[10px] ml-1">(You)</span>' : ''}</p>
                         <p class="text-[9px] text-gray-500 uppercase tracking-widest">${u.gender}</p>
                     </div>
                 `;
                 list.appendChild(div);
 
-                // Left Sidebar List (Active PMs - simulating with recent chatters)
-                if (chatHistory[u.id]) {
+                // Left Sidebar List (Active PMs)
+                if (!isMe && chatHistory[u.id]) {
+                    const hasUnread = unreadCounts[u.id] > 0;
                     const pmDiv = document.createElement('div');
                     pmDiv.className = `flex items-center gap-3 p-3 rounded-xl cursor-pointer transition ${targetId === u.id ? 'active-tab' : 'hover:bg-white/5'}`;
                     pmDiv.onclick = () => switchChat(u.id, u.username, u.pfp, u.gender, u.age);
                     pmDiv.innerHTML = `
-                        <img src="${u.pfp}" class="w-8 h-8 rounded-full border border-white/5 object-cover">
-                        <div class="hidden lg:block overflow-hidden">
-                            <p class="text-xs font-semibold truncate">${u.username}</p>
-                            <p class="text-[9px] text-gray-600 truncate">Last message...</p>
+                        <div class="relative">
+                            <img src="${u.pfp}" class="w-8 h-8 rounded-full border border-white/5 object-cover">
+                            ${hasUnread ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#0a0c10] unread-glow"></div>' : ''}
+                        </div>
+                        <div class="hidden lg:block overflow-hidden flex-1">
+                            <p class="text-xs font-semibold truncate ${hasUnread ? 'text-white' : 'text-gray-400'}">${u.username}</p>
+                            <p class="text-[9px] text-gray-600 truncate">${chatHistory[u.id].slice(-1)[0]?.text || 'No messages'}</p>
                         </div>
                     `;
                     pmList.appendChild(pmDiv);
@@ -294,26 +307,27 @@
             });
         });
 
-        function switchChat(id, name = "Global Square", pfp = null, gender = null, age = null) {
+        function switchChat(id, name = "Aura", pfp = null, gender = null, age = null) {
             targetId = id;
+            if (id !== 'global') {
+                unreadCounts[id] = 0; // Clear unread on open
+                if (!chatHistory[id]) chatHistory[id] = [];
+            }
+            
             document.getElementById('view-global-btn').classList.toggle('active-tab', id === 'global');
             
             if (id === 'global') {
-                document.getElementById('chat-title').innerText = "Global Square";
-                document.getElementById('target-icon').innerText = "🏛️";
-                document.getElementById('target-icon').className = "w-10 h-10 rounded-full flex items-center justify-center text-2xl gold-bg";
-                document.getElementById('chat-status').innerText = "Public Reception";
+                document.getElementById('chat-title').innerText = "Aura";
+                document.getElementById('target-icon').innerText = "A";
+                document.getElementById('target-icon').className = "w-10 h-10 rounded-full flex items-center justify-center text-2xl gold-bg text-black font-bold";
+                document.getElementById('chat-status').innerText = "Elite Social Circle";
             } else {
                 document.getElementById('chat-title').innerText = name;
                 document.getElementById('target-icon').innerHTML = `<img src="${pfp}" class="w-full h-full rounded-full object-cover">`;
                 document.getElementById('target-icon').className = "w-10 h-10 rounded-full overflow-hidden avatar-border";
                 document.getElementById('chat-status').innerText = `${gender} • ${age} Y/O`;
-                
-                // Ensure they are in chat history to show on left
-                if (!chatHistory[id]) chatHistory[id] = [];
             }
             renderMessages();
-            // Force re-render user lists to update tab highlight
             socket.emit('request update'); 
         }
 
@@ -332,9 +346,9 @@
                 socket.emit('global message', msg);
             } else {
                 msg.targetId = targetId;
-                if (!chatHistory[targetId]) chatHistory[targetId] = [];
                 chatHistory[targetId].push(msg);
                 socket.emit('private message', msg);
+                saveState();
                 renderMessages();
             }
             input.value = '';
@@ -342,6 +356,7 @@
 
         socket.on('global message', (msg) => {
             chatHistory['global'].push(msg);
+            saveState();
             if (targetId === 'global') renderMessages();
         });
 
@@ -349,8 +364,13 @@
             const sid = msg.senderId;
             if (!chatHistory[sid]) chatHistory[sid] = [];
             chatHistory[sid].push(msg);
+            
+            if (targetId !== sid) {
+                unreadCounts[sid] = (unreadCounts[sid] || 0) + 1;
+            }
+            
+            saveState();
             if (targetId === sid) renderMessages();
-            // Trigger refresh to update the "Private Links" sidebar
             socket.emit('request update');
         });
 
