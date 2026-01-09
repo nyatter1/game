@@ -71,7 +71,7 @@
             min-width: 300px;
         }
 
-        /* Bank Menu Animation */
+        /* Small Centered Bank Menu Animation */
         @keyframes bankSlideIn {
             0% { opacity: 0; transform: translate(-50%, -45%) scale(0.9); }
             100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -210,48 +210,46 @@
             setTimeout(() => alert.remove(), 2000);
         }
 
-        // Listener for Server Command Feedback
         socket.on('command_response', (res) => {
             showAlert(res.message, res.success);
         });
 
-        // Listener for the /bank display menu
+        // WIPE COMMAND HANDLER: Forces everyone to log out and clears all data
+        socket.on('force_logout_all', () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
+        });
+
         socket.on('bank_display', (data) => {
-            // Remove existing bank menu if it exists
             const existing = document.querySelector('.bank-menu');
             if (existing) existing.remove();
 
             const menu = document.createElement('div');
-            menu.className = "bank-menu w-80 bg-zinc-900/90 border border-zinc-800/50 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden text-center";
+            // Small and centered menu UI
+            menu.className = "bank-menu w-64 bg-zinc-900/95 border border-zinc-800/80 backdrop-blur-xl shadow-2xl rounded-xl overflow-hidden text-center p-6";
             
             menu.innerHTML = `
-                <div class="h-24 bg-gradient-to-b from-zinc-800/50 to-transparent flex items-center justify-center pt-8">
-                    <img src="${data.pfp}" class="w-20 h-20 rounded-full border-4 border-zinc-900 pfp-image shadow-xl">
-                </div>
-                <div class="p-8 pt-6 space-y-6">
+                <div class="flex flex-col items-center gap-4">
+                    <img src="${data.pfp}" class="w-16 h-16 rounded-full border-2 border-zinc-800 pfp-image shadow-md">
                     <div>
-                        <h3 class="font-serif text-lg tracking-[0.2em] text-white uppercase">${data.username}</h3>
-                        <p class="text-[10px] tracking-[0.3em] text-amber-200/60 uppercase mt-1">Lumière Level ${data.level}</p>
+                        <h3 class="font-serif text-sm tracking-[0.2em] text-white uppercase">${data.username}</h3>
+                        <p class="text-[8px] tracking-[0.3em] text-amber-200/60 uppercase mt-1">LVL ${data.level}</p>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 border-y border-zinc-800/50 py-6">
-                        <div class="space-y-1">
-                            <span class="text-[9px] uppercase tracking-widest text-zinc-500 block">Gold</span>
-                            <span class="text-amber-200 font-serif text-xl tracking-tighter">${data.gold}</span>
+                    <div class="flex gap-6 border-t border-zinc-800/50 pt-4 w-full justify-center">
+                        <div class="text-center">
+                            <span class="text-[8px] uppercase tracking-widest text-zinc-500 block">Gold</span>
+                            <span class="text-amber-200 font-serif text-md">${data.gold}</span>
                         </div>
-                        <div class="space-y-1">
-                            <span class="text-[9px] uppercase tracking-widest text-zinc-500 block">Rubies</span>
-                            <span class="text-rose-400 font-serif text-xl tracking-tighter">${data.rubies}</span>
+                        <div class="text-center">
+                            <span class="text-[8px] uppercase tracking-widest text-zinc-500 block">Rubies</span>
+                            <span class="text-rose-400 font-serif text-md">${data.rubies}</span>
                         </div>
                     </div>
-
-                    <button onclick="this.closest('.bank-menu').remove()" class="text-[9px] uppercase tracking-[0.4em] text-zinc-600 hover:text-zinc-100 transition-colors">Close Vault</button>
                 </div>
             `;
             bankOverlayContainer.appendChild(menu);
-            
-            // Auto close after 10 seconds
-            setTimeout(() => { if(menu) menu.remove(); }, 10000);
+            setTimeout(() => { if(menu) menu.remove(); }, 6000);
         });
 
         window.addEventListener('load', () => {
@@ -371,7 +369,9 @@
         });
 
         socket.on('system_message', (text) => {
+            const data = { user: 'System', text: text, time: '' };
             appendMessage('System', text, '', false, true);
+            saveMessage(data); // Ensures system messages (like bank alerts) persist on reload
         });
 
         function appendMessage(user, text, time, isMe, isSystem = false, isFromHistory = false) {
