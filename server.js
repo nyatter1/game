@@ -4,9 +4,15 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
+/**
+ * AURA CHAT - SOCKET.IO SERVER
+ * This version uses WebSockets for real-time communication.
+ * Note: Messages are not persisted to a database in this version.
+ */
+
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Keep track of connected users
+// Keep track of connected users in server memory
 let users = {}; 
 
 io.on('connection', (socket) => {
