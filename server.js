@@ -5,87 +5,60 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+const io = new Server(server);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
-
-/**
- * PRESENCE TRACKING
- * Map<SocketID, Username>
- */
-const activeUsers = new Map(); 
-
+// Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-/**
- * HELPER: Broadcast updated user list
- * Sends a unique list of usernames to all clients
- */
-function broadcastUserUpdate() {
-  const onlineUsernames = Array.from(new Set(activeUsers.values()));
-  io.emit('user_update', onlineUsernames);
-}
+// Keep track of online users: { socketId: username }
+const onlineUsers = {};
 
 io.on('connection', (socket) => {
-  console.log('New connection established:', socket.id);
+    console.log('A user connected:', socket.id);
 
-  socket.on('join', (username) => {
-    // CLEANUP: If this user is already connected on another tab/device, 
-    // you might want to allow it, but we ensure the username is tracked.
-    socket.username = username;
-    activeUsers.set(socket.id, username);
-    
-    console.log(`${username} entered the lounge.`);
-    
-    // Send the full list to everyone (including the person who just joined)
-    broadcastUserUpdate();
-    
-    // System notification
-    socket.broadcast.emit('system_message', `${username.toUpperCase()} HAS ENTERED THE CIRCLE`);
-  });
+    // Handle user joining
+    socket.on('join', (username) => {
+        onlineUsers[socket.id] = username;
+        
+        // Broadcast the updated list of online usernames to everyone
+        const onlineNames = Object.values(onlineUsers);
+        io.emit('user_update', onlineNames);
+        
+        // Notify the room
+        socket.broadcast.emit('system_message', `${username.toUpperCase()} HAS ENTERED THE CIRCLE`);
+    });
 
-  socket.on('chat_message', (msg) => {
-    if (!socket.username) return;
+    // Handle chat messages
+    socket.on('chat_message', (data) => {
+        const username = onlineUsers[socket.id] || 'Guest';
+        const now = new Date();
+        const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0');
 
-    const messageData = {
-      user: socket.username,
-      text: msg.text,
-      time: new Date().toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      })
-    };
+        const messagePayload = {
+            user: username,
+            text: data.text,
+            time: timeString
+        };
 
-    io.emit('chat_message', messageData);
-  });
+        // Send message to everyone including sender
+        io.emit('chat_message', messagePayload);
+    });
 
-  socket.on('disconnect', () => {
-    if (socket.username) {
-      console.log(`${socket.username} disconnected.`);
-      
-      // Remove this specific socket session
-      activeUsers.delete(socket.id);
-      
-      // Update the UI for everyone else
-      broadcastUserUpdate();
-      
-      io.emit('system_message', `${socket.username.toUpperCase()} HAS DEPARTED`);
-    }
-  });
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        const username = onlineUsers[socket.id];
+        if (username) {
+            delete onlineUsers[socket.id];
+            const onlineNames = Object.values(onlineUsers);
+            io.emit('user_update', onlineNames);
+            io.emit('system_message', `${username.toUpperCase()} HAS LEFT THE CIRCLE`);
+        }
+        console.log('User disconnected:', socket.id);
+    });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`-------------------------------------------`);
-  console.log(`Lumière Server: Active on Port ${PORT}`);
-  console.log(`-------------------------------------------`);
+    console.log(`Lumière server running on port ${PORT}`);
 });
