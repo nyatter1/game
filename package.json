@@ -1,16 +1,18 @@
 {
-  "name": "lumiere-live-chat",
-  "version": "1.0.0",
-  "description": "Posh luxury real-time chat",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.7.2"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+"name": "elite-circle-server",
+"version": "1.0.0",
+"description": "Real-time backend for Elite Circle Luxury Chat",
+"main": "server.js",
+"scripts": {
+"start": "node server.js",
+"dev": "node --watch server.js"
+},
+"dependencies": {
+"cors": "^2.8.5",
+"express": "^4.18.2",
+"socket.io": "^4.7.2"
+},
+"engines": {
+"node": ">=14.0.0"
+}
 }
