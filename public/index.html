@@ -45,6 +45,14 @@
         #auth-screen { display: flex; }
         #chat-screen { display: none; }
         .hidden { display: none !important; }
+
+        .user-status-online { color: #10b981; }
+        .user-status-offline { color: #71717a; filter: grayscale(1); opacity: 0.6; }
+        
+        .pfp-image {
+            object-fit: cover;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
@@ -89,28 +97,41 @@
 
     <!-- Chat Screen -->
     <div id="chat-screen" class="flex h-screen bg-[#0d0d0d] text-zinc-300 font-sans overflow-hidden">
-        <aside class="hidden md:flex w-72 border-r border-zinc-900 flex-col bg-black/40">
-            <div class="p-8 border-b border-zinc-900">
-                <h2 class="text-xl font-serif tracking-tighter text-zinc-100">Lumière</h2>
-                <div class="flex items-center gap-2 mt-2">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
-                    <span class="text-[10px] uppercase tracking-widest text-zinc-500">Live Lounge</span>
-                </div>
-            </div>
-            <div class="flex-1 p-6 space-y-6">
-                <div class="space-y-3">
-                    <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Lounge Status</h3>
-                    <div id="user-list" class="space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-500"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
-                            <span id="display-name" class="text-sm font-medium text-zinc-300">Guest</span>
+        <!-- Sidebar -->
+        <aside class="hidden md:flex w-80 border-r border-zinc-900 flex-col bg-black/40">
+            <!-- User Profile (Self) -->
+            <div class="p-8 border-b border-zinc-900 bg-zinc-900/20">
+                <div class="flex items-center gap-4">
+                    <img src="https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1" alt="PFP" class="w-12 h-12 rounded-full pfp-image border border-zinc-800 shadow-lg">
+                    <div>
+                        <h2 id="my-username" class="text-sm font-serif tracking-widest text-zinc-100 uppercase">Guest</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                            <span class="text-[9px] uppercase tracking-[0.2em] text-emerald-500/80">Active</span>
                         </div>
                     </div>
                 </div>
             </div>
-            <button onclick="logout()" class="p-8 text-[10px] text-zinc-500 hover:text-zinc-100 uppercase tracking-widest text-left border-t border-zinc-900 transition-colors">Sign Out</button>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+                <!-- Online List -->
+                <div class="space-y-4">
+                    <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold px-2">Online — <span id="online-count">0</span></h3>
+                    <div id="online-list" class="space-y-2">
+                        <!-- Online users injected here -->
+                    </div>
+                </div>
+
+                <!-- Offline List -->
+                <div class="space-y-4">
+                    <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold px-2">Recently Seen</h3>
+                    <div id="offline-list" class="space-y-2">
+                        <!-- Offline users injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="logout()" class="p-6 text-[10px] text-zinc-500 hover:text-zinc-100 uppercase tracking-[0.3em] text-center border-t border-zinc-900 transition-colors font-bold">Sign Out</button>
         </aside>
 
         <main class="flex-1 flex flex-col relative">
@@ -134,9 +155,21 @@
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
         const messagesContainer = document.getElementById('messages-container');
-        const displayName = document.getElementById('display-name');
+        const onlineList = document.getElementById('online-list');
+        const offlineList = document.getElementById('offline-list');
+        const onlineCount = document.getElementById('online-count');
+        
+        const PFP_URL = "https://th.bing.com/th/id/OIP.Mx3MRciD-058jG_oPtm3FQAAAA?pid=ImgDet&rs=1";
 
         let currentUser = null;
+
+        // Auto-login logic
+        window.addEventListener('load', () => {
+            const savedUser = sessionStorage.getItem('lumiere_active_user');
+            if (savedUser) {
+                enterLounge(savedUser);
+            }
+        });
 
         // Auth Logic using LocalStorage
         function toggleAuth(toSignup) {
@@ -155,7 +188,7 @@
 
             let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
             
-            if (users.find(u => u.username === username || u.email === email)) {
+            if (users.find(u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase())) {
                 document.getElementById('signup-error').classList.remove('hidden');
                 return;
             }
@@ -167,11 +200,16 @@
 
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const identifier = document.getElementById('login-identifier').value.trim();
+            const identifier = document.getElementById('login-identifier').value.trim().toLowerCase();
             const password = document.getElementById('login-password').value;
 
             let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            const user = users.find(u => (u.username === identifier || u.email === identifier) && u.password === password);
+            
+            // Fixed validation logic
+            const user = users.find(u => 
+                (u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier) && 
+                u.password === password
+            );
 
             if (user) {
                 enterLounge(user.username);
@@ -182,17 +220,66 @@
 
         function enterLounge(username) {
             currentUser = username;
-            displayName.textContent = `${currentUser} (You)`;
+            sessionStorage.setItem('lumiere_active_user', username);
+            
+            // Update Self Profile
+            document.getElementById('my-username').textContent = currentUser;
+            
             authScreen.style.display = 'none';
             chatScreen.style.display = 'flex';
+            
+            // Sync with server
             socket.emit('join', currentUser);
         }
 
         function logout() {
+            sessionStorage.removeItem('lumiere_active_user');
             window.location.reload();
         }
 
-        // Chat Logic
+        // --- Presence Tracking ---
+        socket.on('user_update', (onlineUsernames) => {
+            updatePresenceLists(onlineUsernames);
+        });
+
+        function updatePresenceLists(onlineUsernames) {
+            const registeredUsers = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
+            const registeredNames = registeredUsers.map(u => u.username);
+            
+            onlineList.innerHTML = '';
+            offlineList.innerHTML = '';
+            
+            let count = 0;
+
+            registeredNames.forEach(name => {
+                const isOnline = onlineUsernames.includes(name);
+                const isMe = name === currentUser;
+                
+                const userEl = document.createElement('div');
+                userEl.className = `flex items-center gap-3 p-2 rounded-lg transition-colors ${isOnline ? 'bg-zinc-900/40' : 'opacity-40'}`;
+                
+                userEl.innerHTML = `
+                    <img src="${PFP_URL}" class="w-8 h-8 rounded-full border border-zinc-800 pfp-image">
+                    <div class="flex-1 overflow-hidden">
+                        <div class="text-[11px] font-bold uppercase tracking-widest truncate ${isOnline ? 'text-zinc-100' : 'text-zinc-500'}">
+                            ${name} ${isMe ? '<span class="text-[8px] opacity-50 ml-1">(YOU)</span>' : ''}
+                        </div>
+                    </div>
+                    ${isOnline ? '<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>' : ''}
+                `;
+
+                if (isOnline) {
+                    onlineList.appendChild(userEl);
+                    count++;
+                } else {
+                    offlineList.appendChild(userEl);
+                }
+            });
+
+            onlineCount.textContent = count;
+        }
+
+        // --- Chat Logic ---
         document.getElementById('chat-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const text = document.getElementById('chat-input').value.trim();
@@ -217,13 +304,16 @@
                 div.innerHTML = `<div class="w-full text-center py-4"><span class="text-[10px] uppercase tracking-[0.3em] text-zinc-600">${text}</span></div>`;
             } else {
                 div.innerHTML = `
-                    <div class="group flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-2 max-w-[80%]">
-                        <div class="flex items-center gap-3 px-1">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">${user}</span>
-                            <span class="text-[9px] text-zinc-700">${time}</span>
-                        </div>
-                        <div class="${isMe ? 'bg-zinc-100 text-black' : 'bg-zinc-900 border border-zinc-800 text-zinc-200'} px-6 py-4 rounded-2xl text-[15px]">
-                            ${text}
+                    <div class="group flex flex-row ${isMe ? 'flex-row-reverse' : ''} items-start gap-4 max-w-[85%]">
+                        <img src="${PFP_URL}" class="w-8 h-8 rounded-full border border-zinc-800 mt-1 flex-shrink-0">
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-2">
+                            <div class="flex items-center gap-3 px-1">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">${user}</span>
+                                <span class="text-[9px] text-zinc-700">${time}</span>
+                            </div>
+                            <div class="${isMe ? 'bg-zinc-100 text-black' : 'bg-zinc-900 border border-zinc-800 text-zinc-200'} px-6 py-4 rounded-2xl text-[15px] shadow-sm">
+                                ${text}
+                            </div>
                         </div>
                     </div>`;
             }
