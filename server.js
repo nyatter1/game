@@ -2,10 +2,16 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const { handleCommand } = require('./commands');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -13,35 +19,57 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Keep track of online users: { socketId: username }
 const onlineUsers = {};
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+/**
+ * HELPER: Broadcast updated user list
+ */
+function broadcastUserUpdate() {
+    const onlineNames = Array.from(new Set(Object.values(onlineUsers)));
+    io.emit('user_update', onlineNames);
+}
+
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+    console.log('New connection:', socket.id);
 
     // Handle user joining
     socket.on('join', (username) => {
+        socket.username = username;
         onlineUsers[socket.id] = username;
         
-        // Broadcast the updated list of online usernames to everyone
-        const onlineNames = Object.values(onlineUsers);
-        io.emit('user_update', onlineNames);
+        broadcastUserUpdate();
         
-        // Notify the room
+        // System notification
         socket.broadcast.emit('system_message', `${username.toUpperCase()} HAS ENTERED THE CIRCLE`);
     });
 
-    // Handle chat messages
+    // Handle chat messages and commands
     socket.on('chat_message', (data) => {
-        const username = onlineUsers[socket.id] || 'Guest';
-        const now = new Date();
-        const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
-                           now.getMinutes().toString().padStart(2, '0');
+        if (!socket.username || !data.text) return;
 
+        // Check if the message is a command
+        if (data.text.startsWith('/')) {
+            const result = handleCommand(data.text, socket, io);
+            
+            // Emit a private response to the user who sent the command
+            // The client index.html is set up to show these as alerts
+            socket.emit('command_response', result);
+            return;
+        }
+
+        // Regular message processing
         const messagePayload = {
-            user: username,
+            user: socket.username,
             text: data.text,
-            time: timeString
+            time: new Date().toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            })
         };
 
-        // Send message to everyone including sender
         io.emit('chat_message', messagePayload);
     });
 
@@ -50,15 +78,15 @@ io.on('connection', (socket) => {
         const username = onlineUsers[socket.id];
         if (username) {
             delete onlineUsers[socket.id];
-            const onlineNames = Object.values(onlineUsers);
-            io.emit('user_update', onlineNames);
+            broadcastUserUpdate();
             io.emit('system_message', `${username.toUpperCase()} HAS LEFT THE CIRCLE`);
         }
-        console.log('User disconnected:', socket.id);
     });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Lumière server running on port ${PORT}`);
+    console.log(`-------------------------------------------`);
+    console.log(`Lumière Server: Active on Port ${PORT}`);
+    console.log(`-------------------------------------------`);
 });
