@@ -3,57 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraChat Pro - Social & Private</title>
+    <title>AuraChat Pro - Node.js Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         .active-tab { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
-        .chat-window { height: calc(100vh - 180px); }
         .glass-sidebar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .avatar-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
         .avatar-sm { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .online-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; border: 2px solid white; }
+        .online-dot { width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid white; }
+        .message-blob { max-width: 75%; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans h-screen overflow-hidden">
 
     <!-- AUTH SECTION -->
     <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transition-all transform scale-100">
-            <div class="flex border-b">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+            <div class="flex border-b text-center">
                 <button id="tab-login" class="flex-1 py-4 font-bold active-tab">Login</button>
                 <button id="tab-signup" class="flex-1 py-4 font-bold text-gray-400">Sign Up</button>
             </div>
             
             <div class="p-8">
-                <div id="login-form">
-                    <div class="space-y-4">
-                        <input type="email" id="login-email" placeholder="Email" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                        <input type="password" id="login-password" placeholder="Password" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                        <button id="btn-login" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Enter Chat</button>
-                    </div>
+                <!-- Login Form -->
+                <div id="login-form" class="space-y-4">
+                    <input type="text" id="login-user" placeholder="Username" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="login-pass" placeholder="Password" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="btn-login-action" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Enter Chat</button>
                 </div>
 
+                <!-- Signup Form -->
                 <div id="signup-form" class="hidden space-y-4 overflow-y-auto max-h-[60vh]">
-                    <input type="text" id="reg-user" placeholder="Username" class="w-full p-3 border rounded-lg outline-none">
-                    <input type="email" id="reg-email" placeholder="Email" class="w-full p-3 border rounded-lg outline-none">
-                    <input type="password" id="reg-pass" placeholder="Password" class="w-full p-3 border rounded-lg outline-none">
+                    <input type="text" id="reg-user" placeholder="Username" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="email" id="reg-email" placeholder="Email" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="reg-pass" placeholder="Password" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                     <div class="flex gap-2">
-                        <input type="number" id="reg-age" placeholder="Age (8-1000)" min="8" max="1000" class="w-1/2 p-3 border rounded-lg outline-none">
-                        <select id="reg-gender" class="w-1/2 p-3 border rounded-lg outline-none bg-white">
+                        <input type="number" id="reg-age" placeholder="Age (8-1000)" min="8" max="1000" class="w-1/2 p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="reg-gender" class="w-1/2 p-3 border rounded-lg outline-none bg-white focus:ring-2 focus:ring-blue-500">
                             <option value="">Gender...</option>
-                            <!-- Genders populated by JS -->
                         </select>
                     </div>
                     <div class="text-center">
-                        <p class="text-xs text-gray-500 mb-2">Upload Profile Picture</p>
+                        <p class="text-xs text-gray-500 mb-2">Click photo to upload</p>
                         <input type="file" id="reg-pfp" accept="image/*" class="hidden">
-                        <img id="pfp-preview" src="https://ui-avatars.com/api/?name=?" class="avatar-lg mx-auto cursor-pointer border-4 border-blue-50" onclick="document.getElementById('reg-pfp').click()">
+                        <img id="pfp-preview" src="https://ui-avatars.com/api/?name=?" class="avatar-lg mx-auto cursor-pointer border-4 border-blue-50 hover:opacity-80" onclick="document.getElementById('reg-pfp').click()">
                     </div>
-                    <button id="btn-signup" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">Create Account</button>
+                    <button id="btn-signup-action" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">Create Account</button>
                 </div>
             </div>
         </div>
@@ -62,25 +58,30 @@
     <!-- MAIN APP SECTION -->
     <div id="app-screen" class="hidden flex h-screen">
         <!-- Sidebar -->
-        <aside class="w-80 glass-sidebar border-r flex flex-col">
+        <aside class="w-80 glass-sidebar border-r flex flex-col shadow-xl">
             <div class="p-6 bg-blue-600 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <img id="my-pfp" src="" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+                    <div class="relative">
+                        <img id="my-pfp" src="" class="w-12 h-12 rounded-full border-2 border-white object-cover">
+                        <div class="online-dot absolute bottom-0 right-0"></div>
+                    </div>
                     <div>
-                        <p id="my-username" class="font-bold leading-none">User</p>
-                        <p class="text-[10px] opacity-80 uppercase tracking-tighter">Online</p>
+                        <p id="my-username-display" class="font-bold leading-none text-lg">User</p>
+                        <p id="my-gender-display" class="text-[10px] opacity-80 uppercase tracking-widest mt-1">Gamer</p>
                     </div>
                 </div>
-                <button id="btn-logout" class="text-xs bg-white/20 px-2 py-1 rounded hover:bg-white/30">Logout</button>
+                <button id="btn-logout" class="p-2 hover:bg-white/20 rounded-full transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
             </div>
 
-            <div class="p-4 bg-gray-50 border-b flex justify-around text-xs font-bold uppercase text-gray-500">
-                <button onclick="setView('global')" id="view-global-btn" class="active-tab pb-2">Public</button>
-                <button onclick="setView('private')" id="view-private-btn" class="pb-2">DMs</button>
+            <div class="p-4 bg-gray-50 border-b flex justify-around text-xs font-black uppercase text-gray-400 tracking-tighter">
+                <button onclick="switchChat('global')" id="view-global-btn" class="active-tab pb-2 flex items-center gap-1">🌍 Public</button>
+                <button onclick="switchChat('private')" id="view-private-btn" class="pb-2 flex items-center gap-1">💬 Friends</button>
             </div>
 
             <div id="sidebar-list" class="flex-1 overflow-y-auto">
-                <!-- Users or DM List will show here -->
+                <!-- Users populate here -->
             </div>
         </aside>
 
@@ -88,98 +89,66 @@
         <main class="flex-1 flex flex-col bg-white">
             <div class="p-4 border-b flex items-center justify-between shadow-sm bg-white z-10">
                 <div class="flex items-center gap-3">
-                    <div id="target-icon" class="text-2xl">🌍</div>
+                    <div id="target-icon" class="text-3xl">🌍</div>
                     <div>
-                        <h2 id="chat-title" class="font-bold text-gray-800">Global Square</h2>
-                        <p id="chat-status" class="text-xs text-green-500 font-medium">Public Channel</p>
+                        <h2 id="chat-title" class="font-bold text-gray-800 text-lg">Global Square</h2>
+                        <p id="chat-status" class="text-xs text-green-500 font-medium">Online Now</p>
                     </div>
                 </div>
             </div>
 
-            <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-[#f0f2f5]">
+            <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
                 <!-- Messages populate here -->
             </div>
 
             <form id="chat-form" class="p-4 bg-white border-t flex gap-3 items-center">
-                <input type="text" id="msg-input" placeholder="Type a message..." class="flex-1 bg-gray-100 p-3 rounded-full px-6 outline-none focus:ring-2 focus:ring-blue-400">
-                <button type="submit" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 shadow-lg">
+                <input type="text" id="msg-input" placeholder="Type something..." class="flex-1 bg-gray-100 p-3 rounded-full px-6 outline-none focus:ring-2 focus:ring-blue-400">
+                <button type="submit" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 shadow-lg transform transition active:scale-90">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
             </form>
         </main>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, serverTimestamp, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'aura-chat-v1';
-
-        // --- UI State ---
-        let currentUserData = null;
-        let currentView = 'global'; // 'global' or 'private'
-        let targetUser = null; // { uid, username, pfp }
-        let usersList = [];
+    <script>
+        const socket = io();
+        
+        // --- State ---
+        let myProfile = null;
+        let targetId = 'global';
+        let chatHistory = { 'global': [] };
         let pfpBase64 = null;
 
         const genders = [
-            "Male", "Female", "Non-binary", "Agender", "Androgyne", "Bigender", "Cisgender", "Genderfluid", "Genderqueer", "Intersex", "Pangender", "Transgender", "Two-Spirit", 
-            "Table", "UFO", "Attack Helicopter", "Walrus", "Potato", "Wireless Router", "Cloud", "Void", "Glitch", "Cyber-organic", "Nebula", "Pizza", "Dinosaur", "Unicorn", 
-            "Wizard", "Toaster", "Shadow", "Particle", "Vibe", "AI Consciousness", "Time Traveler", "Space Dust", "Binary Code", "Nature Spirit", "Dragon", "Cat", "Dog", 
-            "Meme Lord", "Gamer", "Ghost", "Alien", "Pixel", "Echo", "Spectrum", "Myth", "Legend", "The One"
+            "Male", "Female", "Non-binary", "Agender", "Table", "UFO", "Attack Helicopter", "Walrus", "Potato", "Wireless Router", 
+            "Cloud", "Void", "Glitch", "Cyber-organic", "Nebula", "Pizza", "Dinosaur", "Unicorn", "Wizard", "Toaster", 
+            "Shadow", "Particle", "Vibe", "AI Consciousness", "Time Traveler", "Space Dust", "Binary Code", "Nature Spirit", 
+            "Dragon", "Cat", "Dog", "Meme Lord", "Gamer", "Ghost", "Alien", "Pixel", "Echo", "Spectrum", "Myth", "Legend", 
+            "The One", "Cisgender", "Genderfluid", "Genderqueer", "Intersex", "Pangender", "Transgender", "Two-Spirit", "Bigender", "Androgyne"
         ];
 
-        // --- Initialization ---
-        const init = async () => {
-            // Populate Genders
+        // --- Init ---
+        window.onload = () => {
             const genderSelect = document.getElementById('reg-gender');
             genders.sort().forEach(g => {
                 const opt = document.createElement('option');
-                opt.value = g;
-                opt.textContent = g;
+                opt.value = g; opt.textContent = g;
                 genderSelect.appendChild(opt);
             });
-
-            // Auth Listener
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    const userDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid));
-                    if (userDoc.exists()) {
-                        currentUserData = userDoc.data();
-                        showApp();
-                        listenToUsers();
-                        listenToMessages();
-                    } else {
-                        // Handle anonymous or missing profile
-                        await signOut(auth);
-                        showAuth();
-                    }
-                } else {
-                    showAuth();
-                }
-            });
         };
 
-        // --- Auth Logic ---
-        document.getElementById('tab-login').onclick = () => toggleAuthTabs('login');
-        document.getElementById('tab-signup').onclick = () => toggleAuthTabs('signup');
+        // --- Auth UI Toggles ---
+        document.getElementById('tab-login').onclick = () => toggleAuth('login');
+        document.getElementById('tab-signup').onclick = () => toggleAuth('signup');
 
-        const toggleAuthTabs = (type) => {
-            document.getElementById('login-form').classList.toggle('hidden', type === 'signup');
-            document.getElementById('signup-form').classList.toggle('hidden', type === 'login');
-            document.getElementById('tab-login').className = type === 'login' ? 'flex-1 py-4 font-bold active-tab' : 'flex-1 py-4 font-bold text-gray-400';
-            document.getElementById('tab-signup').className = type === 'signup' ? 'flex-1 py-4 font-bold active-tab' : 'flex-1 py-4 font-bold text-gray-400';
-        };
+        function toggleAuth(mode) {
+            document.getElementById('login-form').classList.toggle('hidden', mode === 'signup');
+            document.getElementById('signup-form').classList.toggle('hidden', mode === 'login');
+            document.getElementById('tab-login').className = mode === 'login' ? 'flex-1 py-4 font-bold active-tab' : 'flex-1 py-4 font-bold text-gray-400';
+            document.getElementById('tab-signup').className = mode === 'signup' ? 'flex-1 py-4 font-bold active-tab' : 'flex-1 py-4 font-bold text-gray-400';
+        }
 
+        // --- Signup Logic ---
         document.getElementById('reg-pfp').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
@@ -189,192 +158,145 @@
             reader.readAsDataURL(e.target.files[0]);
         };
 
-        document.getElementById('btn-signup').onclick = async () => {
+        document.getElementById('btn-signup-action').onclick = () => {
             const user = document.getElementById('reg-user').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const pass = document.getElementById('reg-pass').value.trim();
             const age = parseInt(document.getElementById('reg-age').value);
             const gender = document.getElementById('reg-gender').value;
+            const pass = document.getElementById('reg-pass').value;
 
-            if (!user || !email || pass.length < 6 || age < 8 || age > 1000 || !gender) {
-                return alert("Please fill all fields correctly. Password must be 6+ chars, Age 8-1000.");
-            }
+            if (!user || !pass || age < 8 || age > 1000 || !gender) return alert("Fill everything! Age 8-1000.");
 
-            try {
-                const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                const pfp = pfpBase64 || `https://ui-avatars.com/api/?name=${user}&background=random`;
-                
-                const profile = {
-                    uid: cred.user.uid,
-                    username: user,
-                    email: email,
-                    age: age,
-                    gender: gender,
-                    pfp: pfp,
-                    lastSeen: serverTimestamp()
-                };
+            myProfile = {
+                username: user,
+                age: age,
+                gender: gender,
+                pfp: pfpBase64 || `https://ui-avatars.com/api/?name=${user}&background=random`
+            };
 
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), profile);
-            } catch (err) {
-                alert(err.message);
-            }
+            socket.emit('register user', myProfile);
+            enterApp();
         };
 
-        document.getElementById('btn-login').onclick = async () => {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) {
-                alert("Invalid login credentials.");
-            }
-        };
-
-        document.getElementById('btn-logout').onclick = () => signOut(auth);
-
-        // --- Data Fetching ---
-        const listenToUsers = () => {
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-            onSnapshot(q, (snapshot) => {
-                usersList = snapshot.docs.map(doc => doc.data());
-                renderSidebar();
-            }, (err) => console.error("User list error:", err));
-        };
-
-        let messageUnsubscribe = null;
-        const listenToMessages = () => {
-            if (messageUnsubscribe) messageUnsubscribe();
+        document.getElementById('btn-login-action').onclick = () => {
+            const user = document.getElementById('login-user').value.trim();
+            if (!user) return alert("Enter username");
             
-            let q;
-            if (currentView === 'global') {
-                q = query(collection(db, 'artifacts', appId, 'public', 'data', 'global_messages'), orderBy('timestamp', 'asc'));
-            } else if (targetUser) {
-                // Rule 2 check: We avoid complex queries. We fetch all and filter in JS if needed.
-                // For DM, we use a unique ID for the conversation: [uid1_uid2] sorted alphabetically
-                const chatId = [auth.currentUser.uid, targetUser.uid].sort().join('_');
-                q = query(collection(db, 'artifacts', appId, 'public', 'data', 'dm_' + chatId), orderBy('timestamp', 'asc'));
-            } else return;
-
-            messageUnsubscribe = onSnapshot(q, (snapshot) => {
-                const msgs = snapshot.docs.map(d => d.data());
-                renderMessages(msgs);
-            }, (err) => console.error("Msg error:", err));
+            myProfile = {
+                username: user,
+                pfp: `https://ui-avatars.com/api/?name=${user}&background=random`
+            };
+            socket.emit('register user', myProfile);
+            enterApp();
         };
 
-        // --- App Interaction ---
-        window.setView = (v) => {
-            currentView = v;
-            document.getElementById('view-global-btn').className = v === 'global' ? 'active-tab pb-2' : 'pb-2';
-            document.getElementById('view-private-btn').className = v === 'private' ? 'active-tab pb-2' : 'pb-2';
-            
-            if(v === 'global') {
-                targetUser = null;
+        function enterApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('my-pfp').src = myProfile.pfp;
+            document.getElementById('my-username-display').innerText = myProfile.username;
+            document.getElementById('my-gender-display').innerText = myProfile.gender || "Online";
+        }
+
+        document.getElementById('btn-logout').onclick = () => location.reload();
+
+        // --- Socket Listeners ---
+        socket.on('update user list', (users) => {
+            const list = document.getElementById('sidebar-list');
+            list.innerHTML = '';
+            users.forEach(u => {
+                if (u.id === socket.id) return;
+                const div = document.createElement('div');
+                div.className = `p-4 flex items-center gap-3 hover:bg-blue-50 cursor-pointer border-b transition ${targetId === u.id ? 'bg-blue-50' : ''}`;
+                div.onclick = () => switchChat(u.id, u.username, u.pfp, u.gender, u.age);
+                div.innerHTML = `
+                    <div class="relative">
+                        <img src="${u.pfp}" class="avatar-sm shadow-sm">
+                        <div class="online-dot absolute bottom-0 right-0 scale-75"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-gray-800 truncate">${u.username}</p>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-tight">${u.gender || 'User'}</p>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        });
+
+        function switchChat(id, name = "Global Square", pfp = null, gender = null, age = null) {
+            targetId = id;
+            if (id === 'global') {
                 document.getElementById('chat-title').innerText = "Global Square";
                 document.getElementById('target-icon').innerText = "🌍";
                 document.getElementById('chat-status').innerText = "Public Channel";
+            } else {
+                document.getElementById('chat-title').innerText = name;
+                document.getElementById('target-icon').innerHTML = `<img src="${pfp}" class="avatar-sm">`;
+                document.getElementById('chat-status').innerText = `${gender} • Age ${age}`;
             }
-            renderSidebar();
-            listenToMessages();
-        };
+            renderMessages();
+        }
 
-        const openDM = (user) => {
-            currentView = 'dm';
-            targetUser = user;
-            document.getElementById('chat-title').innerText = user.username;
-            document.getElementById('target-icon').innerHTML = `<img src="${user.pfp}" class="avatar-sm">`;
-            document.getElementById('chat-status').innerText = `${user.gender} • Age ${user.age}`;
-            listenToMessages();
-        };
-
-        document.getElementById('chat-form').onsubmit = async (e) => {
+        // --- Messaging ---
+        document.getElementById('chat-form').onsubmit = (e) => {
             e.preventDefault();
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
-            if (!text || !auth.currentUser) return;
+            if (!text) return;
 
-            const msgData = {
-                senderId: auth.currentUser.uid,
-                senderName: currentUserData.username,
-                senderPfp: currentUserData.pfp,
+            const msg = {
+                senderId: socket.id,
+                senderName: myProfile.username,
+                senderPfp: myProfile.pfp,
                 text: text,
-                timestamp: serverTimestamp()
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            input.value = '';
-
-            try {
-                if (currentView === 'global') {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'global_messages'), msgData);
-                } else if (targetUser) {
-                    const chatId = [auth.currentUser.uid, targetUser.uid].sort().join('_');
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'dm_' + chatId), msgData);
-                }
-            } catch (err) {
-                console.error(err);
+            if (targetId === 'global') {
+                socket.emit('global message', msg);
+            } else {
+                msg.targetId = targetId;
+                if (!chatHistory[targetId]) chatHistory[targetId] = [];
+                chatHistory[targetId].push(msg);
+                socket.emit('private message', msg);
+                renderMessages();
             }
+            input.value = '';
         };
 
-        // --- Rendering ---
-        const renderSidebar = () => {
-            const list = document.getElementById('sidebar-list');
-            list.innerHTML = '';
-            
-            usersList.forEach(user => {
-                if (user.uid === auth.currentUser?.uid) return;
-                
-                const item = document.createElement('div');
-                item.className = "p-4 flex items-center gap-3 hover:bg-blue-50 cursor-pointer border-b transition-colors";
-                item.onclick = () => openDM(user);
-                item.innerHTML = `
-                    <div class="relative">
-                        <img src="${user.pfp}" class="avatar-sm shadow">
-                        <div class="online-dot absolute bottom-0 right-0"></div>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-bold text-gray-800 truncate">${user.username}</p>
-                        <p class="text-xs text-gray-500 truncate">${user.gender}</p>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        };
+        socket.on('global message', (msg) => {
+            chatHistory['global'].push(msg);
+            if (targetId === 'global') renderMessages();
+        });
 
-        const renderMessages = (msgs) => {
+        socket.on('private message', (msg) => {
+            const sid = msg.senderId;
+            if (!chatHistory[sid]) chatHistory[sid] = [];
+            chatHistory[sid].push(msg);
+            if (targetId === sid) renderMessages();
+        });
+
+        function renderMessages() {
             const container = document.getElementById('messages');
             container.innerHTML = '';
+            const msgs = chatHistory[targetId] || [];
             
-            msgs.forEach(msg => {
-                const isMe = msg.senderId === auth.currentUser.uid;
+            msgs.forEach(m => {
+                const isMe = m.senderId === socket.id;
                 const div = document.createElement('div');
                 div.className = `flex gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
-                
                 div.innerHTML = `
-                    <img src="${msg.senderPfp}" class="w-8 h-8 rounded-full self-end shadow-sm object-cover">
-                    <div class="max-w-[70%]">
-                        <div class="px-4 py-2 rounded-2xl shadow-sm text-sm ${isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
-                            ${msg.text}
+                    <img src="${m.senderPfp}" class="w-9 h-9 rounded-full self-end shadow-sm object-cover">
+                    <div class="message-blob">
+                        <div class="px-4 py-2 rounded-2xl text-sm shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
+                            ${m.text}
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1 px-1">${isMe ? 'You' : msg.senderName}</p>
+                        <p class="text-[9px] text-gray-400 mt-1 px-1">${isMe ? 'You' : m.senderName} • ${m.timestamp}</p>
                     </div>
                 `;
                 container.appendChild(div);
             });
             container.scrollTop = container.scrollHeight;
-        };
-
-        const showApp = () => {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
-            document.getElementById('my-username').innerText = currentUserData.username;
-            document.getElementById('my-pfp').src = currentUserData.pfp;
-        };
-
-        const showAuth = () => {
-            document.getElementById('auth-screen').classList.remove('hidden');
-            document.getElementById('app-screen').classList.add('hidden');
-        };
-
-        init();
+        }
     </script>
 </body>
 </html>
