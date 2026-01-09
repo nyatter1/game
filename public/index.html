@@ -88,15 +88,15 @@
     <div id="alert-container"></div>
 
     <!-- Wallet Modal Overlay -->
-    <div id="wallet-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/60 backdrop-blur-xl transition-all duration-300">
-        <div class="relative w-full max-w-md p-8 mx-4">
-            <!-- Close button moved to top-left -->
-            <button onclick="toggleWallet(false)" class="absolute -top-12 left-0 text-zinc-500 hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-            
-            <div class="bg-zinc-900/50 border border-zinc-800 p-8 rounded-3xl shadow-2xl text-center space-y-8">
-                <div class="space-y-2">
+    <div id="wallet-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/80 backdrop-blur-xl transition-all duration-300">
+        <div class="relative w-full max-w-md mx-4">
+            <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl text-center space-y-8 relative overflow-hidden">
+                <!-- Close button positioned at top right inside the modal -->
+                <button onclick="toggleWallet(false)" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+
+                <div class="space-y-2 pt-4">
                     <h3 id="wallet-user" class="text-xs font-serif tracking-[0.3em] text-zinc-500 uppercase">Personal Vault</h3>
                     <div class="h-[1px] w-12 bg-amber-200/30 mx-auto"></div>
                 </div>
@@ -113,7 +113,7 @@
                 </div>
 
                 <div class="pt-4">
-                    <button onclick="toggleWallet(false)" class="px-8 py-3 bg-zinc-100 text-black text-[10px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-white transition-all">Close Vault</button>
+                    <button onclick="toggleWallet(false)" class="px-8 py-3 bg-zinc-100 text-black text-[10px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-white transition-all">Secure Vault</button>
                 </div>
             </div>
         </div>
@@ -232,6 +232,7 @@
 
         let currentUser = null;
         let lastBankData = { gold: 0, rubies: 0 };
+        let isInternalBankUpdate = false; // Flag to suppress UI feedback for background syncing
 
         function showAlert(text, isSuccess = true) {
             const alert = document.createElement('div');
@@ -256,21 +257,21 @@
             document.getElementById('wallet-user').textContent = `${currentUser}'s Vault`;
             document.getElementById('wallet-gold').textContent = lastBankData.gold.toLocaleString();
             document.getElementById('wallet-rubies').textContent = lastBankData.rubies.toLocaleString();
+            
             toggleWallet(true);
-            // We emit /bank silently to sync data without showing "Action Complete" alert
+            
+            // Sync data silently
+            isInternalBankUpdate = true;
             socket.emit('chat_message', { text: '/bank' });
         }
 
         socket.on('command_response', (res) => {
-            // Remove generic alerts for system-triggered /bank calls to keep UI smooth
-            if (res.message.includes("action complete")) return;
+            // Suppress generic "Action Complete" alert if we are just syncing the wallet UI
+            if (isInternalBankUpdate && res.message.toLowerCase().includes("action complete")) {
+                isInternalBankUpdate = false;
+                return;
+            }
             showAlert(res.message, res.success);
-        });
-
-        socket.on('force_logout_all', () => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.reload();
         });
 
         socket.on('bank_display', (data) => {
@@ -278,8 +279,21 @@
             document.getElementById('wallet-gold').textContent = data.gold.toLocaleString();
             document.getElementById('wallet-rubies').textContent = data.rubies.toLocaleString();
             
-            appendBankCard(data);
-            saveMessage({ type: 'bank_card', ...data });
+            // Only show the card in chat if it's NOT an internal sync
+            if (!isInternalBankUpdate) {
+                appendBankCard(data);
+                saveMessage({ type: 'bank_card', ...data });
+            }
+            
+            // Reset the flag after handling the data
+            isInternalBankUpdate = false;
+        });
+
+        // Rest of the logic...
+        socket.on('force_logout_all', () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
         });
 
         window.addEventListener('load', () => {
@@ -391,6 +405,10 @@
             e.preventDefault();
             const text = document.getElementById('chat-input').value.trim();
             if (text) {
+                // Manually check if it's a bank command to handle it specifically if needed
+                if (text.toLowerCase() === '/bank') {
+                    isInternalBankUpdate = false; // User manually wants the card in chat
+                }
                 socket.emit('chat_message', { text });
                 document.getElementById('chat-input').value = '';
             }
