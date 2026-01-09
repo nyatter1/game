@@ -51,7 +51,6 @@
             border-radius: 50%;
         }
 
-        /* Command Feedback Animation */
         @keyframes centerFadeInOut {
             0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
             15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -77,7 +76,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Wallet Modal Transition */
         #wallet-modal {
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
         }
@@ -91,8 +89,8 @@
     <div id="wallet-modal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 invisible bg-black/80 backdrop-blur-xl transition-all duration-300">
         <div class="relative w-full max-w-md mx-4">
             <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl text-center space-y-8 relative overflow-hidden">
-                <!-- Close button positioned at top right inside the modal -->
-                <button onclick="toggleWallet(false)" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors p-2">
+                <!-- Fixed Close Button inside UI -->
+                <button onclick="toggleWallet(false)" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors p-2 z-10">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
 
@@ -232,7 +230,7 @@
 
         let currentUser = null;
         let lastBankData = { gold: 0, rubies: 0 };
-        let isInternalBankUpdate = false; // Flag to suppress UI feedback for background syncing
+        let isSyncingWallet = false; // Flag to silence background updates
 
         function showAlert(text, isSuccess = true) {
             const alert = document.createElement('div');
@@ -253,22 +251,21 @@
         }
 
         function openWallet() {
-            // Update modal text before showing
             document.getElementById('wallet-user').textContent = `${currentUser}'s Vault`;
             document.getElementById('wallet-gold').textContent = lastBankData.gold.toLocaleString();
             document.getElementById('wallet-rubies').textContent = lastBankData.rubies.toLocaleString();
             
             toggleWallet(true);
             
-            // Sync data silently
-            isInternalBankUpdate = true;
+            // Background sync - set flag to suppress "Action Complete" alert and chat card
+            isSyncingWallet = true;
             socket.emit('chat_message', { text: '/bank' });
         }
 
         socket.on('command_response', (res) => {
-            // Suppress generic "Action Complete" alert if we are just syncing the wallet UI
-            if (isInternalBankUpdate && res.message.toLowerCase().includes("action complete")) {
-                isInternalBankUpdate = false;
+            // SILENCE logic: If we are syncing the wallet and the message is "Action Complete", do nothing.
+            if (isSyncingWallet && res.message.toLowerCase().includes("action complete")) {
+                // Keep the flag true for the bank_display listener that follows immediately
                 return;
             }
             showAlert(res.message, res.success);
@@ -279,17 +276,16 @@
             document.getElementById('wallet-gold').textContent = data.gold.toLocaleString();
             document.getElementById('wallet-rubies').textContent = data.rubies.toLocaleString();
             
-            // Only show the card in chat if it's NOT an internal sync
-            if (!isInternalBankUpdate) {
+            // Only post to chat if the user typed /bank manually
+            if (!isSyncingWallet) {
                 appendBankCard(data);
                 saveMessage({ type: 'bank_card', ...data });
             }
             
-            // Reset the flag after handling the data
-            isInternalBankUpdate = false;
+            // Reset sync flag
+            isSyncingWallet = false;
         });
 
-        // Rest of the logic...
         socket.on('force_logout_all', () => {
             localStorage.clear();
             sessionStorage.clear();
@@ -405,10 +401,8 @@
             e.preventDefault();
             const text = document.getElementById('chat-input').value.trim();
             if (text) {
-                // Manually check if it's a bank command to handle it specifically if needed
-                if (text.toLowerCase() === '/bank') {
-                    isInternalBankUpdate = false; // User manually wants the card in chat
-                }
+                // If user manually types /bank, we want the card to show
+                if (text.toLowerCase() === '/bank') isSyncingWallet = false;
                 socket.emit('chat_message', { text });
                 document.getElementById('chat-input').value = '';
             }
@@ -430,7 +424,6 @@
             const div = document.createElement('div');
             const isMe = data.username === currentUser;
             div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500`;
-            
             div.innerHTML = `
                 <div class="flex flex-row ${isMe ? 'flex-row-reverse' : ''} items-start gap-4 max-w-[85%]">
                     <img src="${data.pfp}" class="w-8 h-8 rounded-full border border-zinc-800 mt-1 flex-shrink-0 shadow-lg pfp-image">
