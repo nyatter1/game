@@ -4,28 +4,39 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
-// Change this part in your server.js
-app.get('/', (req, res) => {
-  // We add 'public' to the path here
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Handle the "Live" connection
+// Keep track of connected users
+let users = {}; 
+
 io.on('connection', (socket) => {
-  console.log('A user connected');
+  console.log('User connected:', socket.id);
 
-  // Listen for the 'chat message' event from a user
-  socket.on('chat message', (data) => {
-    // Send the message to EVERYONE connected
-    io.emit('chat message', data);
+  socket.on('register user', (username) => {
+    users[socket.id] = { id: socket.id, username: username };
+    // Broadcast updated user list to everyone
+    io.emit('update user list', Object.values(users));
+  });
+
+  socket.on('global message', (data) => {
+    // Send to everyone
+    io.emit('global message', data);
+  });
+
+  socket.on('private message', (data) => {
+    // data.targetId is the socket.id of the recipient
+    if (users[data.targetId]) {
+      io.to(data.targetId).emit('private message', data);
+    }
   });
 
   socket.on('disconnect', () => {
+    delete users[socket.id];
+    io.emit('update user list', Object.values(users));
     console.log('User disconnected');
   });
 });
 
-// Render provides a PORT environment variable, or we use 3000 locally
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
