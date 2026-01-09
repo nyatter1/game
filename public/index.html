@@ -85,13 +85,14 @@
         @keyframes toastIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         
         .edit-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(212, 175, 55, 0.3); color: white; border-radius: 8px; padding: 4px 8px; font-size: 10px; width: 100%; }
-        .banner-box { width: 100%; height: 80px; background-size: cover; background-position: center; border-radius: 1.5rem 1.5rem 0 0; background-color: #1a1a1a; margin-top: -32px; margin-left: -32px; margin-right: -32px; width: calc(100% + 64px); }
+        .banner-box { width: 100%; height: 90px; background-size: cover; background-position: center; background-color: #1a1a1a; border-bottom: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
 
     <input type="file" id="pfp-input" class="hidden" accept="image/*">
     <input type="file" id="banner-input" class="hidden" accept="image/*">
+    <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
     <div id="toast-container"></div>
     <audio id="profile-audio" class="hidden" loop></audio>
 
@@ -131,76 +132,66 @@
 
     <!-- PROFILE MODAL -->
     <div id="profile-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden" onclick="closeProfile()">
-        <div class="w-full max-w-xs glass rounded-[2rem] p-8 text-center modal-animate relative" onclick="event.stopPropagation()">
+        <div class="w-full max-w-xs glass rounded-[2rem] overflow-hidden modal-animate relative" onclick="event.stopPropagation()">
             <!-- Edit/View Toggle Button -->
-            <button id="profile-edit-toggle" class="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-white/5 transition hidden">
-                <svg id="pencil-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gold-gradient"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gold-gradient hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <button id="profile-edit-toggle" class="absolute top-4 right-4 z-20 p-2 bg-black/50 rounded-full hover:bg-white/10 transition hidden">
+                <svg id="pencil-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
 
             <!-- Banner Area -->
             <div id="modal-banner" class="banner-box cursor-pointer" onclick="triggerBannerUpload()"></div>
 
-            <div class="relative -mt-10 group mx-auto w-20 h-20 mb-4 cursor-pointer" id="modal-pfp-trigger" onclick="triggerPfpUpload()">
-                <img id="modal-pfp" src="" class="w-full h-full rounded-[1.2rem] object-cover border-2 border-[#0a0c10] shadow-xl bg-black">
-                <div id="pfp-edit-overlay-modal" class="hidden absolute inset-0 bg-black/60 rounded-[1.2rem] flex items-center justify-center group-hover:flex">
-                    <span class="text-[7px] text-white font-black uppercase tracking-widest text-center px-1">Change</span>
-                </div>
-            </div>
-            
-            <!-- Display Mode -->
-            <div id="profile-display-mode">
-                <h2 id="modal-name" class="serif text-2xl gold-gradient mb-1">Username</h2>
-                <div id="modal-rank-container" class="flex justify-center mb-4"></div>
-            </div>
-
-            <!-- Edit Mode -->
-            <div id="profile-edit-mode" class="hidden space-y-3 mb-4">
-                <input type="text" id="edit-username" placeholder="New Username" class="edit-input text-center font-bold" oninput="autoSaveProfile()">
-                <input type="text" id="edit-music" placeholder="Music URL (mp3/direct)" class="edit-input" oninput="autoSaveProfile()">
-            </div>
-            
-            <div id="admin-controls" class="hidden mb-4 p-3 border border-blue-500/20 bg-blue-500/5 rounded-xl text-left">
-                <p class="text-[7px] text-blue-400 font-black uppercase tracking-[0.1em] mb-1">Dev Tools</p>
-                <select id="rank-selector" onchange="applyRankChange()" class="w-full bg-black border border-white/5 text-[9px] text-white p-1.5 rounded outline-none uppercase font-black">
-                    <optgroup label="Staff Tier" class="bg-black text-gray-500">
-                        <option value="DEVELOPER">Developer</option>
-                        <option value="CEO">CEO</option>
-                        <option value="SITE_HELPER">Site-Helper</option>
-                        <option value="OWNER">Owner</option>
-                        <option value="CO_OWNER">Co-Owner</option>
-                        <option value="HEAD_OWNER">Head-Owner</option>
-                        <option value="SUPER_ADMIN">Super-Admin</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="MOD">Mod</option>
-                    </optgroup>
-                    <optgroup label="User Tier" class="bg-black text-gray-500">
-                        <option value="LEGEND">Legend</option>
-                        <option value="BEAST">Beast</option>
-                        <option value="PREMIUM">Premium</option>
-                        <option value="SUPER_VIP">Super-VIP</option>
-                        <option value="VIP">VIP</option>
-                        <option value="MEMBER">Member</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="py-4 border-y border-white/5 my-4 space-y-3 text-left">
-                <div>
-                    <p class="text-[8px] text-gray-600 uppercase font-black">Bio Data</p>
-                    <p id="modal-bio" class="text-white font-bold uppercase text-[9px] mt-0.5">-</p>
-                    <textarea id="edit-bio" placeholder="Update your biography..." class="edit-input mt-1 hidden h-12 resize-none" oninput="autoSaveProfile()"></textarea>
-                </div>
-                <div id="modal-status-section">
-                    <p class="text-[8px] text-gray-600 uppercase font-black">Status</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <div id="modal-status-dot" class="status-dot"></div>
-                        <p id="modal-status" class="text-white font-bold uppercase text-[9px]">-</p>
+            <div class="px-8 pb-8 text-center">
+                <div class="relative -mt-12 group mx-auto w-24 h-24 mb-4 cursor-pointer" id="modal-pfp-trigger" onclick="triggerPfpUpload()">
+                    <img id="modal-pfp" src="" class="w-full h-full rounded-[1.5rem] object-cover border-4 border-[#161a21] shadow-2xl bg-black">
+                    <div id="pfp-edit-overlay-modal" class="hidden absolute inset-0 bg-black/60 rounded-[1.5rem] flex items-center justify-center group-hover:flex">
+                        <span class="text-[7px] text-white font-black uppercase tracking-widest text-center px-1">Change</span>
                     </div>
                 </div>
-            </div>
+                
+                <!-- Display Mode -->
+                <div id="profile-display-mode">
+                    <h2 id="modal-name" class="serif text-2xl gold-gradient mb-1">Username</h2>
+                    <div id="modal-rank-container" class="flex justify-center mb-4"></div>
+                </div>
 
-            <button onclick="closeProfile()" class="w-full py-2 text-[8px] text-gray-500 hover:text-white uppercase tracking-[0.2em] font-black transition">Close</button>
+                <!-- Edit Mode -->
+                <div id="profile-edit-mode" class="hidden space-y-3 mb-4">
+                    <input type="text" id="edit-username" placeholder="New Username" class="edit-input text-center font-bold" oninput="autoSaveProfile()">
+                    <button onclick="triggerMusicUpload()" class="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-[8px] text-white font-black uppercase tracking-widest hover:bg-white/10 transition">
+                        <span id="music-filename-label">Upload Profile Music (.mp3)</span>
+                    </button>
+                </div>
+                
+                <div id="admin-controls" class="hidden mb-4 p-3 border border-blue-500/20 bg-blue-500/5 rounded-xl text-left">
+                    <p class="text-[7px] text-blue-400 font-black uppercase tracking-[0.1em] mb-1">Dev Tools</p>
+                    <select id="rank-selector" onchange="applyRankChange()" class="w-full bg-black border border-white/5 text-[9px] text-white p-1.5 rounded outline-none uppercase font-black">
+                        <option value="DEVELOPER">Developer</option>
+                        <option value="CEO">CEO</option>
+                        <option value="OWNER">Owner</option>
+                        <option value="MOD">Mod</option>
+                        <option value="MEMBER">Member</option>
+                    </select>
+                </div>
+
+                <div class="py-4 border-y border-white/5 my-4 space-y-3 text-left">
+                    <div>
+                        <p class="text-[8px] text-gray-600 uppercase font-black">Bio Data</p>
+                        <p id="modal-bio" class="text-white font-bold uppercase text-[9px] mt-0.5 break-words">-</p>
+                        <textarea id="edit-bio" placeholder="Update your biography..." class="edit-input mt-1 hidden h-16 resize-none" oninput="autoSaveProfile()"></textarea>
+                    </div>
+                    <div id="modal-status-section">
+                        <p class="text-[8px] text-gray-600 uppercase font-black">Status</p>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <div id="modal-status-dot" class="status-dot"></div>
+                            <p id="modal-status" class="text-white font-bold uppercase text-[9px]">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="closeProfile()" class="w-full py-2 text-[8px] text-gray-500 hover:text-white uppercase tracking-[0.2em] font-black transition">Close</button>
+            </div>
         </div>
     </div>
 
@@ -209,7 +200,6 @@
         <header class="h-16 border-b border-[#222] flex items-center justify-between px-6 bg-[#0a0c10] shrink-0 z-40">
             <div class="flex items-center gap-4">
                 <span class="serif text-2xl gold-gradient font-bold tracking-tight">Chatlaxy</span>
-                <p class="text-[8px] text-white/40 font-black uppercase tracking-[0.3em] hidden md:block">Elite</p>
             </div>
             
             <div class="flex items-center gap-3 group cursor-pointer" onclick="viewProfile(myProfile.username)">
@@ -226,13 +216,13 @@
             <aside class="w-16 lg:w-48 border-r border-[#222] bg-[#0a0c10] flex flex-col p-4 shrink-0">
                 <div class="mb-6">
                     <p class="text-[8px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 px-1">Access</p>
-                    <button id="status-toggle-btn" class="flex items-center gap-2 w-full p-3 rounded-xl bg-white/5 border border-white/5 hover:border-gold/20 transition-all">
+                    <button id="status-toggle-btn" class="flex items-center gap-2 w-full p-3 rounded-xl bg-white/5 border border-white/5">
                         <div id="my-status-dot" class="status-dot"></div>
                         <span id="my-status-text" class="text-[9px] font-black uppercase tracking-[0.1em] text-white hidden lg:block">Online</span>
                     </button>
                     <div id="status-dropdown" class="hidden absolute left-4 w-40 mt-1 glass rounded-xl overflow-hidden shadow-2xl z-50">
-                        <button onclick="setStatus('online')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition border-b border-white/5"><div class="status-dot status-online"></div><span class="text-[8px] font-bold text-white uppercase">Online</span></button>
-                        <button onclick="setStatus('away')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition border-b border-white/5"><div class="status-dot status-away"></div><span class="text-[8px] font-bold text-white uppercase">Away</span></button>
+                        <button onclick="setStatus('online')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition"><div class="status-dot status-online"></div><span class="text-[8px] font-bold text-white uppercase">Online</span></button>
+                        <button onclick="setStatus('away')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition"><div class="status-dot status-away"></div><span class="text-[8px] font-bold text-white uppercase">Away</span></button>
                         <button onclick="setStatus('dnd')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition"><div class="status-dot status-dnd"></div><span class="text-[8px] font-bold text-white uppercase">Busy</span></button>
                     </div>
                 </div>
@@ -247,17 +237,15 @@
                 <div class="px-6 pb-6">
                     <form id="chat-form" class="bg-[#161a21] border border-[#222] rounded-2xl flex items-center px-4 py-1 gap-3">
                         <input type="text" id="msg-input" placeholder="Message..." autocomplete="off" class="flex-1 bg-transparent py-3 outline-none text-white text-xs font-medium">
-                        <button type="submit" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] px-6 py-2 rounded-lg text-black font-black uppercase text-[8px] hover:brightness-110 transition">Send</button>
+                        <button type="submit" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] px-6 py-2 rounded-lg text-black font-black uppercase text-[8px]">Send</button>
                     </form>
                 </div>
             </main>
 
             <!-- ONLINE LIST -->
             <aside class="w-16 lg:w-56 border-l border-[#222] bg-[#0a0c10] flex flex-col p-4 shrink-0">
-                <div class="flex-1 overflow-y-auto">
-                    <p class="text-[8px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 px-1">Members</p>
-                    <div id="online-users-list" class="space-y-1"></div>
-                </div>
+                <p class="text-[8px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 px-1">Members</p>
+                <div id="online-users-list" class="space-y-1 overflow-y-auto"></div>
             </aside>
         </div>
     </div>
@@ -273,18 +261,8 @@
         const RANK_CONFIG = {
             DEVELOPER: { name: 'Dev', class: 'rank-dev', weight: 100 },
             CEO: { name: 'CEO', class: 'rank-ceo', weight: 99 },
-            HEAD_OWNER: { name: 'H-Owner', class: 'rank-owner', weight: 98 },
             OWNER: { name: 'Owner', class: 'rank-owner', weight: 97 },
-            CO_OWNER: { name: 'Co-Owner', class: 'rank-owner', weight: 96 },
-            SITE_HELPER: { name: 'Helper', class: 'rank-mod', weight: 95 },
-            SUPER_ADMIN: { name: 'S-Admin', class: 'rank-admin', weight: 94 },
-            ADMIN: { name: 'Admin', class: 'rank-admin', weight: 93 },
             MOD: { name: 'Mod', class: 'rank-mod', weight: 92 },
-            LEGEND: { name: 'Legend', class: 'rank-vip', weight: 50 },
-            BEAST: { name: 'Beast', class: 'rank-vip', weight: 40 },
-            PREMIUM: { name: 'Premium', class: 'rank-vip', weight: 30 },
-            SUPER_VIP: { name: 'S-VIP', class: 'rank-vip', weight: 20 },
-            VIP: { name: 'VIP', class: 'rank-vip', weight: 10 },
             MEMBER: { name: 'Member', class: 'rank-member', weight: 0 }
         };
 
@@ -372,9 +350,7 @@
                 rank: user.toLowerCase() === 'developer' ? 'DEVELOPER' : 'MEMBER',
                 status: "online", 
                 pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`,
-                banner: '',
-                music: '',
-                customBio: ''
+                banner: '', music: '', customBio: ''
             };
             db.push(myProfile);
             localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
@@ -399,30 +375,19 @@
         };
 
         // PROFILE EDIT LOGIC
-        function triggerPfpUpload() {
-            if(!isEditingProfile) return;
-            document.getElementById('pfp-input').click();
-        }
-
-        function triggerBannerUpload() {
-            if(!isEditingProfile) return;
-            document.getElementById('banner-input').click();
-        }
+        function triggerPfpUpload() { if(isEditingProfile) document.getElementById('pfp-input').click(); }
+        function triggerBannerUpload() { if(isEditingProfile) document.getElementById('banner-input').click(); }
+        function triggerMusicUpload() { if(isEditingProfile) document.getElementById('music-input').click(); }
 
         document.getElementById('pfp-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                const b64 = event.target.result;
-                if(isEditingProfile) {
-                    myProfile.pfp = b64;
-                    document.getElementById('modal-pfp').src = b64;
-                    document.getElementById('header-pfp').src = b64;
-                    saveEverything();
-                    socket.emit('register user', myProfile);
-                    renderMessages();
-                }
+                myProfile.pfp = event.target.result;
+                document.getElementById('modal-pfp').src = myProfile.pfp;
+                document.getElementById('header-pfp').src = myProfile.pfp;
+                autoSaveProfile();
             };
             reader.readAsDataURL(file);
         };
@@ -432,13 +397,21 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                const b64 = event.target.result;
-                if(isEditingProfile) {
-                    myProfile.banner = b64;
-                    document.getElementById('modal-banner').style.backgroundImage = `url(${b64})`;
-                    saveEverything();
-                    socket.emit('register user', myProfile);
-                }
+                myProfile.banner = event.target.result;
+                document.getElementById('modal-banner').style.backgroundImage = `url(${myProfile.banner})`;
+                autoSaveProfile();
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('music-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('music-filename-label').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                myProfile.music = event.target.result;
+                autoSaveProfile();
             };
             reader.readAsDataURL(file);
         };
@@ -451,7 +424,6 @@
             const editMode = document.getElementById('profile-edit-mode');
             const bioDisplay = document.getElementById('modal-bio');
             const bioEdit = document.getElementById('edit-bio');
-            const statusSection = document.getElementById('modal-status-section');
 
             if(isEditingProfile) {
                 pencil.classList.add('hidden');
@@ -460,11 +432,7 @@
                 editMode.classList.remove('hidden');
                 bioDisplay.classList.add('hidden');
                 bioEdit.classList.remove('hidden');
-                statusSection.classList.add('hidden');
-
-                // Populate fields
                 document.getElementById('edit-username').value = myProfile.username;
-                document.getElementById('edit-music').value = myProfile.music || '';
                 document.getElementById('edit-bio').value = myProfile.customBio || '';
             } else {
                 pencil.classList.remove('hidden');
@@ -473,37 +441,28 @@
                 editMode.classList.add('hidden');
                 bioDisplay.classList.remove('hidden');
                 bioEdit.classList.add('hidden');
-                statusSection.classList.remove('hidden');
-                
-                // Update local visual after exiting edit
-                document.getElementById('modal-name').innerText = myProfile.username;
-                document.getElementById('modal-bio').innerText = myProfile.customBio || `${myProfile.age}Y • ${myProfile.gender}`;
-                enterApp();
-                renderMessages();
+                viewProfile(myProfile.username);
             }
         };
 
         function autoSaveProfile() {
             if(!isEditingProfile || !myProfile) return;
             
-            const oldUsername = myProfile.username;
-            const newUsername = document.getElementById('edit-username').value.trim() || myProfile.username;
-            
-            // Check for duplicate username if changing
-            if(newUsername !== oldUsername) {
+            const newUsername = document.getElementById('edit-username').value.trim();
+            if(newUsername && newUsername !== myProfile.username) {
                 const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
-                if(db.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
-                    // Don't save username if taken, but save others
-                } else {
+                if(!db.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
                     myProfile.username = newUsername;
                 }
             }
             
-            myProfile.music = document.getElementById('edit-music').value;
             myProfile.customBio = document.getElementById('edit-bio').value;
-            
             saveEverything();
             socket.emit('register user', myProfile);
+            
+            // Local Immediate Updates
+            document.getElementById('header-username').innerText = myProfile.username;
+            renderMessages();
         }
 
         function viewProfile(username) {
@@ -512,80 +471,62 @@
             viewingUser = user;
             isEditingProfile = false;
 
-            // Reset UI states
+            // Reset UI
             document.getElementById('pencil-icon').classList.remove('hidden');
             document.getElementById('eye-icon').classList.add('hidden');
             document.getElementById('profile-display-mode').classList.remove('hidden');
             document.getElementById('profile-edit-mode').classList.add('hidden');
             document.getElementById('modal-bio').classList.remove('hidden');
             document.getElementById('edit-bio').classList.add('hidden');
-            document.getElementById('modal-status-section').classList.remove('hidden');
 
-            // Set Data
+            // Data
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
-            
-            const userStatus = user.status || "online";
-            document.getElementById('modal-status').innerText = userStatus.toUpperCase();
-            document.getElementById('modal-status-dot').className = `status-dot status-${userStatus}`;
+            document.getElementById('modal-status').innerText = (user.status || "online").toUpperCase();
+            document.getElementById('modal-status-dot').className = `status-dot status-${user.status || 'online'}`;
             document.getElementById('modal-bio').innerText = user.customBio || `${user.age}Y • ${user.gender}`;
             
-            // Handle Banner
             const banner = document.getElementById('modal-banner');
-            if(user.banner) banner.style.backgroundImage = `url(${user.banner})`;
-            else banner.style.backgroundImage = 'none';
+            banner.style.backgroundImage = user.banner ? `url(${user.banner})` : 'none';
 
-            // Handle Music
+            // Music
             const audio = document.getElementById('profile-audio');
             if(user.music) {
                 audio.src = user.music;
-                audio.play().catch(e => console.log("Music blocked until user interacts"));
+                audio.play().catch(() => {});
             } else {
                 audio.pause();
                 audio.src = "";
             }
 
             const isMe = myProfile && user.username === myProfile.username;
-            const isMeDev = myProfile && myProfile.rank === 'DEVELOPER';
-            
             document.getElementById('profile-edit-toggle').classList.toggle('hidden', !isMe);
-            document.getElementById('admin-controls').classList.toggle('hidden', !isMeDev);
-            if(isMeDev) document.getElementById('rank-selector').value = user.rank;
+            document.getElementById('admin-controls').classList.toggle('hidden', !(myProfile?.rank === 'DEVELOPER'));
             
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
         function applyRankChange() {
-            if(!myProfile || myProfile.rank !== 'DEVELOPER' || !viewingUser) return;
+            if(myProfile?.rank !== 'DEVELOPER' || !viewingUser) return;
             const newRank = document.getElementById('rank-selector').value;
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v5') || "[]");
             const idx = db.findIndex(u => u.username === viewingUser.username);
-            
             if(idx !== -1) {
                 db[idx].rank = newRank;
                 localStorage.setItem('chatlaxy_accounts_v5', JSON.stringify(db));
-                
                 if(viewingUser.username === myProfile.username) {
                     myProfile.rank = newRank;
                     enterApp();
                 }
-                
-                showToast(`RANK UPDATED: ${viewingUser.username} is now ${newRank}`);
-                socket.emit('admin update user', db[idx]);
-                socket.emit('force reload user', viewingUser.username);
-                
-                document.getElementById('modal-rank-container').innerHTML = getRankTag(newRank);
-                renderUserList();
-                renderMessages();
+                socket.emit('register user', db[idx]);
+                viewProfile(viewingUser.username);
             }
         }
 
         function closeProfile() { 
             document.getElementById('profile-modal').classList.add('hidden');
-            const audio = document.getElementById('profile-audio');
-            audio.pause();
-            audio.src = "";
+            document.getElementById('profile-audio').pause();
         }
 
         function setStatus(s) {
@@ -596,36 +537,15 @@
             socket.emit('register user', myProfile);
         }
 
-        const statusBtn = document.getElementById('status-toggle-btn');
-        const statusDropdown = document.getElementById('status-dropdown');
-        statusBtn.onclick = (e) => { e.stopPropagation(); statusDropdown.classList.toggle('hidden'); };
-        window.onclick = () => { statusDropdown.classList.add('hidden'); };
+        document.getElementById('status-toggle-btn').onclick = (e) => { 
+            e.stopPropagation(); 
+            document.getElementById('status-dropdown').classList.toggle('hidden'); 
+        };
+        window.onclick = () => { document.getElementById('status-dropdown').classList.add('hidden'); };
 
         socket.on('update user list', (users) => {
-            globalUsers = users.sort((a, b) => {
-                const wA = RANK_CONFIG[a.rank]?.weight || 0;
-                const wB = RANK_CONFIG[b.rank]?.weight || 0;
-                return wB - wA || a.username.localeCompare(b.username);
-            });
+            globalUsers = users;
             renderUserList();
-        });
-
-        socket.on('reload client', (targetName) => {
-            if(myProfile && myProfile.username === targetName) {
-                location.reload();
-            }
-        });
-
-        socket.on('force update profile', (updatedUser) => {
-            if(myProfile && myProfile.username === updatedUser.username) {
-                myProfile = { ...updatedUser };
-                localStorage.setItem('chatlaxy_session_v5', JSON.stringify(myProfile));
-                enterApp();
-            }
-            const uIdx = globalUsers.findIndex(u => u.username === updatedUser.username);
-            if(uIdx !== -1) globalUsers[uIdx] = updatedUser;
-            renderUserList();
-            renderMessages();
         });
 
         function renderUserList() {
@@ -637,12 +557,12 @@
                 div.onclick = () => viewProfile(u.username);
                 div.innerHTML = `
                     <div class="relative shrink-0">
-                        <img src="${u.pfp}" class="w-7 h-7 rounded-lg object-cover border border-white/5">
-                        <div class="absolute -bottom-0.5 -right-0.5 status-dot status-${u.status || 'online'} border border-black scale-[0.6]"></div>
+                        <img src="${u.pfp}" class="w-7 h-7 rounded-lg object-cover">
+                        <div class="absolute -bottom-0.5 -right-0.5 status-dot status-${u.status || 'online'} scale-[0.6]"></div>
                     </div>
                     <div class="hidden lg:block overflow-hidden">
                         <p class="text-[9px] font-black text-white uppercase truncate">${u.username}</p>
-                        <div class="mt-0.5">${getRankTag(u.rank)}</div>
+                        ${getRankTag(u.rank)}
                     </div>
                 `;
                 list.appendChild(div);
@@ -664,7 +584,7 @@
 
         socket.on('global message', (msg) => {
             chatHistory.push(msg);
-            if(chatHistory.length > 100) chatHistory.shift();
+            if(chatHistory.length > 50) chatHistory.shift();
             localStorage.setItem('chatlaxy_history_v5', JSON.stringify(chatHistory));
             renderMessages();
         });
@@ -673,21 +593,19 @@
             const container = document.getElementById('messages');
             container.innerHTML = '';
             chatHistory.forEach(m => {
-                const isMe = myProfile && m.sender.username === myProfile.username;
+                // Find current version of sender in global list to show latest pfp/rank
+                const liveSender = globalUsers.find(u => u.username === m.sender.username) || m.sender;
                 const div = document.createElement('div');
-                div.className = `message-row flex gap-4 group`;
+                div.className = `message-row flex gap-4`;
                 div.innerHTML = `
-                    <div class="shrink-0">
-                        <img src="${m.sender.pfp}" onclick="viewProfile('${m.sender.username}')" 
-                             class="w-10 h-10 rounded-xl object-cover border border-white/5 cursor-pointer shadow-lg">
-                    </div>
+                    <img src="${liveSender.pfp}" onclick="viewProfile('${liveSender.username}')" class="w-10 h-10 rounded-xl object-cover cursor-pointer">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="serif text-sm font-bold ${isMe ? 'gold-gradient' : 'text-white'}">${m.sender.username}</span>
-                            ${getRankTag(m.sender.rank)}
-                            <span class="text-[7px] text-gray-700 font-black uppercase tracking-widest">${m.timestamp}</span>
+                            <span class="serif text-sm font-bold text-white">${liveSender.username}</span>
+                            ${getRankTag(liveSender.rank)}
+                            <span class="text-[7px] text-gray-700 font-black uppercase">${m.timestamp}</span>
                         </div>
-                        <p class="text-[11px] leading-relaxed text-gray-300 font-medium">${m.text}</p>
+                        <p class="text-[11px] text-gray-300 font-medium">${m.text}</p>
                     </div>
                 `;
                 container.appendChild(div);
