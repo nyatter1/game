@@ -55,7 +55,6 @@
             transition: all 0.2s ease;
         }
 
-        /* Command Feedback Animation - Focused in Middle */
         @keyframes centerFadeInOut {
             0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
             15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -78,7 +77,6 @@
 </head>
 <body>
 
-    <!-- Floating Alert Container for Commands -->
     <div id="alert-container"></div>
 
     <!-- Auth Screen -->
@@ -152,7 +150,7 @@
             <button onclick="logout()" class="p-4 text-[9px] text-zinc-500 hover:text-zinc-100 uppercase tracking-[0.3em] text-center border-t border-zinc-900 transition-colors font-bold">Sign Out</button>
         </aside>
 
-        <main class="flex-1 flex flex-col min-w-0 relative bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
+        <main class="flex-1 flex flex-col min-w-0 relative">
             <header class="h-16 border-b border-zinc-900 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md z-10">
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full bg-amber-200/40 animate-pulse"></div>
@@ -190,37 +188,17 @@
 
         let currentUser = null;
 
-        /**
-         * COMMAND SYSTEM
-         */
-        const COMMANDS = {
-            "help": () => {
-                showAlert("ACTION COMPLETE", true);
-                console.log("Lumière Commands: /help, /clear");
-            },
-            "clear": () => {
-                clearSavedChat();
-                showAlert("ACTION COMPLETE", true);
-            }
-        };
-
         function showAlert(text, isSuccess = true) {
             const alert = document.createElement('div');
             alert.className = `command-alert px-10 py-6 rounded-lg font-serif text-[12px] uppercase tracking-[0.5em] shadow-2xl backdrop-blur-2xl border ${isSuccess ? 'bg-zinc-100/95 text-black border-white' : 'bg-red-950/90 text-red-100 border-red-800'}`;
             alert.textContent = text;
             alertContainer.appendChild(alert);
-            
             setTimeout(() => alert.remove(), 2000);
         }
 
-        function processCommand(input) {
-            const trigger = input.split(' ')[0].substring(1).toLowerCase();
-            if (COMMANDS[trigger]) {
-                COMMANDS[trigger]();
-            } else {
-                showAlert("INVALID COMMAND", false);
-            }
-        }
+        socket.on('command_response', (res) => {
+            showAlert(res.message, res.success);
+        });
 
         window.addEventListener('load', () => {
             const savedUser = sessionStorage.getItem('lumiere_active_user');
@@ -239,18 +217,13 @@
             const username = document.getElementById('signup-username').value.trim();
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
-            
             let users = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
-            
             if (users.find(u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase())) {
                 document.getElementById('signup-error').classList.remove('hidden');
                 return;
             }
-            
             users.push({ username, email, password });
             localStorage.setItem('lumiere_users', JSON.stringify(users));
-            
-            // Explicitly sync this user to the socket server immediately
             enterLounge(username);
         });
 
@@ -278,12 +251,18 @@
             window.location.reload();
         }
 
-        // IMPROVED: Logic to ensure your friend appears if they are online
+        // FIX: Ensuring all online users appear, even if they aren't in YOUR local registry
         socket.on('user_update', (onlineUsernames) => {
-            // Re-fetch all registered users from local storage
             const registeredUsers = JSON.parse(localStorage.getItem('lumiere_users') || '[]');
             const registeredNames = registeredUsers.map(u => u.username);
             
+            // If someone is online but not in our "known" list, add them temporarily so we can see them
+            onlineUsernames.forEach(name => {
+                if (!registeredNames.includes(name)) {
+                    registeredNames.push(name);
+                }
+            });
+
             onlineList.innerHTML = '';
             offlineList.innerHTML = '';
             let count = 0;
@@ -338,11 +317,7 @@
             e.preventDefault();
             const text = document.getElementById('chat-input').value.trim();
             if (text) {
-                if (text.startsWith('/')) {
-                    processCommand(text);
-                } else {
-                    socket.emit('chat_message', { text });
-                }
+                socket.emit('chat_message', { text });
                 document.getElementById('chat-input').value = '';
             }
         });
