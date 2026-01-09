@@ -134,6 +134,7 @@
         <main class="flex-1 flex flex-col relative">
             <header class="h-20 border-b border-zinc-900 flex items-center justify-between px-8 bg-black/20 backdrop-blur-md">
                 <h2 class="text-xs uppercase tracking-[0.2em] font-bold text-zinc-400">Main Gallery</h2>
+                <button onclick="clearSavedChat()" class="text-[9px] uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors">Clear History</button>
             </header>
             <div id="messages-container" class="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar"></div>
             <div class="p-8 bg-gradient-to-t from-black to-transparent">
@@ -166,6 +167,7 @@
             if (savedUser) {
                 enterLounge(savedUser);
             }
+            loadSavedChat();
         });
 
         function toggleAuth(toSignup) {
@@ -218,6 +220,8 @@
             document.getElementById('my-username').textContent = currentUser;
             authScreen.style.display = 'none';
             chatScreen.style.display = 'flex';
+            
+            // Critical for showing players: join immediately
             socket.emit('join', currentUser);
         }
 
@@ -263,7 +267,29 @@
             onlineCount.textContent = count;
         });
 
-        // --- Chat Logic ---
+        // --- Chat Logic & Persistence ---
+        function saveMessage(data) {
+            let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
+            history.push(data);
+            // Keep last 100 messages to prevent storage bloat
+            if (history.length > 100) history.shift(); 
+            localStorage.setItem('lumiere_chat_history', JSON.stringify(history));
+        }
+
+        function loadSavedChat() {
+            messagesContainer.innerHTML = '';
+            let history = JSON.parse(localStorage.getItem('lumiere_chat_history') || '[]');
+            history.forEach(data => {
+                appendMessage(data.user, data.text, data.time, data.user === currentUser, false, true);
+            });
+        }
+
+        function clearSavedChat() {
+            localStorage.removeItem('lumiere_chat_history');
+            messagesContainer.innerHTML = '';
+            appendMessage('System', 'HISTORY CLEARED', '', false, true);
+        }
+
         document.getElementById('chat-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const text = document.getElementById('chat-input').value.trim();
@@ -275,13 +301,14 @@
 
         socket.on('chat_message', (data) => {
             appendMessage(data.user, data.text, data.time, data.user === currentUser);
+            saveMessage(data);
         });
 
         socket.on('system_message', (text) => {
             appendMessage('System', text, '', false, true);
         });
 
-        function appendMessage(user, text, time, isMe, isSystem = false) {
+        function appendMessage(user, text, time, isMe, isSystem = false, isFromHistory = false) {
             const div = document.createElement('div');
             div.className = `flex flex-col ${isMe && !isSystem ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full`;
             if (isSystem) {
@@ -302,7 +329,13 @@
                     </div>`;
             }
             messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            // Only auto-scroll if it's a new message, not initial loading of history
+            if (!isFromHistory) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else {
+                // Ensure scroll is at bottom after history loads
+                setTimeout(() => { messagesContainer.scrollTop = messagesContainer.scrollHeight; }, 50);
+            }
         }
     </script>
 </body>
