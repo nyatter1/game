@@ -47,11 +47,11 @@ io.on('connection', (socket) => {
     
     console.log(`${username} has entered the Main Gallery.`);
     
-    // Notify clients of the new online list
+    // Notify all clients of the new online list immediately
     broadcastUserUpdate();
     
     // Notify other connected clients (system message)
-    socket.broadcast.emit('system_message', `${username} HAS ENTERED THE CIRCLE.`);
+    socket.broadcast.emit('system_message', `${username.toUpperCase()} HAS ENTERED THE CIRCLE.`);
   });
 
   // Handle incoming chat messages
@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
       // Update everyone's online/offline list
       broadcastUserUpdate();
       
-      io.emit('system_message', `${socket.username} HAS LEFT THE GALLERY.`);
+      io.emit('system_message', `${socket.username.toUpperCase()} HAS LEFT THE GALLERY.`);
     }
   });
 });
