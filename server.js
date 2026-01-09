@@ -12,11 +12,12 @@ const io = new Server(server, {
   }
 });
 
-// Serve static files from the root directory
-app.use(express.static(__dirname));
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  // Point to the index.html inside the public folder
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Real-time communication logic
@@ -26,13 +27,11 @@ io.on('connection', (socket) => {
   // Handle joining the room
   socket.on('join', (username) => {
     socket.username = username;
-    // Broadcast to everyone else that someone joined
     socket.broadcast.emit('system_message', `${username} has joined the circle.`);
   });
 
   // Handle chat messages
   socket.on('chat_message', (msg) => {
-    // Send message to everyone including the sender
     io.emit('chat_message', {
       user: socket.username || 'Anonymous',
       text: msg.text,
