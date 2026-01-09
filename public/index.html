@@ -3,389 +3,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraChat Pro | Global Elite</title>
+    <title>Chatlaxy | Elite Social</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --luxury-gold: #d4af37;
-            --luxury-black: #0f1115;
-            --luxury-dark: #1a1d23;
+            --luxury-black: #0a0c10;
+            --luxury-dark: #161a21;
+            --border-color: #222222;
         }
         body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; }
         .serif { font-family: 'Cormorant Garamond', serif; }
         
-        .glass { background: rgba(26, 29, 35, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .gold-bg { background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%); }
-        
-        .avatar-border { border: 2px solid var(--luxury-gold); padding: 2px; }
-        .online-glow { box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .vip-tag { background: linear-gradient(90deg, #d4af37, #f9e29c); color: #000; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-size: 9px; text-transform: uppercase; }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--luxury-black); }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 
-        .luxury-input { background: #262a33; border: 1px solid #3d4451; transition: all 0.3s ease; }
-        .luxury-input:focus { border-color: var(--luxury-gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
+        /* Message Bubbles */
+        .message-bubble { background: #1a1d23; border: 1px solid var(--border-color); border-radius: 18px; padding: 12px 16px; max-width: 85%; }
+        .quote-box { background: rgba(255, 255, 255, 0.05); border-left: 2px solid var(--luxury-gold); padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; font-size: 0.75rem; color: #94a3b8; }
         
-        .message-me { background: linear-gradient(135deg, #2d3436 0%, #000000 100%); border: 1px solid rgba(212, 175, 55, 0.3); }
-        .message-them { background: #262a33; border: 1px solid rgba(255, 255, 255, 0.05); }
+        /* Status Indicators */
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s; }
+        .status-online { background: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .status-away { background: #eab308; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
+        .status-dnd { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+        .status-offline { background: #6b7280; }
 
-        .modal-enter { animation: modalIn 0.3s ease-out forwards; }
+        .auth-overlay { background: rgba(5, 5, 5, 0.98); backdrop-filter: blur(20px); z-index: 100; }
+        .input-bar { background: #161a21; border: 1px solid var(--border-color); border-radius: 12px; }
+        
+        .user-card { border: 1px solid transparent; transition: all 0.2s; }
+        .user-card:hover { background: rgba(255,255,255,0.03); border-color: rgba(212, 175, 55, 0.2); }
+        
+        .luxury-input { width: 100%; background: #111; border: 1px solid #222; padding: 0.75rem 1rem; rounded: 0.75rem; outline: none; transition: border-color 0.2s; color: white; font-size: 0.875rem; }
+        .luxury-input:focus { border-color: var(--luxury-gold); }
+
         @keyframes modalIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
-
-        .logo-circle {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-            color: black;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 28px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
     </style>
 </head>
-<body class="h-screen overflow-hidden">
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- PROFILE MODAL -->
-    <div id="profile-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="glass w-full max-w-sm rounded-3xl p-8 border border-white/10 shadow-2xl relative modal-enter">
-            <button onclick="closeProfile()" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+    <!-- AUTH OVERLAY -->
+    <div id="auth-screen" class="fixed inset-0 flex items-center justify-center auth-overlay p-4">
+        <div class="w-full max-w-md text-center">
+            <h1 class="serif text-6xl gold-gradient mb-4">Chatlaxy</h1>
+            <p class="text-gray-500 uppercase tracking-[0.3em] text-[10px] mb-8">The Elite Social Hub</p>
             
-            <div class="flex flex-col items-center text-center">
-                <div class="w-24 h-24 rounded-full avatar-border mb-6 p-1">
-                    <img id="modal-pfp" src="" class="w-full h-full rounded-full object-cover shadow-2xl">
-                </div>
-                <h3 id="modal-username" class="serif text-3xl gold-gradient mb-1">Username</h3>
-                <p id="modal-status" class="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-6">Verified Member</p>
-                
-                <div class="grid grid-cols-2 gap-4 w-full border-t border-white/5 pt-6">
-                    <div class="text-left">
-                        <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Gender</p>
-                        <p id="modal-gender" class="text-sm font-semibold text-white">Gender</p>
-                    </div>
-                    <div class="text-left">
-                        <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Chronology</p>
-                        <p id="modal-age" class="text-sm font-semibold text-white">Age</p>
-                    </div>
-                </div>
-                <div class="w-full mt-6 p-4 bg-white/5 rounded-xl border border-white/5">
-                    <p class="text-[9px] text-gray-500 uppercase tracking-widest text-center mb-1">Status</p>
-                    <p class="text-xs text-white text-center italic opacity-80">Currently Online</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AUTH SCREEN -->
-    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-[#050505] p-4">
-        <div class="w-full max-w-lg">
-            <div class="flex flex-col items-center mb-10">
-                <div class="logo-circle mb-4">A</div>
-                <h1 class="serif text-5xl gold-gradient mb-1">Aura Pro</h1>
-                <p class="text-gray-500 tracking-[0.3em] uppercase text-[10px] font-light">The Elite Social Hub</p>
-            </div>
-            
-            <div class="glass rounded-3xl p-8 border border-white/10 shadow-2xl">
-                <div class="flex justify-center gap-8 mb-8">
-                    <button id="tab-login" class="pb-2 text-sm uppercase tracking-widest font-semibold border-b-2 border-gold text-white" onclick="toggleAuth('login')">SignIn</button>
-                    <button id="tab-signup" class="pb-2 text-sm uppercase tracking-widest font-semibold border-b-2 border-transparent text-gray-500" onclick="toggleAuth('signup')">Register</button>
-                </div>
-                
-                <div id="login-form" class="space-y-6">
-                    <div class="space-y-2">
+            <!-- Login Form -->
+            <div id="login-form-box" class="glass p-8 rounded-3xl space-y-6">
+                <h2 class="text-white font-bold uppercase tracking-widest text-xs mb-4">Member Authentication</h2>
+                <div class="space-y-4 text-left">
+                    <div>
                         <label class="text-[10px] text-gray-400 uppercase tracking-widest ml-1">Identity</label>
-                        <input type="text" id="login-user" autocomplete="off" class="luxury-input w-full p-4 rounded-xl outline-none text-white placeholder-gray-600" placeholder="Username">
+                        <input type="text" id="login-user" autocomplete="off" class="luxury-input mt-1" placeholder="Username">
                     </div>
-                    <div class="space-y-2">
+                    <div>
                         <label class="text-[10px] text-gray-400 uppercase tracking-widest ml-1">Access Key</label>
-                        <input type="password" id="login-pass" autocomplete="off" class="luxury-input w-full p-4 rounded-xl outline-none text-white placeholder-gray-600" placeholder="••••••••">
+                        <input type="password" id="login-pass" class="luxury-input mt-1" placeholder="••••••••">
                     </div>
-                    <button id="btn-login-action" class="gold-bg w-full py-4 rounded-xl text-black font-bold uppercase tracking-widest hover:brightness-110 transition active:scale-95 shadow-lg">Authenticate</button>
-                    <p id="login-error" class="text-red-400 text-xs text-center hidden italic">Access Denied.</p>
                 </div>
+                <button id="btn-login" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-xl text-black font-bold uppercase tracking-widest hover:brightness-110 transition active:scale-95 shadow-lg">Enter Lounge</button>
+                <p class="text-[10px] text-gray-500">Not a member yet? <button onclick="toggleAuth('signup')" class="text-gold hover:underline">Apply for Entry</button></p>
+            </div>
 
-                <div id="signup-form" class="hidden space-y-4 max-h-[50vh] overflow-y-auto pr-2">
-                    <input type="text" id="reg-user" autocomplete="off" placeholder="Username" class="luxury-input w-full p-4 rounded-xl outline-none text-white">
-                    <input type="password" id="reg-pass" autocomplete="off" placeholder="Password" class="luxury-input w-full p-4 rounded-xl outline-none text-white">
-                    <div class="flex gap-4">
-                        <input type="number" id="reg-age" autocomplete="off" placeholder="Age" class="luxury-input w-1/3 p-4 rounded-xl outline-none text-white">
-                        <select id="reg-gender" class="luxury-input w-2/3 p-4 rounded-xl outline-none text-white appearance-none">
-                            <option value="">Select Gender</option>
+            <!-- Signup Form -->
+            <div id="signup-form-box" class="hidden glass p-8 rounded-3xl space-y-6">
+                <h2 class="text-white font-bold uppercase tracking-widest text-xs mb-4">Create Elite Profile</h2>
+                <div class="grid grid-cols-2 gap-4 text-left">
+                    <div class="col-span-2">
+                        <label class="text-[10px] text-gray-400 uppercase tracking-widest ml-1">Desired Username</label>
+                        <input type="text" id="reg-user" class="luxury-input mt-1" placeholder="Ex: MajesticShadow">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 uppercase tracking-widest ml-1">Age</label>
+                        <input type="number" id="reg-age" min="13" class="luxury-input mt-1" placeholder="21">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 uppercase tracking-widest ml-1">Gender</label>
+                        <select id="reg-gender" class="luxury-input mt-1">
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    <div class="flex flex-col items-center pt-4">
-                        <input type="file" id="reg-pfp" class="hidden" accept="image/*">
-                        <img id="pfp-preview" src="https://ui-avatars.com/api/?name=?" class="w-20 h-20 rounded-full border-2 border-[#d4af37] cursor-pointer hover:opacity-80 transition p-1" onclick="document.getElementById('reg-pfp').click()">
-                        <p class="text-[10px] text-gray-500 uppercase mt-2 tracking-tighter">Identity Visual</p>
+                    <div class="col-span-2">
+                        <label class="text-[10px] text-gray-400 uppercase tracking-widest ml-1">Password</label>
+                        <input type="password" id="reg-pass" class="luxury-input mt-1" placeholder="••••••••">
                     </div>
-                    <button id="btn-signup-action" class="gold-bg w-full py-4 rounded-xl text-black font-bold uppercase tracking-widest hover:brightness-110 transition active:scale-95 mt-4">Create Membership</button>
                 </div>
+                <button id="btn-signup" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-xl text-black font-bold uppercase tracking-widest hover:brightness-110 transition active:scale-95 shadow-lg">Initialize Membership</button>
+                <p class="text-[10px] text-gray-500">Already an elite? <button onclick="toggleAuth('login')" class="text-gold hover:underline">Return to Portal</button></p>
             </div>
         </div>
     </div>
 
-    <!-- MAIN INTERFACE -->
-    <div id="app-screen" class="hidden flex h-screen">
+    <!-- HEADER -->
+    <header class="h-16 border-b border-[#222] flex items-center justify-between px-6 bg-[#0a0c10] shrink-0 z-40">
+        <div class="flex items-center gap-2">
+            <span class="serif text-2xl gold-gradient font-bold tracking-tighter">Chatlaxy</span>
+        </div>
         
-        <!-- Sidebar: Personal Stats & Brand -->
-        <aside class="w-20 lg:w-72 bg-[#0a0c10] border-r border-white/5 flex flex-col">
-            <div class="p-6 border-b border-white/5 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="logo-circle !w-10 !h-10 !text-lg">A</div>
-                    <span class="serif text-2xl gold-gradient hidden lg:block">Aura Pro</span>
-                </div>
-            </div>
-
-            <div class="flex-1 p-6 space-y-8">
-                <div class="space-y-4">
-                    <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Profile</p>
-                    <div class="flex items-center gap-4 p-4 glass rounded-2xl border border-gold/20">
-                        <img id="my-pfp" class="w-12 h-12 rounded-full avatar-border object-cover">
-                        <div class="hidden lg:block overflow-hidden">
-                            <p id="my-username" class="text-sm font-bold text-white truncate">User</p>
-                            <p class="text-[9px] text-gold uppercase tracking-widest">Active Member</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Lounge</p>
-                    <div class="w-full flex items-center gap-4 p-4 rounded-xl bg-white/5 border-l-2 border-gold text-gold">
-                        <div class="w-8 h-8 rounded-lg bg-gold/20 flex items-center justify-center text-xs font-bold">#</div>
-                        <div class="text-left hidden lg:block">
-                            <p class="text-xs font-bold uppercase tracking-widest">Global</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button id="btn-logout" class="p-6 text-gray-600 hover:text-red-400 transition flex items-center gap-4 border-t border-white/5 uppercase text-[10px] font-black tracking-widest">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                <span class="hidden lg:block">Terminate Session</span>
+        <div class="flex items-center gap-6">
+            <button class="text-gray-500 hover:text-white transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
             </button>
+            
+            <div class="flex items-center gap-3 group cursor-pointer" onclick="document.getElementById('header-pfp-input').click()">
+                <div class="text-right hidden sm:block">
+                    <p id="header-username" class="text-xs font-bold text-white">Guest</p>
+                    <span class="vip-tag">VIP</span>
+                </div>
+                <input type="file" id="header-pfp-input" class="hidden" accept="image/*">
+                <img id="header-pfp" src="https://ui-avatars.com/api/?name=?" class="w-10 h-10 rounded-xl border border-gold/30 group-hover:border-gold transition object-cover shadow-lg">
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- LEFT SIDEBAR: STATUS ONLY -->
+        <aside class="w-20 lg:w-64 border-r border-[#222] bg-[#0a0c10] flex flex-col p-4 shrink-0">
+            <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 px-2">Navigation</p>
+            
+            <div class="relative group">
+                <button id="status-toggle-btn" class="flex items-center gap-3 w-full p-4 rounded-xl bg-white/5 border border-white/5 hover:border-gold/30 transition-all">
+                    <div id="my-status-dot" class="status-dot status-online"></div>
+                    <span id="my-status-text" class="text-xs font-bold uppercase tracking-widest text-white hidden lg:block">Online</span>
+                    <svg class="w-4 h-4 ml-auto text-gray-500 hidden lg:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                <!-- Status Dropdown -->
+                <div id="status-dropdown" class="hidden absolute top-full left-0 w-full mt-2 glass rounded-2xl overflow-hidden shadow-2xl z-50">
+                    <button onclick="setStatus('online')" class="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition">
+                        <div class="status-dot status-online"></div>
+                        <span class="text-xs text-white">Online</span>
+                    </button>
+                    <button onclick="setStatus('away')" class="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition">
+                        <div class="status-dot status-away"></div>
+                        <span class="text-xs text-white">Away</span>
+                    </button>
+                    <button onclick="setStatus('dnd')" class="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition">
+                        <div class="status-dot status-dnd"></div>
+                        <span class="text-xs text-white">Do Not Disturb</span>
+                    </button>
+                    <button onclick="setStatus('offline')" class="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition">
+                        <div class="status-dot status-offline"></div>
+                        <span class="text-xs text-white">Offline</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-auto p-4 glass rounded-2xl text-center hidden lg:block">
+                <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Session</p>
+                <button id="btn-logout" class="text-[10px] text-red-400 font-bold hover:underline">Terminate</button>
+            </div>
         </aside>
 
-        <!-- Main Chat Theatre -->
-        <main class="flex-1 flex flex-col bg-[#0f1115]">
-            <header class="h-20 border-b border-white/5 flex items-center px-8 justify-between bg-[#0f1115]/50 backdrop-blur-md">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg gold-bg text-black font-bold">#</div>
-                    <div>
-                        <h2 class="serif text-xl gold-gradient">Global Lounge</h2>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Sharing with all members</p>
-                    </div>
-                </div>
-                <div id="active-count" class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 uppercase tracking-tighter">
-                    0 Online
-                </div>
-            </header>
-
-            <div id="messages" class="flex-1 overflow-y-auto p-10 space-y-6 scroll-smooth">
-                <!-- Messages populate here -->
+        <!-- CENTER: MAIN CHAT -->
+        <main class="flex-1 flex flex-col bg-[#0f1115] relative">
+            <!-- Topic Bar -->
+            <div class="h-12 border-b border-white/5 flex items-center px-6 gap-3 shrink-0">
+                <div class="px-2 py-0.5 rounded bg-gold/10 border border-gold/20 text-[9px] text-gold font-bold uppercase">Topic</div>
+                <marquee class="text-[11px] text-gray-400 font-medium">Welcome to the elite Chatlaxy Lounge. Please maintain luxury standards. Everyone here is a VIP member.</marquee>
             </div>
 
-            <div class="p-6 bg-[#0f1115]">
-                <form id="chat-form" class="luxury-input rounded-2xl p-2 flex items-center gap-4" autocomplete="off">
-                    <input type="text" id="msg-input" placeholder="Compose an elegant message..." autocomplete="off" class="flex-1 bg-transparent p-3 px-6 outline-none text-white text-sm">
-                    <button type="submit" class="gold-bg p-3 rounded-xl hover:brightness-110 transition-all shadow-lg shadow-gold/10">
-                        <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            <!-- Messages Area -->
+            <div id="messages" class="flex-1 overflow-y-auto p-6 lg:p-10 space-y-6 scroll-smooth">
+                <!-- Messages populated here -->
+            </div>
+
+            <!-- Quoted Preview -->
+            <div id="quote-preview" class="hidden px-6 py-3 border-t border-white/5 bg-white/5 flex items-center justify-between">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="w-1 h-8 bg-gold rounded-full"></div>
+                    <div class="overflow-hidden">
+                        <p id="quote-preview-name" class="text-[10px] text-gold font-bold uppercase"></p>
+                        <p id="quote-preview-text" class="text-xs text-gray-400 truncate"></p>
+                    </div>
+                </div>
+                <button onclick="clearQuote()" class="text-gray-500 hover:text-white p-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-6">
+                <form id="chat-form" class="input-bar flex items-center p-2 gap-2 shadow-2xl">
+                    <button type="button" class="p-3 text-gray-500 hover:text-gold transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    <input type="text" id="msg-input" placeholder="Type an elegant message..." autocomplete="off" class="flex-1 bg-transparent py-3 px-2 outline-none text-white text-sm">
+                    <button type="button" class="p-3 text-gray-500 hover:text-gold transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </button>
+                    <button type="button" class="p-3 text-gray-500 hover:text-gold transition mr-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    </button>
+                    <button type="submit" class="bg-gold p-3 px-6 rounded-xl text-black font-bold hover:brightness-110 transition shadow-lg shadow-gold/20">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                     </button>
                 </form>
             </div>
         </main>
 
-        <!-- Right Sidebar: Presence -->
-        <aside class="w-72 bg-[#0a0c10] border-l border-white/5 hidden xl:flex flex-col">
-            <div class="p-6 border-b border-white/5 flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-green-500 online-glow"></div>
-                <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Active Elite</span>
+        <!-- RIGHT SIDEBAR: USER LIST -->
+        <aside class="w-80 border-l border-[#222] bg-[#0a0c10] hidden xl:flex flex-col shrink-0">
+            <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Online Elite</span>
+                <span id="active-count" class="text-[10px] font-bold text-gold bg-gold/10 px-2 py-0.5 rounded">0</span>
             </div>
             <div id="sidebar-list" class="flex-1 overflow-y-auto p-4 space-y-2">
-                <!-- Active users list -->
+                <!-- Active users populated here -->
             </div>
         </aside>
     </div>
 
     <script>
         const socket = io();
-        let myProfile = null;
-        let pfpBase64 = null;
-        let registeredUsers = [];
-        let onlineUsers = [];
+        let myProfile = {
+            username: "",
+            pfp: "",
+            status: "online",
+            bio: "Luxury Enthusiast",
+            age: null,
+            gender: ""
+        };
+        let quotingMessage = null;
         let chatHistory = [];
 
-        window.onload = () => {
-            const savedUsers = localStorage.getItem('aura_users');
-            if(savedUsers) registeredUsers = JSON.parse(savedUsers);
+        // UI HELPERS
+        function toggleAuth(type) {
+            const loginBox = document.getElementById('login-form-box');
+            const signupBox = document.getElementById('signup-form-box');
+            if(type === 'signup') {
+                loginBox.classList.add('hidden');
+                signupBox.classList.remove('hidden');
+            } else {
+                signupBox.classList.add('hidden');
+                loginBox.classList.remove('hidden');
+            }
+        }
 
-            const currentSession = localStorage.getItem('aura_current_session');
-            if (currentSession) {
-                const sessionData = JSON.parse(currentSession);
-                const account = registeredUsers.find(u => u.username === sessionData.username && u.password === sessionData.password);
-                if (account) {
-                    myProfile = account;
-                    socket.emit('register user', myProfile);
-                    enterApp();
-                }
+        // LOAD PERSISTENCE
+        window.onload = () => {
+            const savedHistory = localStorage.getItem('chatlaxy_history');
+            if(savedHistory) {
+                chatHistory = JSON.parse(savedHistory);
+                renderMessages();
+            }
+
+            const session = localStorage.getItem('chatlaxy_session');
+            if(session) {
+                myProfile = JSON.parse(session);
+                socket.emit('register user', myProfile);
+                enterApp();
             }
         };
 
-        function toggleAuth(mode) {
-            document.getElementById('login-form').classList.toggle('hidden', mode === 'signup');
-            document.getElementById('signup-form').classList.toggle('hidden', mode === 'login');
-            document.getElementById('tab-login').className = mode === 'login' ? 'pb-2 text-sm uppercase tracking-widest font-semibold border-b-2 border-[#d4af37] text-white' : 'pb-2 text-sm uppercase tracking-widest font-semibold border-b-2 border-transparent text-gray-500';
-            document.getElementById('tab-signup').className = mode === 'signup' ? 'pb-2 text-sm uppercase tracking-widest font-semibold border-b-2 border-[#d4af37] text-white' : 'pb-2 text-sm uppercase tracking-widest font-semibold border-b-2 border-transparent text-gray-500';
-        }
-
-        function openProfile(user) {
-            document.getElementById('modal-pfp').src = user.pfp;
-            document.getElementById('modal-username').innerText = user.username;
-            document.getElementById('modal-gender').innerText = user.gender;
-            document.getElementById('modal-age').innerText = `${user.age} Years`;
-            document.getElementById('profile-modal').classList.remove('hidden');
-        }
-
-        function closeProfile() {
-            document.getElementById('profile-modal').classList.add('hidden');
-        }
-
-        document.getElementById('reg-pfp').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                pfpBase64 = ev.target.result;
-                document.getElementById('pfp-preview').src = pfpBase64;
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
-        document.getElementById('btn-signup-action').onclick = () => {
-            const user = document.getElementById('reg-user').value.trim();
-            const pass = document.getElementById('reg-pass').value;
-            const gender = document.getElementById('reg-gender').value;
-            if(!user || !pass || !gender) return;
-
-            const newUser = {
-                username: user, password: pass, gender: gender, age: document.getElementById('reg-age').value || 21,
-                pfp: pfpBase64 || `https://ui-avatars.com/api/?name=${user}&background=random`
-            };
-            registeredUsers.push(newUser);
-            localStorage.setItem('aura_users', JSON.stringify(registeredUsers));
-            localStorage.setItem('aura_current_session', JSON.stringify(newUser));
-            myProfile = newUser;
+        // LOGIN LOGIC
+        document.getElementById('btn-login').onclick = () => {
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            
+            if(!user || !pass) return;
+            
+            // For demo, we auto-authenticate with the provided name
+            myProfile.username = user;
+            myProfile.pfp = myProfile.pfp || `https://ui-avatars.com/api/?name=${user}&background=random&color=fff&size=128`;
+            
+            localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
             socket.emit('register user', myProfile);
             enterApp();
         };
 
-        document.getElementById('btn-login-action').onclick = () => {
-            const user = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pass').value;
-            const account = registeredUsers.find(u => u.username.toLowerCase() === user.toLowerCase() && u.password === pass);
-            if (account) {
-                myProfile = account;
-                localStorage.setItem('aura_current_session', JSON.stringify(account));
-                socket.emit('register user', myProfile);
-                enterApp();
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-            }
+        // SIGNUP LOGIC
+        document.getElementById('btn-signup').onclick = () => {
+            const user = document.getElementById('reg-user').value.trim();
+            const age = document.getElementById('reg-age').value;
+            const gender = document.getElementById('reg-gender').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            if(!user || !age || !pass) return;
+
+            myProfile = {
+                username: user,
+                age: age,
+                gender: gender,
+                status: "online",
+                bio: `${age}yr old ${gender}`,
+                pfp: `https://ui-avatars.com/api/?name=${user}&background=random&color=fff&size=128`
+            };
+
+            localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
+            socket.emit('register user', myProfile);
+            enterApp();
         };
 
         function enterApp() {
             document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
-            document.getElementById('my-pfp').src = myProfile.pfp;
-            document.getElementById('my-username').innerText = myProfile.username;
+            document.getElementById('header-username').innerText = myProfile.username;
+            document.getElementById('header-pfp').src = myProfile.pfp;
+            setStatus(myProfile.status);
         }
 
         document.getElementById('btn-logout').onclick = () => {
-            localStorage.removeItem('aura_current_session');
+            localStorage.removeItem('chatlaxy_session');
             location.reload();
         };
 
+        // PROFILE PICTURE UPDATE
+        document.getElementById('header-pfp-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    myProfile.pfp = ev.target.result;
+                    document.getElementById('header-pfp').src = myProfile.pfp;
+                    localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
+                    socket.emit('register user', myProfile);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // STATUS TOGGLE
+        const statusBtn = document.getElementById('status-toggle-btn');
+        const statusDropdown = document.getElementById('status-dropdown');
+        
+        statusBtn.onclick = () => statusDropdown.classList.toggle('hidden');
+        
+        function setStatus(s) {
+            myProfile.status = s;
+            const dot = document.getElementById('my-status-dot');
+            const text = document.getElementById('my-status-text');
+            
+            dot.className = `status-dot status-${s}`;
+            text.innerText = s.charAt(0).toUpperCase() + s.slice(1);
+            if(s === 'dnd') text.innerText = 'Do Not Disturb';
+            
+            statusDropdown.classList.add('hidden');
+            localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
+            socket.emit('register user', myProfile);
+        }
+
+        // USER LIST
         socket.on('update user list', (users) => {
-            onlineUsers = users;
             const list = document.getElementById('sidebar-list');
-            document.getElementById('active-count').innerText = `${users.length} Online`;
+            document.getElementById('active-count').innerText = users.length;
             list.innerHTML = '';
             
             users.forEach(u => {
                 const div = document.createElement('div');
-                div.className = "flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition group";
-                div.onclick = () => openProfile(u);
+                div.className = "user-card flex items-center gap-4 p-3 rounded-2xl cursor-pointer";
                 div.innerHTML = `
-                    <div class="relative">
-                        <img src="${u.pfp}" class="w-10 h-10 rounded-full border border-white/10 group-hover:border-gold transition object-cover">
-                        <div class="w-2.5 h-2.5 bg-green-500 border-2 border-[#0a0c10] absolute bottom-0 right-0 rounded-full online-glow"></div>
+                    <div class="relative shrink-0">
+                        <img src="${u.pfp}" class="w-12 h-12 rounded-xl object-cover border border-white/5">
+                        <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0a0c10] status-${u.status || 'online'} shadow-lg"></div>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="text-xs font-bold text-gray-200 truncate group-hover:text-gold transition">${u.username}</p>
-                        <p class="text-[9px] text-gray-500 uppercase tracking-widest">${u.gender}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-bold text-white truncate serif">${u.username}</p>
+                            <span class="vip-tag">VIP</span>
+                        </div>
+                        <p class="text-[10px] text-gray-500 truncate mt-0.5">${u.status === 'dnd' ? 'Busy' : (u.bio || 'Luxury Elite')}</p>
                     </div>
                 `;
                 list.appendChild(div);
             });
         });
 
+        // MESSAGING
         document.getElementById('chat-form').onsubmit = (e) => {
             e.preventDefault();
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
-            if (!text) return;
+            if(!text) return;
 
             const msg = {
-                senderId: socket.id, 
-                senderName: myProfile.username, 
-                senderPfp: myProfile.pfp,
-                senderGender: myProfile.gender,
-                senderAge: myProfile.age,
-                text: text, 
+                id: Date.now(),
+                sender: myProfile,
+                text: text,
+                quote: quotingMessage,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
             socket.emit('global message', msg);
             input.value = '';
+            clearQuote();
         };
 
         socket.on('global message', (msg) => {
             chatHistory.push(msg);
+            if(chatHistory.length > 100) chatHistory.shift();
+            localStorage.setItem('chatlaxy_history', JSON.stringify(chatHistory));
             renderMessages();
         });
+
+        function quoteMessage(id) {
+            const msg = chatHistory.find(m => m.id === id);
+            if(msg) {
+                quotingMessage = { name: msg.sender.username, text: msg.text };
+                document.getElementById('quote-preview-name').innerText = msg.sender.username;
+                document.getElementById('quote-preview-text').innerText = msg.text;
+                document.getElementById('quote-preview').classList.remove('hidden');
+                document.getElementById('msg-input').focus();
+            }
+        }
+
+        function clearQuote() {
+            quotingMessage = null;
+            document.getElementById('quote-preview').classList.add('hidden');
+        }
 
         function renderMessages() {
             const container = document.getElementById('messages');
             container.innerHTML = '';
             
             chatHistory.forEach(m => {
-                const isMe = m.senderId === socket.id;
+                const isMe = m.sender.username === myProfile.username;
                 const div = document.createElement('div');
-                div.className = `flex gap-4 flex-row items-end group`;
-                div.innerHTML = `
-                    <img src="${m.senderPfp}" class="w-8 h-8 rounded-full border border-white/10 shadow-lg object-cover cursor-pointer hover:scale-110 transition" 
-                         onclick="openProfile({username: '${m.senderName}', pfp: '${m.senderPfp}', gender: '${m.senderGender}', age: '${m.senderAge}'})">
-                    <div class="max-w-[70%]">
-                        <div class="px-5 py-3 rounded-2xl text-sm ${isMe ? 'message-me text-white rounded-bl-none' : 'message-them text-gray-200 rounded-bl-none'}">
-                            ${m.text}
+                div.className = `flex gap-4 ${isMe ? 'flex-row-reverse' : ''} group`;
+                
+                let quoteHtml = '';
+                if(m.quote) {
+                    quoteHtml = `
+                        <div class="quote-box">
+                            <p class="font-bold text-[9px] uppercase mb-0.5">${m.quote.name}</p>
+                            <p class="truncate">${m.quote.text}</p>
                         </div>
-                        <p class="text-[8px] uppercase tracking-widest text-gray-600 mt-2 px-1 font-bold">
-                            ${isMe ? 'You' : m.senderName} <span class="mx-1 opacity-50">•</span> ${m.timestamp}
-                        </p>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="shrink-0 mt-1">
+                        <img src="${m.sender.pfp}" class="w-10 h-10 rounded-xl object-cover border border-white/5 shadow-xl group-hover:border-gold/30 transition">
+                    </div>
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%]">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-bold uppercase tracking-widest ${isMe ? 'text-gold' : 'text-gray-400'}">${m.sender.username}</span>
+                            <span class="vip-tag">VIP</span>
+                            <span class="text-[8px] text-gray-600 font-medium">${m.timestamp}</span>
+                        </div>
+                        <div class="message-bubble transition-all group-hover:border-white/10 relative">
+                            ${quoteHtml}
+                            <p class="text-sm leading-relaxed text-gray-200">${m.text}</p>
+                            <button onclick="quoteMessage(${m.id})" class="absolute top-2 -right-10 opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-gold transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                            </button>
+                        </div>
                     </div>
                 `;
                 container.appendChild(div);
