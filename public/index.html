@@ -63,7 +63,6 @@
                     <i class="fas fa-rocket text-2xl text-white"></i>
                 </div>
                 <h1 class="text-4xl font-black tracking-tighter text-white">CHATLAXY</h1>
-                <p class="text-slate-400 mt-2 font-medium">Step into the cosmic social club.</p>
             </div>
 
             <div class="flex mb-6 bg-slate-800/50 p-1.5 rounded-2xl">
@@ -98,13 +97,27 @@
 
     <!-- App Screen -->
     <div id="app-screen" class="hidden flex-grow flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex shrink-0">
-            <div class="p-6 border-b border-slate-800">
-                <h1 class="text-xl font-black tracking-tighter text-white flex items-center gap-2">
-                    <i class="fas fa-rocket text-indigo-500"></i> CHATLAXY
-                </h1>
+        <!-- Sidebar (Classic Style Restored) -->
+        <aside class="w-80 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex shrink-0">
+            <div id="current-user-card" class="relative bg-slate-800 border-b border-slate-700">
+                <div id="my-banner" class="h-28 bg-cover bg-center bg-indigo-900 w-full opacity-80"></div>
+                <div class="px-5 pb-5 -mt-12 relative">
+                    <div class="relative inline-block">
+                        <img id="my-pfp" src="https://ui-avatars.com/api/?name=User" class="w-24 h-24 rounded-full border-4 border-slate-900 object-cover shadow-2xl">
+                        <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-4 border-slate-900 rounded-full"></div>
+                    </div>
+                    <div class="mt-3">
+                        <h2 id="my-username" class="text-xl font-black text-white leading-tight">Loading...</h2>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 tracking-widest uppercase">Member</span>
+                        </div>
+                    </div>
+                    <button onclick="openEditModal()" class="absolute top-16 right-5 bg-slate-950/60 hover:bg-slate-800 p-2.5 rounded-2xl text-slate-300 transition-all border border-white/5 backdrop-blur-md">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
             </div>
+            
             <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
                 <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 px-2">Crew Members (<span id="online-count">0</span>)</h3>
                 <div id="users-list" class="space-y-2"></div>
@@ -116,26 +129,29 @@
             <!-- Top Navbar -->
             <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md z-30">
                 <div class="flex items-center gap-3">
-                    <div class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
-                    <span class="text-sm font-bold text-slate-300">Public Sector</span>
+                    <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                    <span class="text-xs font-black uppercase tracking-widest text-slate-400">Deep Space Terminal</span>
                 </div>
                 
                 <div class="relative group">
-                    <button id="nav-profile-btn" onclick="toggleNavMenu()" class="flex items-center gap-2 p-1 pr-3 rounded-full bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-all">
-                        <img id="nav-pfp" src="https://ui-avatars.com/api/?name=?" class="w-8 h-8 rounded-full object-cover">
+                    <button id="nav-profile-btn" onclick="toggleNavMenu()" class="flex items-center gap-2 p-1.5 pr-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-all">
+                        <img id="nav-pfp" src="https://ui-avatars.com/api/?name=?" class="w-8 h-8 rounded-xl object-cover">
+                        <span class="text-xs font-bold text-slate-300">Account</span>
                         <i class="fas fa-chevron-down text-[10px] text-slate-500"></i>
                     </button>
                     <!-- Nav Dropdown -->
-                    <div id="nav-menu" class="hidden absolute top-full right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-[100]">
-                        <button onclick="openWallet()" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-800 text-slate-300 text-sm">
-                            <i class="fas fa-wallet text-yellow-500"></i> My Wallet
+                    <div id="nav-menu" class="hidden absolute top-full right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-[100]">
+                        <button onclick="openWallet()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 text-sm">
+                            <div class="w-8 h-8 bg-yellow-500/10 rounded-lg flex items-center justify-center text-yellow-500">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            My Wallet
                         </button>
-                        <button onclick="openEditModal()" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-800 text-slate-300 text-sm">
-                            <i class="fas fa-user-edit text-indigo-400"></i> Edit Profile
-                        </button>
-                        <hr class="border-slate-800 my-1">
-                        <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-800 text-red-400 text-sm">
-                            <i class="fas fa-sign-out-alt"></i> Sign Out
+                        <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-red-400 text-sm">
+                            <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400">
+                                <i class="fas fa-power-off"></i>
+                            </div>
+                            Log Out
                         </button>
                     </div>
                 </div>
@@ -153,10 +169,10 @@
                     <!-- Vertical Plus Menu -->
                     <div id="plus-menu-container" class="relative">
                         <div id="plus-options" class="absolute bottom-16 left-0 flex flex-col gap-2 pointer-events-none">
-                            <button onclick="triggerImageUpload()" class="plus-option-btn w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-500 pointer-events-auto">
+                            <button onclick="triggerImageUpload()" class="plus-option-btn w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-indigo-500 pointer-events-auto">
                                 <i class="fas fa-image"></i>
                             </button>
-                            <button onclick="openThemePicker()" class="plus-option-btn w-12 h-12 bg-pink-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-pink-500 pointer-events-auto">
+                            <button onclick="openThemePicker()" class="plus-option-btn w-12 h-12 bg-pink-600 text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-pink-500 pointer-events-auto">
                                 <i class="fas fa-palette"></i>
                             </button>
                         </div>
@@ -180,7 +196,7 @@
     <!-- Wallet Modal -->
     <div id="wallet-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="wallet-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-4">
+            <div class="absolute top-0 right-0 p-6">
                 <button onclick="closeWallet()" class="text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="text-center">
@@ -190,7 +206,7 @@
                 <h3 class="text-2xl font-black text-white mb-8 tracking-tight">Galactic Wallet</h3>
                 
                 <div class="space-y-4">
-                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between group hover:bg-slate-800 transition-all">
+                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-2xl bg-yellow-600/20 flex items-center justify-center text-yellow-500">
                                 <i class="fas fa-coins text-xl"></i>
@@ -200,10 +216,9 @@
                                 <span id="wallet-coins" class="text-2xl font-black text-white tracking-tighter">0</span>
                             </div>
                         </div>
-                        <i class="fas fa-plus text-slate-600 group-hover:text-indigo-400 cursor-pointer"></i>
                     </div>
 
-                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between group hover:bg-slate-800 transition-all">
+                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-2xl bg-emerald-600/20 flex items-center justify-center text-emerald-500">
                                 <i class="fas fa-gem text-xl"></i>
@@ -213,63 +228,49 @@
                                 <span id="wallet-gems" class="text-2xl font-black text-white tracking-tighter">0</span>
                             </div>
                         </div>
-                        <i class="fas fa-plus text-slate-600 group-hover:text-emerald-400 cursor-pointer"></i>
                     </div>
                 </div>
-                
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-8">Transfer ID: <span id="wallet-id" class="text-slate-400">---</span></p>
             </div>
         </div>
     </div>
 
-    <!-- Theme Picker Modal (Updated styling) -->
+    <!-- Theme Picker Modal (Smaller & Compact) -->
     <div id="theme-picker-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden">
-            <div class="p-8 border-b border-slate-800">
-                <h3 class="text-2xl font-black text-white tracking-tight">Style Center</h3>
-                <p class="text-slate-400 text-sm font-medium">Customize your presence in the crew list.</p>
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-slate-800">
+                <h3 class="text-lg font-black text-white">Card Style</h3>
             </div>
-            <div class="p-8 space-y-8">
+            <div class="p-6 space-y-6">
                 <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-4">Color Spectrum</label>
-                    <div id="color-grid" class="grid grid-cols-5 gap-4"></div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-3">Accent Color</label>
+                    <div id="color-grid" class="grid grid-cols-5 gap-3"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-800/50 p-5 rounded-3xl border border-slate-700 flex items-center justify-between">
-                        <div><span class="block text-sm font-bold text-white">Neon Glow</span></div>
-                        <input type="checkbox" id="theme-glow-toggle" class="w-6 h-6 accent-indigo-500">
-                    </div>
-                    <div class="bg-slate-800/50 p-5 rounded-3xl border border-slate-700 flex items-center justify-between">
-                        <div><span class="block text-sm font-bold text-white">Gradient</span></div>
-                        <input type="checkbox" id="theme-gradient-toggle" class="w-6 h-6 accent-indigo-500">
-                    </div>
+                <div class="space-y-3">
+                    <label class="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700 cursor-pointer">
+                        <span class="text-sm font-bold text-slate-300">Glow Effect</span>
+                        <input type="checkbox" id="theme-glow-toggle" class="w-5 h-5 accent-indigo-500">
+                    </label>
+                    <label class="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700 cursor-pointer">
+                        <span class="text-sm font-bold text-slate-300">Gradient Fill</span>
+                        <input type="checkbox" id="theme-gradient-toggle" class="w-5 h-5 accent-indigo-500">
+                    </label>
                 </div>
             </div>
-            <div class="p-8 bg-slate-800/20 flex justify-end gap-3">
-                <button onclick="closeThemePicker()" class="px-6 py-2.5 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
-                <button onclick="applyTheme()" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black transition-all shadow-lg shadow-indigo-600/20">Apply</button>
+            <div class="p-6 bg-slate-800/20 flex gap-3">
+                <button onclick="closeThemePicker()" class="flex-1 py-3 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
+                <button onclick="applyTheme()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black transition-all">Apply</button>
             </div>
         </div>
     </div>
 
     <!-- Profile Viewer Modal -->
     <div id="view-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl">
             <div id="view-banner" class="h-32 bg-cover bg-center bg-slate-800"></div>
             <div class="px-8 pb-8 -mt-12 relative text-center">
                 <img id="view-pfp" src="" class="w-24 h-24 rounded-full border-8 border-slate-900 object-cover mx-auto shadow-xl">
                 <h2 id="view-username" class="text-3xl font-black text-white mt-4 tracking-tighter">Username</h2>
-                <div class="grid grid-cols-2 gap-3 mt-8">
-                    <div class="bg-slate-800/50 p-4 rounded-2xl border border-white/5">
-                        <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest">Age</span>
-                        <span id="view-age" class="text-lg font-bold text-white">--</span>
-                    </div>
-                    <div class="bg-slate-800/50 p-4 rounded-2xl border border-white/5">
-                        <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest">Gender</span>
-                        <span id="view-gender" class="text-lg font-bold text-white">--</span>
-                    </div>
-                </div>
-                <button onclick="closeViewModal()" class="mt-8 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-2xl transition-colors">Close Profile</button>
+                <button onclick="closeViewModal()" class="mt-8 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-2xl transition-colors">Close</button>
             </div>
         </div>
     </div>
@@ -279,12 +280,19 @@
         <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-[2rem] p-8 shadow-2xl">
             <h3 class="text-2xl font-black text-white mb-8 tracking-tight">Identity Settings</h3>
             <div class="space-y-6">
-                <div class="flex items-center gap-6 bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
-                    <img id="edit-pfp-preview" src="" class="w-20 h-20 rounded-full bg-slate-700 object-cover border-4 border-slate-900">
-                    <label class="flex-1">
-                        <span class="block text-center bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 py-3 rounded-xl border border-indigo-600/30 cursor-pointer font-bold text-sm">Change Avatar</span>
-                        <input type="file" id="pfp-upload" class="hidden" accept="image/*">
-                    </label>
+                <div class="flex flex-col gap-4 bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                    <div class="flex items-center gap-6">
+                        <img id="edit-pfp-preview" src="" class="w-20 h-20 rounded-full bg-slate-700 object-cover border-4 border-slate-900">
+                        <label class="flex-1">
+                            <span class="block text-center bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 py-3 rounded-xl border border-indigo-600/30 cursor-pointer font-bold text-sm">Change Avatar</span>
+                            <input type="file" id="pfp-upload" class="hidden" accept="image/*">
+                        </label>
+                    </div>
+                    <div>
+                        <div id="edit-banner-preview" class="w-full h-20 bg-slate-700 rounded-xl bg-cover bg-center border border-white/5 mb-2"></div>
+                        <label class="block w-full text-center bg-slate-700 hover:bg-slate-600 text-slate-300 py-2 rounded-xl cursor-pointer font-bold text-xs uppercase tracking-widest">Change Banner</label>
+                        <input type="file" id="banner-upload" class="hidden" accept="image/*">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-3">Your Story</label>
@@ -322,6 +330,7 @@
         let currentUser = null;
         let currentUserData = null;
         let pendingPfp = null;
+        let pendingBanner = null;
         let selectedThemeColor = '#6366f1';
 
         const themeColors = [
@@ -339,10 +348,12 @@
                 onSnapshot(userDocRef, (snap) => {
                     if (snap.exists()) {
                         currentUserData = snap.data();
+                        document.getElementById('my-username').innerText = currentUserData.username;
+                        document.getElementById('my-pfp').src = currentUserData.pfp || `https://ui-avatars.com/api/?name=${currentUserData.username}`;
+                        document.getElementById('my-banner').style.backgroundImage = `url('${currentUserData.banner || ''}')`;
                         document.getElementById('nav-pfp').src = currentUserData.pfp || `https://ui-avatars.com/api/?name=${currentUserData.username}`;
                         document.getElementById('wallet-coins').innerText = (currentUserData.wallet?.coins || 0).toLocaleString();
                         document.getElementById('wallet-gems').innerText = (currentUserData.wallet?.gems || 0).toLocaleString();
-                        document.getElementById('wallet-id').innerText = user.uid.slice(0, 12).toUpperCase();
                     }
                 });
                 document.getElementById('auth-screen').classList.add('hidden');
@@ -363,13 +374,11 @@
             reader.onerror = error => reject(error);
         });
 
-        // Navigation Menu
         window.toggleNavMenu = () => document.getElementById('nav-menu').classList.toggle('hidden');
         window.onclick = (e) => {
             if (!e.target.closest('#nav-profile-btn')) document.getElementById('nav-menu').classList.add('hidden');
         };
 
-        // Wallet Functions
         window.openWallet = () => {
             document.getElementById('chat-blur-overlay').classList.remove('hidden', 'pointer-events-none');
             document.getElementById('chat-blur-overlay').style.opacity = '1';
@@ -383,7 +392,6 @@
             document.getElementById('wallet-modal').classList.add('hidden');
         };
 
-        // Plus Menu
         window.togglePlusMenu = () => {
             const container = document.getElementById('plus-menu-container');
             const icon = document.getElementById('plus-icon');
@@ -409,7 +417,6 @@
             document.getElementById('theme-picker-modal').classList.add('hidden');
         };
 
-        // Image Handling
         document.getElementById('chat-image-upload').addEventListener('change', async (e) => {
             if (e.target.files[0]) {
                 const b64 = await toBase64(e.target.files[0]);
@@ -423,7 +430,6 @@
             }
         });
 
-        // Chat & Auth Implementation
         window.switchAuthTab = (tab) => {
             document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
             document.getElementById('signup-form').classList.toggle('hidden', tab !== 'signup');
@@ -452,7 +458,7 @@
                     lastSeen: serverTimestamp()
                 });
             } catch (err) {
-                document.getElementById('auth-error').innerText = err.message;
+                document.getElementById('auth-error').innerText = "Account creation error.";
                 document.getElementById('auth-error').classList.remove('hidden');
             }
         });
@@ -479,17 +485,13 @@
                     const isMe = m.uid === currentUser.uid;
                     const div = document.createElement('div');
                     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-4 group`;
+                    let content = m.type === 'image' ? 
+                        `<img src="${m.imageUrl}" class="rounded-2xl max-w-[280px] shadow-xl border border-white/5" onclick="window.open('${m.imageUrl}')">` :
+                        `<div class="px-5 py-3 rounded-2xl max-w-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'} text-sm leading-relaxed shadow-lg">${m.text}</div>`;
                     
-                    let content = '';
-                    if (m.type === 'image') {
-                        content = `<img src="${m.imageUrl}" class="rounded-2xl max-w-[280px] cursor-pointer shadow-xl border border-white/5" onclick="window.open('${m.imageUrl}')">`;
-                    } else {
-                        content = `<div class="px-5 py-3 rounded-2xl max-w-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-none shadow-indigo-600/10' : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'} text-sm leading-relaxed shadow-lg">${m.text}</div>`;
-                    }
-
                     div.innerHTML = `
                         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            ${!isMe ? `<span class="text-[10px] font-black text-slate-500 mb-1.5 uppercase tracking-widest">${m.username}</span>` : ''}
+                            ${!isMe ? `<span class="text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">${m.username}</span>` : ''}
                             ${content}
                         </div>
                     `;
@@ -525,7 +527,6 @@
                     div.className = `flex items-center gap-3 p-3 rounded-2xl cursor-pointer user-card-custom border border-transparent ${theme.glow ? 'glow-effect' : ''}`;
                     div.onclick = () => viewUserProfile(u.uid);
                     div.style.setProperty('--glow-color', theme.color + '33');
-                    
                     if (theme.gradient) {
                         div.style.background = `linear-gradient(135deg, ${theme.color}22 0%, rgba(15,23,42,0) 100%)`;
                         div.style.borderColor = theme.color + '44';
@@ -533,9 +534,8 @@
                         div.style.backgroundColor = 'rgba(30,41,59,0.5)';
                         div.style.borderColor = 'rgba(255,255,255,0.03)';
                     }
-
                     div.innerHTML = `
-                        <div class="relative">
+                        <div class="relative shrink-0">
                             <img src="${u.pfp}" class="w-10 h-10 rounded-full object-cover border-2" style="border-color: ${theme.color}">
                             <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></div>
                         </div>
@@ -549,18 +549,17 @@
             });
         }
 
-        // Theme Picker Logic
         function initThemePicker() {
             const grid = document.getElementById('color-grid');
             grid.innerHTML = '';
             themeColors.forEach(color => {
                 const btn = document.createElement('button');
-                btn.className = "w-full aspect-square rounded-xl border-2 border-transparent hover:scale-105 transition-all";
+                btn.className = "w-full aspect-square rounded-lg border-2 border-transparent hover:scale-110 transition-all";
                 btn.style.backgroundColor = color;
                 btn.onclick = () => {
                     selectedThemeColor = color;
-                    document.querySelectorAll('#color-grid button').forEach(b => b.classList.remove('border-white', 'scale-110'));
-                    btn.classList.add('border-white', 'scale-110');
+                    document.querySelectorAll('#color-grid button').forEach(b => b.classList.remove('border-white'));
+                    btn.classList.add('border-white');
                 };
                 grid.appendChild(btn);
             });
@@ -584,14 +583,17 @@
                 document.getElementById('view-username').innerText = u.username;
                 document.getElementById('view-pfp').src = u.pfp;
                 document.getElementById('view-banner').style.backgroundImage = `url('${u.banner}')`;
-                document.getElementById('view-age').innerText = u.age;
-                document.getElementById('view-gender').innerText = u.gender;
                 document.getElementById('view-profile-modal').classList.remove('hidden');
             }
         };
 
         window.closeViewModal = () => document.getElementById('view-profile-modal').classList.add('hidden');
-        window.openEditModal = () => document.getElementById('edit-profile-modal').classList.remove('hidden');
+        window.openEditModal = () => {
+            document.getElementById('edit-bio').value = currentUserData.bio || "";
+            document.getElementById('edit-pfp-preview').src = currentUserData.pfp || "";
+            document.getElementById('edit-banner-preview').style.backgroundImage = `url('${currentUserData.banner || ''}')`;
+            document.getElementById('edit-profile-modal').classList.remove('hidden');
+        };
         window.closeEditModal = () => document.getElementById('edit-profile-modal').classList.add('hidden');
         
         window.saveProfile = async () => {
@@ -599,6 +601,7 @@
             btn.innerText = "UPDATING...";
             const data = { bio: document.getElementById('edit-bio').value };
             if (pendingPfp) data.pfp = pendingPfp;
+            if (pendingBanner) data.banner = pendingBanner;
             await updateDoc(doc(db, USERS_COL, currentUser.uid), data);
             btn.innerText = "SAVE CHANGES";
             closeEditModal();
@@ -608,6 +611,12 @@
             if (e.target.files[0]) {
                 pendingPfp = await toBase64(e.target.files[0]);
                 document.getElementById('edit-pfp-preview').src = pendingPfp;
+            }
+        });
+        document.getElementById('banner-upload').addEventListener('change', async (e) => {
+            if (e.target.files[0]) {
+                pendingBanner = await toBase64(e.target.files[0]);
+                document.getElementById('edit-banner-preview').style.backgroundImage = `url('${pendingBanner}')`;
             }
         });
     </script>
