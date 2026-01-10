@@ -3,86 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile | Chatlaxy Elite</title>
+    <title>Elite Editor | Chatlaxy</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --luxury-gold: #d4af37; --luxury-black: #0a0c10; --luxury-dark: #161a21; --border-color: #222222; }
-        body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        :root { 
+            --gold: #d4af37; 
+            --gold-bright: #f9e29c;
+            --dark: #050505; 
+            --card: #111111;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--dark); 
+            color: white; 
+            overflow-x: hidden;
+        }
         .serif { font-family: 'Cormorant Garamond', serif; }
-        .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(20px); border: 1px solid var(--border-color); }
-        .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .input-field { width: 100%; background: #000; border: 1px solid #333; padding: 0.75rem; border-radius: 0.75rem; font-size: 0.85rem; color: white; outline: none; transition: border-color 0.2s; }
-        .input-field:focus { border-color: var(--luxury-gold); }
-        .upload-btn { background: rgba(255,255,255,0.05); border: 1px dashed #444; padding: 1rem; border-radius: 0.75rem; text-align: center; cursor: pointer; transition: all 0.2s; }
-        .upload-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--luxury-gold); }
-        .banner-preview { width: 100%; height: 120px; background-size: cover; background-position: center; background-color: #1a1a1a; border-radius: 1rem; border: 1px solid var(--border-color); }
-        .pfp-preview { width: 80px; height: 80px; border-radius: 1.5rem; object-fit: cover; border: 3px solid var(--luxury-dark); background: #000; }
         
-        #save-status { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 10px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; display: none; z-index: 1000; }
-        .saving { background: #d4af37; color: black; display: block !important; }
-        .saved { background: #22c55e; color: white; display: block !important; }
+        /* Luxury Glass Effect */
+        .glass-panel {
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .gold-text {
+            background: linear-gradient(to bottom right, var(--gold-bright), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-luxury {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #222;
+            transition: all 0.2s ease;
+        }
+        .input-luxury:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+            outline: none;
+        }
+
+        /* Status Toast */
+        #status-pill {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 8px 16px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            transform: translateY(-100px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+        }
+        #status-pill.show { transform: translateY(0); }
+
+        .pfp-ring {
+            box-shadow: 0 0 0 4px var(--card), 0 0 0 5px rgba(212, 175, 55, 0.2);
+        }
+
+        /* Loading Spinner */
+        .loader {
+            width: 12px; height: 12px;
+            border: 2px solid #000;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-height-screen py-10">
 
-    <div id="save-status">Syncing...</div>
+    <div id="status-pill" class="bg-white text-black flex items-center gap-2">
+        <span id="status-text">SYNCING</span>
+    </div>
 
-    <div class="max-w-md w-full mx-auto p-6">
-        <div class="glass rounded-[2.5rem] p-8 shadow-2xl">
-            <div class="flex items-center justify-between mb-8">
-                <div>
-                    <h1 class="serif text-3xl gold-gradient">Edit Profile</h1>
-                    <p id="auth-status" class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Instant Sync Enabled</p>
-                </div>
-                <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-[#d4af37] hover:text-white transition uppercase tracking-widest border border-[#d4af37]/30 px-4 py-2 rounded-lg">Discard</button>
+    <div class="w-full max-w-lg px-4">
+        <div class="glass-panel rounded-[3rem] overflow-hidden">
+            <div class="relative h-40 bg-zinc-900 overflow-hidden">
+                <div id="prev-banner" class="absolute inset-0 bg-cover bg-center transition-opacity duration-500"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                
+                <button onclick="window.location.href='index.html'" class="absolute top-6 left-6 z-20 text-[10px] font-bold tracking-widest uppercase bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-white hover:text-black transition">
+                    ← Exit
+                </button>
             </div>
 
-            <div class="space-y-6">
-                <div class="relative mb-12">
-                    <div id="prev-banner" class="banner-preview mb-[-40px]"></div>
-                    <div class="px-6 flex items-end gap-4">
-                        <img id="prev-pfp" src="" class="pfp-preview shadow-xl relative z-10">
+            <div class="px-8 pb-10">
+                <div class="relative flex justify-between items-end -mt-12 mb-8">
+                    <div class="relative group">
+                        <img id="prev-pfp" src="https://via.placeholder.com/150" class="w-24 h-24 rounded-3xl object-cover pfp-ring relative z-10 bg-black">
+                        <div onclick="document.getElementById('pfp-input').click()" class="absolute inset-0 z-20 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 rounded-3xl cursor-pointer transition">
+                            <span class="text-[10px] font-bold">CHANGE</span>
+                        </div>
                     </div>
+                    <button id="final-save-btn" class="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-tighter hover:scale-105 transition active:scale-95">
+                        Finish Editing
+                    </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div onclick="document.getElementById('pfp-input').click()" class="upload-btn">
-                        <p class="text-[7px] font-black uppercase tracking-widest text-gray-400">Change PFP</p>
-                        <input type="file" id="pfp-input" class="hidden" accept="image/*">
+                <div class="space-y-6">
+                    <div>
+                        <h1 class="serif text-4xl gold-text mb-1">Refine Identity</h1>
+                        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.4em] mb-8">Elite Member Dashboard</p>
                     </div>
-                    <div onclick="document.getElementById('banner-input').click()" class="upload-btn">
-                        <p class="text-[7px] font-black uppercase tracking-widest text-gray-400">Change Banner</p>
-                        <input type="file" id="banner-input" class="hidden" accept="image/*">
-                    </div>
-                </div>
 
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Biography</label>
-                        <textarea id="edit-bio" class="input-field h-24 resize-none" placeholder="Tell your story..."></textarea>
-                    </div>
-                    <div>
-                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Profile Music (.mp3)</label>
-                        <div onclick="document.getElementById('music-input').click()" class="upload-btn py-3">
-                            <p id="music-label" class="text-[8px] font-bold text-white truncate">Select Audio File</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div onclick="document.getElementById('banner-input').click()" class="input-luxury p-4 rounded-2xl cursor-pointer hover:border-zinc-600 transition group">
+                            <p class="text-[9px] text-zinc-500 font-bold uppercase mb-1">Cover Art</p>
+                            <p class="text-xs font-medium group-hover:text-gold transition">Update Banner</p>
+                            <input type="file" id="banner-input" class="hidden" accept="image/*">
+                        </div>
+                        <div onclick="document.getElementById('music-input').click()" class="input-luxury p-4 rounded-2xl cursor-pointer hover:border-zinc-600 transition group">
+                            <p class="text-[9px] text-zinc-500 font-bold uppercase mb-1">Atmosphere</p>
+                            <p id="music-label" class="text-xs font-medium group-hover:text-gold transition truncate">Select Audio</p>
                             <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
                         </div>
                     </div>
+
+                    <div>
+                        <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-500 ml-2 mb-2 block">Biography</label>
+                        <textarea id="edit-bio" class="input-luxury w-full h-32 rounded-2xl p-4 text-sm resize-none leading-relaxed" placeholder="Write your legacy..."></textarea>
+                    </div>
                 </div>
 
-                <div class="pt-4 space-y-4">
-                    <button id="final-save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition shadow-xl">Save & Apply Changes</button>
-                    <p class="text-[7px] text-center text-gray-600 uppercase tracking-widest leading-loose">Applying changes will refresh your session instantly.</p>
-                </div>
+                <input type="file" id="pfp-input" class="hidden" accept="image/*">
             </div>
         </div>
+        
+        <p class="text-center mt-6 text-zinc-600 text-[9px] uppercase tracking-[0.5em]">Global Encryption Active</p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
@@ -99,95 +160,100 @@
         const appId = "chatlaxy-v1-production";
 
         let localProfile = JSON.parse(localStorage.getItem('chatlaxy_session_v6'));
-
         if (!localProfile) window.location.href = 'index.html';
 
-        // Initial UI Load
-        document.getElementById('prev-pfp').src = localProfile.pfp;
+        // Set Initial View
+        document.getElementById('prev-pfp').src = localProfile.pfp || '';
         if (localProfile.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${localProfile.banner})`;
         document.getElementById('edit-bio').value = localProfile.customBio || '';
 
-        // Auth setup
-        onAuthStateChanged(auth, (user) => {
-            if (!user) signInAnonymously(auth);
-        });
+        // Status Indicator Controller
+        const showStatus = (text, isGold = false) => {
+            const pill = document.getElementById('status-pill');
+            const label = document.getElementById('status-text');
+            label.innerText = text;
+            pill.style.background = isGold ? '#d4af37' : '#ffffff';
+            pill.classList.add('show');
+            if(!isGold) setTimeout(() => pill.classList.remove('show'), 2000);
+        };
 
-        // Optimized Instant Save Logic
-        const triggerSave = async (updates = {}, forceRefresh = false) => {
-            const status = document.getElementById('save-status');
-            status.className = 'saving';
-            status.innerText = 'Syncing...';
+        // Instant Sync Core
+        let saveTimeout;
+        const triggerSave = async (updates = {}, forceExit = false) => {
+            if (forceExit) showStatus("FINALIZING...", true);
+            else showStatus("SYNCING...");
 
             try {
-                const currentBio = document.getElementById('edit-bio').value;
                 const fullUpdates = {
                     ...updates,
                     username: localProfile.username,
-                    customBio: currentBio,
+                    customBio: document.getElementById('edit-bio').value,
                     lastSync: Date.now()
                 };
 
-                // Cloud Sync
+                // 1. Parallel Cloud Save (Fastest possible)
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
-                await setDoc(docRef, fullUpdates, { merge: true });
+                const cloudPromise = setDoc(docRef, fullUpdates, { merge: true });
 
-                // Local Sync
+                // 2. Immediate Local Update
+                localProfile = { ...localProfile, ...fullUpdates };
+                localStorage.setItem('chatlaxy_session_v6', JSON.stringify(localProfile));
+                
                 const accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
                 const idx = accounts.findIndex(a => a.username === localProfile.username);
                 if (idx !== -1) {
                     accounts[idx] = { ...accounts[idx], ...fullUpdates };
                     localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(accounts));
                 }
-                localProfile = { ...localProfile, ...fullUpdates };
-                localStorage.setItem('chatlaxy_session_v6', JSON.stringify(localProfile));
 
-                status.className = 'saved';
-                status.innerText = 'Saved';
+                await cloudPromise; // Wait for cloud after local is done
+                
+                if (forceExit) window.location.href = 'index.html';
+                else showStatus("SAVED");
 
-                if (forceRefresh) {
-                    window.location.href = 'index.html';
-                } else {
-                    setTimeout(() => { status.className = ''; }, 1000);
-                }
             } catch (err) {
                 console.error(err);
-                status.innerText = 'Error';
+                showStatus("ERROR");
             }
         };
 
-        // Final Save Button Action
-        document.getElementById('final-save-btn').onclick = () => {
-            triggerSave({}, true);
-        };
+        // Event Listeners
+        document.getElementById('final-save-btn').onclick = () => triggerSave({}, true);
 
-        // Bio Background Sync
+        // Bio: Debounced for performance
         document.getElementById('edit-bio').oninput = () => {
-            triggerSave();
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => triggerSave(), 800);
         };
 
-        // Instant Upload & Background Sync
-        const setupAutoUpload = (id, field, isImage) => {
+        // File Handlers: Instant Preview + Instant Sync
+        const handleFile = (id, field) => {
             document.getElementById(id).onchange = (e) => {
-                const f = e.target.files[0];
-                if (!f) return;
-                const r = new FileReader();
-                r.onload = (ev) => {
-                    const result = ev.target.result;
-                    if(field === 'pfp') document.getElementById('prev-pfp').src = result;
-                    if(field === 'banner') document.getElementById('prev-banner').style.backgroundImage = `url(${result})`;
-                    if(field === 'music') document.getElementById('music-label').innerText = "Audio Ready";
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Instant UI Preview (Before Uploading)
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const data = ev.target.result;
+                    if(field === 'pfp') document.getElementById('prev-pfp').src = data;
+                    if(field === 'banner') document.getElementById('prev-banner').style.backgroundImage = `url(${data})`;
+                    if(field === 'music') document.getElementById('music-label').innerText = "Audio Attached";
                     
-                    const update = {};
-                    update[field] = result;
-                    triggerSave(update);
+                    // Sync immediately
+                    const up = {}; up[field] = data;
+                    triggerSave(up);
                 };
-                r.readAsDataURL(f);
+                reader.readAsDataURL(file);
             };
         };
 
-        setupAutoUpload('pfp-input', 'pfp', true);
-        setupAutoUpload('banner-input', 'banner', true);
-        setupAutoUpload('music-input', 'music', false);
+        handleFile('pfp-input', 'pfp');
+        handleFile('banner-input', 'banner');
+        handleFile('music-input', 'music');
+
+        // Silent Auth
+        signInAnonymously(auth);
 
     </script>
 </body>
