@@ -7,31 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Custom Scrollbar for Dark Mode */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1f2937; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4b5563; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; 
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         .glass-panel {
             background: rgba(31, 41, 55, 0.7);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(75, 85, 99, 0.4);
         }
+        .profile-modal-content {
+            max-height: 85vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans antialiased h-screen w-screen overflow-hidden flex flex-col">
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
     </div>
@@ -39,7 +31,6 @@
     <!-- Auth Screen -->
     <div id="auth-screen" class="hidden flex-grow flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5980?auto=format&fit=crop&q=80')] bg-cover bg-center">
         <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm"></div>
-        
         <div class="glass-panel w-full max-w-md p-8 rounded-2xl shadow-2xl relative z-10">
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-600 mb-4">
@@ -49,7 +40,6 @@
                 <p class="text-gray-400 mt-2">Join the galactic conversation.</p>
             </div>
 
-            <!-- Tabs -->
             <div class="flex mb-6 bg-gray-800 p-1 rounded-lg">
                 <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white shadow transition-all">Login</button>
                 <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-sm font-medium rounded-md text-gray-400 hover:text-white transition-all">Sign Up</button>
@@ -65,9 +55,7 @@
                     <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
                     <input type="password" id="login-password" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors" required>
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/30">
-                    Warp In
-                </button>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/30">Warp In</button>
             </form>
 
             <!-- Signup Form -->
@@ -82,74 +70,54 @@
                         <input type="number" id="signup-age" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Gender</label>
-                        <select id="signup-gender" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                            <option value="Not Specified">Select...</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Non-binary">Non-binary</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                         <label class="block text-sm font-medium text-gray-300 mb-1">Bio</label>
-                         <input type="text" id="signup-bio" placeholder="Short bio..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Gender</label>
+                    <select id="signup-gender" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="Not Specified">Select...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
                     <input type="email" id="signup-email" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                    <input type="password" id="signup-password" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Password (min 6 chars)</label>
+                    <input type="password" id="signup-password" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required minlength="6">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/30">
-                    Create Identity
-                </button>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/30">Create Identity</button>
             </form>
-            <div id="auth-error" class="mt-4 text-red-400 text-sm text-center hidden"></div>
+            <div id="auth-error" class="mt-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center hidden"></div>
         </div>
     </div>
 
     <!-- App Screen -->
     <div id="app-screen" class="hidden flex-grow flex h-screen overflow-hidden">
-        
-        <!-- Sidebar (Profile & Online Users) -->
         <aside class="w-80 bg-gray-900 border-r border-gray-800 flex flex-col hidden md:flex">
-            <!-- My Profile Card -->
             <div id="current-user-card" class="relative bg-gray-800 border-b border-gray-700">
-                <div id="my-banner" class="h-24 bg-cover bg-center bg-indigo-900 w-full opacity-80"></div>
+                <div id="my-banner" class="h-24 bg-cover bg-center bg-indigo-900 w-full opacity-80 transition-all"></div>
                 <div class="px-4 pb-4 -mt-10 relative">
-                    <img id="my-pfp" src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff" class="w-20 h-20 rounded-full border-4 border-gray-800 object-cover shadow-lg">
+                    <img id="my-pfp" src="https://ui-avatars.com/api/?name=User" class="w-20 h-20 rounded-full border-4 border-gray-800 object-cover shadow-lg">
                     <div class="mt-2">
                         <h2 id="my-username" class="text-lg font-bold text-white leading-tight">Loading...</h2>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">MEMBER</span>
-                            <span id="my-status-dot" class="w-2.5 h-2.5 rounded-full bg-green-500 border border-gray-900"></span>
-                            <span id="my-status-text" class="text-xs text-gray-400 truncate">Online</span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 border border-gray-900"></span>
+                            <span class="text-xs text-gray-400 truncate">Online</span>
                         </div>
-                        <p id="my-bio" class="text-xs text-gray-500 mt-2 line-clamp-2">Bio goes here...</p>
                     </div>
-                    <button onclick="openProfileModal()" class="absolute top-4 right-4 bg-gray-900/50 hover:bg-gray-700 p-1.5 rounded-full text-gray-300 transition-colors">
-                        <i class="fas fa-cog"></i>
+                    <button onclick="openEditModal()" class="absolute top-4 right-4 bg-gray-900/50 hover:bg-gray-700 p-1.5 rounded-full text-gray-300 transition-colors">
+                        <i class="fas fa-edit"></i>
                     </button>
                 </div>
             </div>
-
-            <!-- Online Users List -->
             <div class="flex-1 overflow-y-auto p-4">
-                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center justify-between">
-                    <span>Crew Online</span>
-                    <span id="online-count" class="bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full text-xs">0</span>
-                </h3>
-                <div id="users-list" class="space-y-3">
-                    <!-- Users injected here -->
-                </div>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Crew Online (<span id="online-count">0</span>)</h3>
+                <div id="users-list" class="space-y-3"></div>
             </div>
-            
             <div class="p-4 border-t border-gray-800">
                 <button onclick="logout()" class="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-400 transition-colors text-sm py-2">
                     <i class="fas fa-sign-out-alt"></i> Sign Out
@@ -157,29 +125,12 @@
             </div>
         </aside>
 
-        <!-- Main Chat Area -->
-        <main class="flex-1 flex flex-col bg-gray-950 relative">
-            <!-- Mobile Header -->
-            <div class="md:hidden h-14 bg-gray-900 border-b border-gray-800 flex items-center px-4 justify-between shrink-0">
-                <h1 class="font-bold text-indigo-400">Chatlaxy</h1>
-                <button onclick="document.querySelector('aside').classList.toggle('hidden'); document.querySelector('aside').classList.toggle('absolute'); document.querySelector('aside').classList.toggle('z-50'); document.querySelector('aside').classList.toggle('h-full');" class="text-gray-300">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-
-            <!-- Chat Messages -->
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                <!-- Messages injected here -->
-                <div class="flex justify-center opacity-50 text-sm py-4">
-                    <span>Welcome to the bridge. Start chatting!</span>
-                </div>
-            </div>
-
-            <!-- Chat Input -->
-            <div class="p-4 bg-gray-900/90 border-t border-gray-800 backdrop-blur-sm">
+        <main class="flex-1 flex flex-col bg-gray-950">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+            <div class="p-4 bg-gray-900/90 border-t border-gray-800">
                 <form id="chat-form" class="flex gap-2 max-w-4xl mx-auto">
-                    <input type="text" id="message-input" autocomplete="off" placeholder="Type a message..." class="flex-1 bg-gray-800 text-white rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 placeholder-gray-500">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-105 shadow-lg shadow-indigo-600/20">
+                    <input type="text" id="message-input" autocomplete="off" placeholder="Type a message..." class="flex-1 bg-gray-800 text-white rounded-full px-5 py-3 focus:outline-none border border-gray-700">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-105">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </form>
@@ -187,45 +138,79 @@
         </main>
     </div>
 
-    <!-- Edit Profile Modal -->
-    <div id="profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="bg-gray-900 border border-gray-700 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50">
-                <h3 class="text-lg font-bold text-white">Edit Profile</h3>
-                <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto space-y-4">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Avatar URL</label>
-                    <input type="text" id="edit-pfp" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+    <!-- Profile Viewer Modal -->
+    <div id="view-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-700 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
+            <div id="view-banner" class="h-32 bg-cover bg-center bg-gray-800"></div>
+            <div class="px-6 pb-6 -mt-12 relative text-center">
+                <img id="view-pfp" src="" class="w-24 h-24 rounded-full border-4 border-gray-900 object-cover mx-auto shadow-xl">
+                <h2 id="view-username" class="text-2xl font-bold text-white mt-4">Username</h2>
+                <div class="flex items-center justify-center gap-2 mt-1">
+                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">MEMBER</span>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Banner URL</label>
-                    <input type="text" id="edit-banner" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+                <div class="grid grid-cols-2 gap-4 mt-6 text-sm text-gray-400">
+                    <div class="bg-gray-800 p-2 rounded">
+                        <span class="block text-xs uppercase text-gray-500 font-bold">Age</span>
+                        <span id="view-age" class="text-white">--</span>
+                    </div>
+                    <div class="bg-gray-800 p-2 rounded">
+                        <span class="block text-xs uppercase text-gray-500 font-bold">Gender</span>
+                        <span id="view-gender" class="text-white">--</span>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Status Message</label>
-                    <input type="text" id="edit-status" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+                <div class="mt-6 text-left">
+                    <span class="block text-xs uppercase text-gray-500 font-bold mb-1">Bio</span>
+                    <p id="view-bio" class="text-gray-300 text-sm italic">No bio available.</p>
                 </div>
-                 <div>
-                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Bio</label>
-                    <textarea id="edit-bio" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none"></textarea>
-                </div>
-            </div>
-            <div class="p-4 border-t border-gray-800 bg-gray-800/50 flex justify-end gap-2">
-                <button onclick="closeProfileModal()" class="px-4 py-2 text-sm text-gray-300 hover:text-white">Cancel</button>
-                <button onclick="saveProfile()" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium">Save Changes</button>
+                <button onclick="closeViewModal()" class="mt-8 w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg transition-colors">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase Logic -->
+    <!-- Edit Profile Modal -->
+    <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div class="bg-gray-900 border border-gray-700 w-full max-w-lg rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-6">Customize Identity</h3>
+            <div class="space-y-6">
+                <!-- Banner Upload -->
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Banner Image</label>
+                    <div class="flex items-center gap-4">
+                        <div id="edit-banner-preview" class="w-24 h-12 bg-gray-800 rounded bg-cover bg-center"></div>
+                        <label class="flex-1">
+                            <span class="block w-full text-center bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 py-2 rounded border border-indigo-600/30 cursor-pointer text-sm">Upload Banner</span>
+                            <input type="file" id="banner-upload" class="hidden" accept="image/*">
+                        </label>
+                    </div>
+                </div>
+                <!-- PFP Upload -->
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Profile Picture</label>
+                    <div class="flex items-center gap-4">
+                        <img id="edit-pfp-preview" src="" class="w-16 h-16 rounded-full bg-gray-800 object-cover">
+                        <label class="flex-1">
+                            <span class="block w-full text-center bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 py-2 rounded border border-indigo-600/30 cursor-pointer text-sm">Upload Avatar</span>
+                            <input type="file" id="pfp-upload" class="hidden" accept="image/*">
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Bio</label>
+                    <textarea id="edit-bio" rows="3" placeholder="Tell the galaxy about yourself..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-3">
+                <button onclick="closeEditModal()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button id="save-profile-btn" onclick="saveProfile()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition-all shadow-lg shadow-indigo-600/20">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, setDoc, doc, updateDoc, limit, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, setDoc, doc, updateDoc, limit, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
             authDomain: "chatlaxy-pro.firebaseapp.com",
@@ -240,86 +225,67 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // Use a consistent app ID for paths
-        const APP_ID = "chatlaxy-pro-v1";
-        const USERS_COLLECTION = `artifacts/${APP_ID}/public/data/users`;
-        const MESSAGES_COLLECTION = `artifacts/${APP_ID}/public/data/messages`;
+        const USERS_COL = `artifacts/chatlaxy-pro-v1/public/data/users`;
+        const MSGS_COL = `artifacts/chatlaxy-pro-v1/public/data/messages`;
 
-        // State
         let currentUser = null;
         let currentUserData = null;
-        let messagesUnsubscribe = null;
-        let usersUnsubscribe = null;
+        let pendingPfp = null;
+        let pendingBanner = null;
 
-        // --- DOM Elements ---
-        const authScreen = document.getElementById('auth-screen');
-        const appScreen = document.getElementById('app-screen');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const messagesContainer = document.getElementById('chat-messages');
-        const authError = document.getElementById('auth-error');
-
-        // --- Authentication Logic ---
         onAuthStateChanged(auth, async (user) => {
+            document.getElementById('loading-overlay').classList.add('hidden');
             if (user) {
                 currentUser = user;
-                // Listen to my own profile data
-                const userDocRef = doc(db, USERS_COLLECTION, user.uid);
-                
-                onSnapshot(userDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        currentUserData = docSnap.data();
-                        renderMyProfile(currentUserData);
+                const userDocRef = doc(db, USERS_COL, user.uid);
+                onSnapshot(userDocRef, (snap) => {
+                    if (snap.exists()) {
+                        currentUserData = snap.data();
+                        document.getElementById('my-username').innerText = currentUserData.username;
+                        document.getElementById('my-pfp').src = currentUserData.pfp || `https://ui-avatars.com/api/?name=${currentUserData.username}`;
+                        document.getElementById('my-banner').style.backgroundImage = `url('${currentUserData.banner || ''}')`;
                     }
                 });
-
-                // Start App
-                authScreen.classList.add('hidden');
-                appScreen.classList.remove('hidden');
-                loadingOverlay.classList.add('hidden');
-                
-                initChat();
-                initUserPresence();
-                startPresenceHeartbeat();
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                loadChat();
+                loadUsers();
             } else {
-                currentUser = null;
-                currentUserData = null;
-                // Show Auth
-                appScreen.classList.add('hidden');
-                authScreen.classList.remove('hidden');
-                loadingOverlay.classList.add('hidden');
-                
-                if (messagesUnsubscribe) messagesUnsubscribe();
-                if (usersUnsubscribe) usersUnsubscribe();
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
             }
         });
 
-        // --- Auth UI Functions ---
         window.switchAuthTab = (tab) => {
-            const loginForm = document.getElementById('login-form');
-            const signupForm = document.getElementById('signup-form');
-            const tabLogin = document.getElementById('tab-login');
-            const tabSignup = document.getElementById('tab-signup');
-            
-            authError.classList.add('hidden');
-
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                signupForm.classList.add('hidden');
-                tabLogin.classList.add('bg-indigo-600', 'text-white', 'shadow');
-                tabLogin.classList.remove('text-gray-400');
-                tabSignup.classList.remove('bg-indigo-600', 'text-white', 'shadow');
-                tabSignup.classList.add('text-gray-400');
-            } else {
-                loginForm.classList.add('hidden');
-                signupForm.classList.remove('hidden');
-                tabSignup.classList.add('bg-indigo-600', 'text-white', 'shadow');
-                tabSignup.classList.remove('text-gray-400');
-                tabLogin.classList.remove('bg-indigo-600', 'text-white', 'shadow');
-                tabLogin.classList.add('text-gray-400');
-            }
+            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('signup-form').classList.toggle('hidden', tab !== 'signup');
+            document.getElementById('tab-login').className = tab === 'login' ? 'flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white shadow' : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-400';
+            document.getElementById('tab-signup').className = tab === 'signup' ? 'flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white shadow' : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-400';
         };
 
-        // --- Signup ---
+        // File to Base64 Utility
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // Handle File Previews
+        document.getElementById('pfp-upload').addEventListener('change', async (e) => {
+            if (e.target.files[0]) {
+                pendingPfp = await toBase64(e.target.files[0]);
+                document.getElementById('edit-pfp-preview').src = pendingPfp;
+            }
+        });
+
+        document.getElementById('banner-upload').addEventListener('change', async (e) => {
+            if (e.target.files[0]) {
+                pendingBanner = await toBase64(e.target.files[0]);
+                document.getElementById('edit-banner-preview').style.backgroundImage = `url('${pendingBanner}')`;
+            }
+        });
+
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
@@ -327,239 +293,163 @@
             const username = document.getElementById('signup-username').value;
             const age = document.getElementById('signup-age').value;
             const gender = document.getElementById('signup-gender').value;
-            const bio = document.getElementById('signup-bio').value;
-
-            loadingOverlay.classList.remove('hidden');
-            authError.classList.add('hidden');
+            const errDiv = document.getElementById('auth-error');
+            
+            errDiv.classList.add('hidden');
 
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                // Create User Profile in Public Collection
-                const userData = {
-                    uid: user.uid,
-                    username: username,
-                    age: age,
-                    gender: gender,
-                    bio: bio || "New member of the galaxy.",
-                    pfp: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`,
-                    banner: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1000&q=80",
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, USERS_COL, cred.user.uid), {
+                    uid: cred.user.uid,
+                    username,
+                    pfp: `https://ui-avatars.com/api/?name=${username}`,
+                    banner: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800",
                     rank: "Member",
-                    status: "Online",
-                    statusMessage: "Just landed.",
-                    lastSeen: serverTimestamp(),
-                    email: email
-                };
-
-                await setDoc(doc(db, USERS_COLLECTION, user.uid), userData);
-                await updateProfile(user, { displayName: username });
-
-            } catch (error) {
-                console.error(error);
-                authError.innerText = error.message.replace("Firebase: ", "");
-                authError.classList.remove('hidden');
-                loadingOverlay.classList.add('hidden');
+                    age,
+                    gender,
+                    bio: "",
+                    lastSeen: serverTimestamp()
+                });
+            } catch (err) {
+                errDiv.innerText = err.message;
+                errDiv.classList.remove('hidden');
             }
         });
 
-        // --- Login ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            loadingOverlay.classList.remove('hidden');
-            authError.classList.add('hidden');
-
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                authError.innerText = "Invalid credentials or account not found.";
-                authError.classList.remove('hidden');
-                loadingOverlay.classList.add('hidden');
+                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+            } catch (err) {
+                const errDiv = document.getElementById('auth-error');
+                errDiv.innerText = "Login failed. Check your credentials.";
+                errDiv.classList.remove('hidden');
             }
         });
 
         window.logout = () => signOut(auth);
 
-        // --- Chat Logic ---
-        function initChat() {
-            const q = query(collection(db, MESSAGES_COLLECTION), orderBy("createdAt", "asc"));
-            
-            messagesUnsubscribe = onSnapshot(q, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        appendMessage(change.doc.data());
-                    }
-                });
-            });
-        }
-
-        document.getElementById('chat-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-
-            if (!text || !currentUser || !currentUserData) return;
-
-            input.value = ''; // Clear early for speed
-
-            try {
-                await addDoc(collection(db, MESSAGES_COLLECTION), {
-                    text: text,
-                    uid: currentUser.uid,
-                    username: currentUserData.username,
-                    pfp: currentUserData.pfp,
-                    rank: currentUserData.rank,
-                    createdAt: serverTimestamp()
-                });
-                
-                // Also update presence on chat
-                updateMyPresence();
-            } catch (error) {
-                console.error("Error sending message:", error);
-            }
-        });
-
-        function appendMessage(msg) {
-            const isMe = msg.uid === currentUser?.uid;
-            
-            const div = document.createElement('div');
-            div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-4 group animate-fade-in`;
-            
-            // Time formatting
-            let timeStr = "";
-            if (msg.createdAt) {
-                const date = msg.createdAt.toDate();
-                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
-
-            const bubbleClass = isMe 
-                ? 'bg-indigo-600 text-white rounded-l-2xl rounded-tr-2xl' 
-                : 'bg-gray-800 text-gray-200 rounded-r-2xl rounded-tl-2xl';
-
-            div.innerHTML = `
-                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%]">
-                    ${!isMe ? `<div class="flex items-center gap-2 mb-1 ml-1">
-                        <img src="${msg.pfp}" class="w-6 h-6 rounded-full border border-gray-700">
-                        <span class="text-xs font-bold text-gray-400 hover:text-indigo-400 cursor-pointer">${msg.username}</span>
-                        ${msg.rank === 'Member' ? '' : `<span class="text-[10px] bg-yellow-500/20 text-yellow-500 px-1 rounded">${msg.rank}</span>`}
-                    </div>` : ''}
+        function loadChat() {
+            const q = query(collection(db, MSGS_COL), orderBy("createdAt", "asc"), limit(100));
+            onSnapshot(q, (snap) => {
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = '';
+                snap.forEach(d => {
+                    const m = d.data();
+                    const isMe = m.uid === currentUser.uid;
+                    const div = document.createElement('div');
+                    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-2 group`;
                     
-                    <div class="${bubbleClass} px-5 py-3 shadow-md relative group-hover:shadow-lg transition-shadow break-words text-sm leading-relaxed">
-                        ${escapeHtml(msg.text)}
-                    </div>
-                    <span class="text-[10px] text-gray-600 mt-1 px-1">${timeStr}</span>
-                </div>
-            `;
-            
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTo(0, messagesContainer.scrollHeight);
-        }
-
-        // --- Presence & Online Users ---
-        function initUserPresence() {
-            // Listen for all users (in a real app, limit this or paginate)
-            const q = query(collection(db, USERS_COLLECTION), orderBy("lastSeen", "desc"), limit(50));
-            
-            usersUnsubscribe = onSnapshot(q, (snapshot) => {
-                const list = document.getElementById('users-list');
-                list.innerHTML = '';
-                let onlineCount = 0;
-                const now = new Date();
-
-                snapshot.forEach(doc => {
-                    const u = doc.data();
-                    const lastSeen = u.lastSeen?.toDate();
-                    // Consider online if seen in last 5 minutes
-                    const isOnline = lastSeen && (now - lastSeen) < 5 * 60 * 1000;
-                    if (isOnline) onlineCount++;
-
-                    const el = document.createElement('div');
-                    el.className = 'flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer group';
-                    el.innerHTML = `
-                        <div class="relative">
-                            <img src="${u.pfp}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-700 group-hover:border-gray-500">
-                            <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${isOnline ? 'bg-green-500' : 'bg-gray-500'}"></span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-center">
-                                <h4 class="text-sm font-semibold text-gray-200 truncate">${u.username}</h4>
-                                <span class="text-[10px] text-gray-500 bg-gray-900 px-1.5 rounded">${u.age}/${u.gender ? u.gender.charAt(0) : '?'}</span>
+                    div.innerHTML = `
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                            ${!isMe ? `<span class="text-[10px] text-gray-500 mb-1 ml-1">${m.username || 'User'}</span>` : ''}
+                            <div class="p-3 rounded-2xl max-w-xs ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-gray-800 text-gray-200 rounded-tl-none'} text-sm shadow-sm">
+                                ${escapeHtml(m.text)}
                             </div>
-                            <p class="text-xs text-gray-500 truncate">${u.statusMessage || u.bio}</p>
                         </div>
                     `;
-                    list.appendChild(el);
+                    container.appendChild(div);
                 });
-                
-                document.getElementById('online-count').innerText = onlineCount;
+                container.scrollTo(0, container.scrollHeight);
             });
         }
 
-        function updateMyPresence() {
-            if (currentUser) {
-                const userRef = doc(db, USERS_COLLECTION, currentUser.uid);
-                updateDoc(userRef, {
-                    lastSeen: serverTimestamp()
-                });
-            }
-        }
-
-        function startPresenceHeartbeat() {
-            updateMyPresence();
-            setInterval(updateMyPresence, 60000); // Update every minute
-        }
-
-        // --- Profile Management ---
-        window.openProfileModal = () => {
-            if (!currentUserData) return;
-            document.getElementById('edit-pfp').value = currentUserData.pfp || '';
-            document.getElementById('edit-banner').value = currentUserData.banner || '';
-            document.getElementById('edit-bio').value = currentUserData.bio || '';
-            document.getElementById('edit-status').value = currentUserData.statusMessage || '';
-            document.getElementById('profile-modal').classList.remove('hidden');
-        };
-
-        window.closeProfileModal = () => {
-            document.getElementById('profile-modal').classList.add('hidden');
-        };
-
-        window.saveProfile = async () => {
-            const newPfp = document.getElementById('edit-pfp').value;
-            const newBanner = document.getElementById('edit-banner').value;
-            const newBio = document.getElementById('edit-bio').value;
-            const newStatus = document.getElementById('edit-status').value;
-            
-            try {
-                await updateDoc(doc(db, USERS_COLLECTION, currentUser.uid), {
-                    pfp: newPfp,
-                    banner: newBanner,
-                    bio: newBio,
-                    statusMessage: newStatus
-                });
-                closeProfileModal();
-            } catch (e) {
-                alert("Failed to save profile.");
-            }
-        };
-
-        function renderMyProfile(data) {
-            document.getElementById('my-username').innerText = data.username;
-            document.getElementById('my-pfp').src = data.pfp;
-            document.getElementById('my-banner').style.backgroundImage = `url('${data.banner}')`;
-            document.getElementById('my-bio').innerText = data.bio;
-            document.getElementById('my-status-text').innerText = data.statusMessage || "Online";
-        }
-
-        // Utils
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.innerText = text;
             return div.innerHTML;
         }
-        
+
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msgInput = document.getElementById('message-input');
+            const msg = msgInput.value.trim();
+            if (!msg) return;
+            msgInput.value = '';
+            await addDoc(collection(db, MSGS_COL), {
+                text: msg,
+                uid: currentUser.uid,
+                username: currentUserData.username,
+                createdAt: serverTimestamp()
+            });
+        });
+
+        function loadUsers() {
+            onSnapshot(collection(db, USERS_COL), (snap) => {
+                const list = document.getElementById('users-list');
+                list.innerHTML = '';
+                document.getElementById('online-count').innerText = snap.size;
+                snap.forEach(d => {
+                    const u = d.data();
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-3 p-2 hover:bg-gray-800 rounded-xl cursor-pointer transition-all border border-transparent hover:border-gray-700";
+                    div.onclick = () => viewUserProfile(u.uid);
+                    div.innerHTML = `
+                        <div class="relative">
+                            <img src="${u.pfp || `https://ui-avatars.com/api/?name=${u.username}`}" class="w-10 h-10 rounded-full object-cover border border-gray-700">
+                            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-900 rounded-full"></div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="block text-sm font-bold text-gray-200 truncate">${u.username}</span>
+                            <span class="block text-[10px] text-gray-500 uppercase tracking-widest">${u.rank}</span>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        // View Other Profile
+        window.viewUserProfile = async (uid) => {
+            const docRef = doc(db, USERS_COL, uid);
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                const u = snap.data();
+                document.getElementById('view-username').innerText = u.username;
+                document.getElementById('view-pfp').src = u.pfp || `https://ui-avatars.com/api/?name=${u.username}`;
+                document.getElementById('view-banner').style.backgroundImage = `url('${u.banner || ''}')`;
+                document.getElementById('view-bio').innerText = u.bio || "This user hasn't set a bio yet.";
+                document.getElementById('view-age').innerText = u.age || "--";
+                document.getElementById('view-gender').innerText = u.gender || "--";
+                document.getElementById('view-profile-modal').classList.remove('hidden');
+            }
+        };
+
+        window.closeViewModal = () => document.getElementById('view-profile-modal').classList.add('hidden');
+
+        // Edit My Profile
+        window.openEditModal = () => {
+            document.getElementById('edit-bio').value = currentUserData.bio || "";
+            document.getElementById('edit-pfp-preview').src = currentUserData.pfp || `https://ui-avatars.com/api/?name=${currentUserData.username}`;
+            document.getElementById('edit-banner-preview').style.backgroundImage = `url('${currentUserData.banner || ''}')`;
+            pendingPfp = null;
+            pendingBanner = null;
+            document.getElementById('edit-profile-modal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = () => document.getElementById('edit-profile-modal').classList.add('hidden');
+
+        window.saveProfile = async () => {
+            const btn = document.getElementById('save-profile-btn');
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            const updateData = {
+                bio: document.getElementById('edit-bio').value
+            };
+            if (pendingPfp) updateData.pfp = pendingPfp;
+            if (pendingBanner) updateData.banner = pendingBanner;
+
+            try {
+                await updateDoc(doc(db, USERS_COL, currentUser.uid), updateData);
+                closeEditModal();
+            } catch (err) {
+                alert("Error saving profile: " + err.message);
+            } finally {
+                btn.innerText = "Save Changes";
+                btn.disabled = false;
+            }
+        };
     </script>
 </body>
 </html>
