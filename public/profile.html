@@ -25,7 +25,7 @@
 
     <div id="loading-overlay">
         <div class="w-10 h-10 border-2 border-gold/20 border-t-gold rounded-full animate-spin mb-4"></div>
-        <p id="loading-text" class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Uploading to Cloud</p>
+        <p id="loading-text" class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Syncing with Chatlaxy Cloud</p>
     </div>
 
     <div class="max-w-md w-full mx-auto p-6">
@@ -33,7 +33,7 @@
             <div class="flex items-center justify-between mb-8">
                 <div>
                     <h1 class="serif text-3xl gold-gradient">Edit Profile</h1>
-                    <p class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Cloud Storage Enabled</p>
+                    <p class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Connected: chatlaxy-pro</p>
                 </div>
                 <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-gray-500 hover:text-white transition uppercase tracking-widest">Cancel</button>
             </div>
@@ -71,93 +71,112 @@
                     </div>
                 </div>
 
-                <button id="save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[11px] hover:brightness-110 transition shadow-xl mt-4">Sync to Cloud</button>
+                <button id="save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[11px] hover:brightness-110 transition shadow-xl mt-4">Save to Global Cloud</button>
             </div>
         </div>
     </div>
 
     <script type="module">
+        // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Your specific chatlaxy-pro configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
+            authDomain: "chatlaxy-pro.firebaseapp.com",
+            projectId: "chatlaxy-pro",
+            storageBucket: "chatlaxy-pro.firebasestorage.app",
+            messagingSenderId: "807800533954",
+            appId: "1:807800533954:web:4165776ac52b93e9cb9c5b"
+        };
+
+        // Initialize
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // Use a unique ID for your app to keep data isolated
+        const appId = "chatlaxy-v1-production";
 
-        let user = null;
-        let userData = null;
+        let currentUser = null;
+        let localProfile = JSON.parse(localStorage.getItem('chatlaxy_session_v6'));
         let pendingPfp = null, pendingBanner = null, pendingMusic = null;
 
-        // Auth Logic
-        onAuthStateChanged(auth, async (u) => {
-            if (u) {
-                user = u;
-                loadProfile();
+        // Auth Listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadExistingCloudProfile();
             } else {
-                await signInAnonymously(auth);
+                signInAnonymously(auth);
             }
         });
 
-        async function loadProfile() {
-            const session = localStorage.getItem('chatlaxy_session_v6');
-            if (!session) { window.location.href = 'index.html'; return; }
-            const localData = JSON.parse(session);
+        async function loadExistingCloudProfile() {
+            if (!localProfile) return;
             
-            // Try to get fresh cloud data
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', localData.username);
-            const docSnap = await getDoc(docRef);
+            // Look for this user's cloud document
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
+            const snap = await getDoc(docRef);
             
-            if (docSnap.exists()) {
-                userData = docSnap.data();
-                document.getElementById('edit-bio').value = userData.customBio || '';
-                document.getElementById('prev-pfp').src = userData.pfp || '';
-                if (userData.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${userData.banner})`;
-                if (userData.music) document.getElementById('music-label').innerText = "Song currently active";
+            if (snap.exists()) {
+                const cloudData = snap.data();
+                document.getElementById('edit-bio').value = cloudData.customBio || '';
+                document.getElementById('prev-pfp').src = cloudData.pfp || localProfile.pfp;
+                if (cloudData.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${cloudData.banner})`;
+                if (cloudData.music) document.getElementById('music-label').innerText = "Cloud Audio Active";
+            } else {
+                // First time user - set default view from local
+                document.getElementById('prev-pfp').src = localProfile.pfp;
             }
         }
 
-        // File Readers
-        const handleFile = (inputId, callback) => {
-            document.getElementById(inputId).onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                if (file.size > 2 * 1024 * 1024) return alert("File too large (max 2MB)");
-                const reader = new FileReader();
-                reader.onload = (ev) => callback(ev.target.result);
-                reader.readAsDataURL(file);
+        // File handling
+        const setupReader = (id, cb) => {
+            document.getElementById(id).onchange = (e) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                if (f.size > 800000) return alert("File too heavy! Keep under 800KB for cloud sync.");
+                const r = new FileReader();
+                r.onload = (ev) => cb(ev.target.result);
+                r.readAsDataURL(f);
             };
         };
 
-        handleFile('pfp-input', (res) => { pendingPfp = res; document.getElementById('prev-pfp').src = res; });
-        handleFile('banner-input', (res) => { pendingBanner = res; document.getElementById('prev-banner').style.backgroundImage = `url(${res})`; });
-        handleFile('music-input', (res) => { pendingMusic = res; document.getElementById('music-label').innerText = "New Audio Loaded"; });
+        setupReader('pfp-input', (res) => { pendingPfp = res; document.getElementById('prev-pfp').src = res; });
+        setupReader('banner-input', (res) => { pendingBanner = res; document.getElementById('prev-banner').style.backgroundImage = `url(${res})`; });
+        setupReader('music-input', (res) => { pendingMusic = res; document.getElementById('music-label').innerText = "Ready to upload song"; });
 
         document.getElementById('save-btn').onclick = async () => {
-            if (!user || !userData) return;
-            document.getElementById('loading-overlay').style.display = 'flex';
+            if (!currentUser || !localProfile) return alert("Log in first!");
             
-            try {
-                const updates = {
-                    customBio: document.getElementById('edit-bio').value.trim()
-                };
-                if (pendingPfp) updates.pfp = pendingPfp;
-                if (pendingBanner) updates.banner = pendingBanner;
-                if (pendingMusic) updates.music = pendingMusic;
+            document.getElementById('loading-overlay').style.display = 'flex';
 
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userData.username);
-                await updateDoc(docRef, updates);
-                
-                // Update local session to keep sync
-                const newSession = { ...userData, ...updates };
-                localStorage.setItem('chatlaxy_session_v6', JSON.stringify(newSession));
-                
+            try {
+                const profileUpdates = {
+                    username: localProfile.username,
+                    customBio: document.getElementById('edit-bio').value,
+                    lastSync: Date.now()
+                };
+
+                if (pendingPfp) profileUpdates.pfp = pendingPfp;
+                if (pendingBanner) profileUpdates.banner = pendingBanner;
+                if (pendingMusic) profileUpdates.music = pendingMusic;
+
+                // Path: /artifacts/chatlaxy-v1-production/public/data/profiles/USERNAME
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
+                await setDoc(docRef, profileUpdates, { merge: true });
+
+                // Sync local session too
+                const merged = { ...localProfile, ...profileUpdates };
+                localStorage.setItem('chatlaxy_session_v6', JSON.stringify(merged));
+
                 window.location.href = 'index.html';
-            } catch (e) {
-                console.error(e);
-                alert("Error saving: Profile might be too large for free cloud tier. Try smaller images.");
+            } catch (err) {
+                console.error(err);
+                alert("Cloud Error: Did you set your Firestore Rules to 'Test Mode'?");
                 document.getElementById('loading-overlay').style.display = 'none';
             }
         };
