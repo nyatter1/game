@@ -12,71 +12,92 @@ const PORT = process.env.PORT || 3000;
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory store for active sessions
+// In-memory store for active connections
+// Key: socket.id, Value: userProfile object
 const activeUsers = new Map();
 
 io.on('connection', (socket) => {
-    console.log(`New connection: ${socket.id}`);
+    console.log(`User connected: ${socket.id}`);
 
-    // Handle user registration/login
+    /**
+     * USER REGISTRATION / UPDATE
+     * Triggered when a user logs in, changes status, or updates their profile
+     */
     socket.on('register user', (profile) => {
-        const userData = {
-            id: socket.id,
-            username: profile.username,
-            pfp: profile.pfp,
-            gender: profile.gender,
-            age: profile.age
-        };
+        // Store user data associated with this socket
+        activeUsers.set(socket.id, {
+            ...profile,
+            socketId: socket.id,
+            lastSeen: Date.now()
+        });
         
-        activeUsers.set(socket.id, userData);
-        
-        // Broadcast updated user list to everyone
-        io.emit('update user list', Array.from(activeUsers.values()));
+        // Broadcast the updated online list to everyone
+        broadcastUserList();
     });
 
-    // Handle PFP updates during session
-    socket.on('update pfp', (newPfp) => {
-        const user = activeUsers.get(socket.id);
-        if (user) {
-            user.pfp = newPfp;
-            activeUsers.set(socket.id, user);
-            // Sync the updated PFP across all clients' sidebars
-            io.emit('update user list', Array.from(activeUsers.values()));
-        }
-    });
-
-    // Handle Global Messages
+    /**
+     * CHAT MESSAGING
+     */
     socket.on('global message', (msg) => {
-        // Ensure the sender ID is correct from the socket session
-        msg.senderId = socket.id;
+        // Broadcast message to all connected clients
         io.emit('global message', msg);
     });
 
-    // Handle Private Messages (PMs)
-    socket.on('private message', (msg) => {
-        const targetSocketId = msg.targetId;
-        const senderData = activeUsers.get(socket.id);
+    /**
+     * DEVELOPER ADMINISTRATIVE ACTIONS
+     * Allows the Developer to force-update other users' ranks or profiles
+     */
+    socket.on('admin update user', (updatedUser) => {
+        // Check if the sender is actually a developer (Server-side validation)
+        const sender = activeUsers.get(socket.id);
+        if (sender && sender.rank === 'DEVELOPER') {
+            
+            // Find if the target user is currently online to notify them
+            for (let [id, user] of activeUsers.entries()) {
+                if (user.username === updatedUser.username) {
+                    // Update our internal tracking
+                    const newProfile = { ...user, ...updatedUser };
+                    activeUsers.set(id, newProfile);
+                    
+                    // Tell that specific client to update their local storage/session
+                    io.to(id).emit('force update profile', newProfile);
+                }
+            }
 
-        if (targetSocketId && senderData) {
-            // Forward the message specifically to the recipient
-            io.to(targetSocketId).emit('private message', {
-                senderId: socket.id,
-                senderName: senderData.username,
-                senderPfp: senderData.pfp,
-                text: msg.text,
-                timestamp: msg.timestamp
-            });
+            // Update the list for everyone
+            broadcastUserList();
         }
     });
 
-    // Handle Disconnection
+    /**
+     * DISCONNECT
+     */
     socket.on('disconnect', () => {
         activeUsers.delete(socket.id);
-        io.emit('update user list', Array.from(activeUsers.values()));
+        broadcastUserList();
         console.log(`User disconnected: ${socket.id}`);
     });
+
+    /**
+     * HELPER: Broadcast unique users to all clients
+     */
+    function broadcastUserList() {
+        // Convert Map to Array and filter for unique usernames (in case of multi-tabs)
+        const usersArray = Array.from(activeUsers.values());
+        const uniqueUsers = [];
+        const seenNames = new Set();
+
+        for (const u of usersArray) {
+            if (!seenNames.has(u.username)) {
+                uniqueUsers.push(u);
+                seenNames.add(u.username);
+            }
+        }
+
+        io.emit('update user list', uniqueUsers);
+    }
 });
 
 server.listen(PORT, () => {
-    console.log(`AuraChat Pro Server running on port ${PORT}`);
+    console.log(`Chatlaxy Elite Server running on port ${PORT}`);
 });
