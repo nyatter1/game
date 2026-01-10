@@ -32,7 +32,7 @@
         ::-webkit-scrollbar-track { background: var(--luxury-black); }
         ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
         
-        /* Fixed Auth Layout */
+        /* Auth Layout */
         .auth-container { width: 100%; max-width: 320px; margin: 0 auto; }
         .message-row { border-bottom: 1px solid rgba(255, 255, 255, 0.02); padding-bottom: 0.75rem; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
@@ -49,6 +49,7 @@
         .user-item:hover { background: rgba(255,255,255,0.02); border-left-color: var(--luxury-gold); }
         .banner-box { width: 100%; height: 90px; background-size: cover; background-position: center; background-color: #1a1a1a; border-bottom: 1px solid var(--border-color); }
         
+        /* Panel Transition */
         .editor-panel { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .editor-panel.active { transform: translateX(0); }
         .upload-zone { border: 1px dashed #333; padding: 10px; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
@@ -92,7 +93,7 @@
         </div>
     </div>
 
-    <!-- PROFILE VIEW MODAL -->
+    <!-- PROFILE MODAL -->
     <div id="profile-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden" onclick="closeProfile()">
         <div class="w-full max-w-xs glass rounded-[2rem] overflow-hidden modal-animate relative" onclick="event.stopPropagation()">
             <div id="modal-banner" class="banner-box relative overflow-hidden"></div>
@@ -115,36 +116,36 @@
         </div>
     </div>
 
-    <!-- SIMPLE PROFILE EDITOR (SLIDER) -->
+    <!-- PROFILE EDITOR PANEL -->
     <div id="editor-panel" class="fixed inset-y-0 right-0 w-full max-w-xs z-[70] glass editor-panel border-l border-white/10 shadow-2xl p-8 flex flex-col">
         <h2 class="serif text-3xl gold-gradient mb-2">Edit Identity</h2>
         <p class="text-[8px] text-gray-500 uppercase tracking-widest mb-6">GIFs & Images Allowed</p>
         
         <div class="space-y-6 overflow-y-auto pr-2 flex-1">
             <div>
-                <label class="text-[7px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Avatar (GIF/PNG/JPG)</label>
+                <label class="text-[7px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Avatar</label>
                 <div onclick="document.getElementById('edit-pfp-file').click()" class="upload-zone">
                     <img id="edit-pfp-preview" src="" class="w-12 h-12 rounded-lg mx-auto object-cover bg-black mb-2">
-                    <span class="text-[7px] text-[#d4af37] uppercase font-bold">Choose File</span>
+                    <span class="text-[7px] text-[#d4af37] uppercase font-bold">Change Image</span>
                 </div>
-                <input type="file" id="edit-pfp-file" class="hidden" accept="image/gif,image/png,image/jpeg">
+                <input type="file" id="edit-pfp-file" class="hidden" accept="image/*">
             </div>
             <div>
-                <label class="text-[7px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Banner (GIF/PNG/JPG)</label>
+                <label class="text-[7px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Banner</label>
                 <div onclick="document.getElementById('edit-banner-file').click()" class="upload-zone">
                     <div id="edit-banner-preview" class="w-full h-12 rounded-lg bg-black mb-2 bg-cover bg-center border border-white/5"></div>
-                    <span class="text-[7px] text-[#d4af37] uppercase font-bold">Choose File</span>
+                    <span class="text-[7px] text-[#d4af37] uppercase font-bold">Change Banner</span>
                 </div>
-                <input type="file" id="edit-banner-file" class="hidden" accept="image/gif,image/png,image/jpeg">
+                <input type="file" id="edit-banner-file" class="hidden" accept="image/*">
             </div>
             <div>
-                <label class="text-[7px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Personal Bio</label>
+                <label class="text-[7px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Bio / Status</label>
                 <textarea id="edit-bio-input" class="luxury-input h-24 resize-none text-[10px]" placeholder="Who are you?"></textarea>
             </div>
         </div>
 
         <div class="pt-6 space-y-3">
-            <button onclick="saveAndRefresh()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-3 rounded-xl text-black font-black uppercase tracking-[0.1em] text-[10px]">Save & Refresh</button>
+            <button onclick="saveAndRefresh()" id="btn-save-editor" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-3 rounded-xl text-black font-black uppercase tracking-[0.1em] text-[10px]">Save & Refresh</button>
             <button onclick="closeEditor()" class="w-full text-[8px] text-gray-500 uppercase font-black hover:text-white transition py-2">Cancel</button>
         </div>
     </div>
@@ -155,7 +156,7 @@
             <div class="flex items-center gap-4">
                 <span class="serif text-2xl gold-gradient font-bold tracking-tight">Chatlaxy</span>
             </div>
-            <div class="flex items-center gap-3 group cursor-pointer" onclick="viewProfile(myProfile.username)">
+            <div id="header-profile-trigger" class="flex items-center gap-3 group cursor-pointer">
                 <div class="text-right hidden sm:block">
                     <p id="header-username" class="text-[10px] font-black text-white uppercase tracking-wider leading-none">Guest</p>
                 </div>
@@ -166,13 +167,13 @@
         <div class="flex flex-1 overflow-hidden">
             <!-- SIDEBAR -->
             <aside class="w-16 lg:w-48 border-r border-[#222] bg-[#0a0c10] flex flex-col p-4 shrink-0">
-                <div class="mb-6">
+                <div class="mb-6 relative">
                     <p class="text-[8px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 px-1 text-center lg:text-left">Access</p>
                     <button id="status-toggle-btn" class="flex items-center justify-center lg:justify-start gap-2 w-full p-3 rounded-xl bg-white/5 border border-white/5">
                         <div id="my-status-dot" class="status-dot"></div>
                         <span id="my-status-text" class="text-[9px] font-black uppercase tracking-[0.1em] text-white hidden lg:block">Online</span>
                     </button>
-                    <div id="status-dropdown" class="hidden absolute left-4 w-40 mt-1 glass rounded-xl overflow-hidden shadow-2xl z-50">
+                    <div id="status-dropdown" class="hidden absolute left-0 w-full mt-1 glass rounded-xl overflow-hidden shadow-2xl z-50">
                         <button onclick="setStatus('online')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition"><div class="status-dot status-online"></div><span class="text-[8px] font-bold text-white uppercase">Online</span></button>
                         <button onclick="setStatus('away')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition"><div class="status-dot status-away"></div><span class="text-[8px] font-bold text-white uppercase">Away</span></button>
                         <button onclick="setStatus('dnd')" class="w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition"><div class="status-dot status-dnd"></div><span class="text-[8px] font-bold text-white uppercase">Busy</span></button>
@@ -183,7 +184,7 @@
                 </div>
             </aside>
 
-            <!-- CHAT -->
+            <!-- CHAT AREA -->
             <main class="flex-1 flex flex-col bg-[#0d0f14] relative">
                 <div id="messages" class="flex-1 overflow-y-auto p-6 lg:p-10 space-y-6 scroll-smooth"></div>
                 <div class="px-6 pb-6">
@@ -194,7 +195,7 @@
                 </div>
             </main>
 
-            <!-- ONLINE LIST -->
+            <!-- MEMBERS LIST -->
             <aside class="w-16 lg:w-56 border-l border-[#222] bg-[#0a0c10] flex flex-col p-4 shrink-0">
                 <p class="text-[8px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 px-1 text-center lg:text-left">Members</p>
                 <div id="online-users-list" class="space-y-1 overflow-y-auto"></div>
@@ -208,6 +209,12 @@
         let chatHistory = [];
         let globalUsers = [];
 
+        // DB Helpers
+        const getDB = () => JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
+        const setDB = (data) => localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(data));
+        const getSession = () => JSON.parse(localStorage.getItem('chatlaxy_session_v6'));
+        const setSession = (data) => localStorage.setItem('chatlaxy_session_v6', JSON.stringify(data));
+
         window.onload = () => {
             const savedHistory = localStorage.getItem('chatlaxy_history_v6');
             if(savedHistory) {
@@ -215,19 +222,16 @@
                 renderMessages();
             }
 
-            const session = localStorage.getItem('chatlaxy_session_v6');
+            const session = getSession();
             if(session) {
-                try {
-                    myProfile = JSON.parse(session);
-                    const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-                    const updated = db.find(u => u.username === myProfile.username && u.password === myProfile.password);
-                    if(updated) {
-                        myProfile = updated;
-                        localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
-                    }
+                const db = getDB();
+                const found = db.find(u => u.username === session.username);
+                if(found) {
+                    myProfile = found;
+                    setSession(myProfile);
                     socket.emit('register user', myProfile);
                     enterApp();
-                } catch (e) {
+                } else {
                     localStorage.removeItem('chatlaxy_session_v6');
                 }
             }
@@ -248,11 +252,13 @@
         document.getElementById('btn-login').onclick = () => {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
+            const db = getDB();
             const found = db.find(u => u.username.toLowerCase() === user.toLowerCase() && u.password === pass);
-            if(!found) return showAlert("Failed.");
-            myProfile = { ...found };
-            localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
+            
+            if(!found) return showAlert("Invalid Credentials.");
+            
+            myProfile = found;
+            setSession(myProfile);
             socket.emit('register user', myProfile);
             enterApp();
         };
@@ -262,20 +268,21 @@
             const pass = document.getElementById('reg-pass').value;
             const age = document.getElementById('reg-age').value;
             const gender = document.getElementById('reg-gender').value;
-            if(!user || !pass || !age || !gender) return showAlert("Fill all.");
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-            if(db.some(u => u.username.toLowerCase() === user.toLowerCase())) return showAlert("Taken.");
+            
+            if(!user || !pass || !age || !gender) return showAlert("All fields required.");
+            const db = getDB();
+            if(db.some(u => u.username.toLowerCase() === user.toLowerCase())) return showAlert("Username taken.");
             
             myProfile = {
                 username: user, password: pass, age: age, gender: gender,
                 status: "online", 
                 pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`,
-                banner: '', music: '', customBio: ''
+                banner: '', customBio: ''
             };
             
             db.push(myProfile);
-            localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
-            localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
+            setDB(db);
+            setSession(myProfile);
             socket.emit('register user', myProfile);
             enterApp();
         };
@@ -284,8 +291,9 @@
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('header-username').innerText = myProfile.username;
             document.getElementById('header-pfp').src = myProfile.pfp;
-            document.getElementById('my-status-dot').className = `status-dot status-${myProfile.status}`;
+            document.getElementById('my-status-dot').className = `status-dot status-${myProfile.status || 'online'}`;
             document.getElementById('my-status-text').innerText = (myProfile.status || 'online').toUpperCase();
+            document.getElementById('header-profile-trigger').onclick = () => viewProfile(myProfile.username);
             renderMessages();
         }
 
@@ -302,6 +310,7 @@
             document.getElementById('editor-panel').classList.remove('active');
         }
 
+        // Fix File Upload Logic
         function handleFileUpload(inputId, previewId, field) {
             document.getElementById(inputId).onchange = (e) => {
                 const file = e.target.files[0];
@@ -321,15 +330,28 @@
         handleFileUpload('edit-banner-file', 'edit-banner-preview', 'banner');
 
         function saveAndRefresh() {
+            const btn = document.getElementById('btn-save-editor');
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+
             myProfile.customBio = document.getElementById('edit-bio-input').value;
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
+            
+            const db = getDB();
             const idx = db.findIndex(u => u.username === myProfile.username);
             if(idx !== -1) {
                 db[idx] = { ...db[idx], ...myProfile };
-                localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
+                setDB(db);
+                setSession(myProfile);
+                
+                // Crucial: Give browser time to finish disk write
+                setTimeout(() => {
+                    location.reload();
+                }, 100);
+            } else {
+                alert("Session error. Please log in again.");
+                localStorage.removeItem('chatlaxy_session_v6');
+                location.reload();
             }
-            localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
-            location.reload();
         }
 
         document.getElementById('btn-logout').onclick = () => {
@@ -340,18 +362,14 @@
         function viewProfile(username) {
             const user = globalUsers.find(u => u.username === username) || (myProfile && myProfile.username === username ? myProfile : null);
             if(!user) return;
+            
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-bio').innerText = user.customBio || `${user.age}Y • ${user.gender}`;
+            
             const banner = document.getElementById('modal-banner');
             banner.style.backgroundImage = user.banner ? `url(${user.banner})` : 'none';
-            const audio = document.getElementById('profile-audio');
-            audio.pause();
-            if(user.music) {
-                audio.src = user.music;
-                audio.load();
-                audio.play().catch(e => {});
-            }
+            
             const isMe = myProfile && user.username === myProfile.username;
             document.getElementById('profile-edit-trigger').classList.toggle('hidden', !isMe);
             document.getElementById('profile-modal').classList.remove('hidden');
@@ -359,21 +377,28 @@
 
         function closeProfile() { 
             document.getElementById('profile-modal').classList.add('hidden');
-            document.getElementById('profile-audio').pause();
         }
 
         function setStatus(s) {
             myProfile.status = s;
             document.getElementById('my-status-dot').className = `status-dot status-${s}`;
             document.getElementById('my-status-text').innerText = s.toUpperCase();
-            localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
-            socket.emit('register user', myProfile);
+            
+            const db = getDB();
+            const idx = db.findIndex(u => u.username === myProfile.username);
+            if(idx !== -1) {
+                db[idx].status = s;
+                setDB(db);
+                setSession(myProfile);
+                socket.emit('register user', myProfile);
+            }
         }
 
         document.getElementById('status-toggle-btn').onclick = (e) => { 
             e.stopPropagation(); 
             document.getElementById('status-dropdown').classList.toggle('hidden'); 
         };
+        
         window.onclick = () => { 
             document.getElementById('status-dropdown').classList.add('hidden'); 
         };
@@ -426,8 +451,11 @@
 
         function renderMessages() {
             const container = document.getElementById('messages');
+            const shouldScroll = container.scrollTop + container.offsetHeight >= container.scrollHeight - 50;
+            
             container.innerHTML = '';
             chatHistory.forEach(m => {
+                // Check if sender is online to get latest profile updates, else use cached sender info
                 const liveSender = globalUsers.find(u => u.username === m.sender.username) || m.sender;
                 const div = document.createElement('div');
                 div.className = `message-row flex gap-4`;
@@ -443,7 +471,8 @@
                 `;
                 container.appendChild(div);
             });
-            container.scrollTop = container.scrollHeight;
+            
+            if(shouldScroll) container.scrollTop = container.scrollHeight;
         }
     </script>
 </body>
