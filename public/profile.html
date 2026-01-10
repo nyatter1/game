@@ -33,7 +33,7 @@
             <div class="flex items-center justify-between mb-8">
                 <div>
                     <h1 class="serif text-3xl gold-gradient">Edit Profile</h1>
-                    <p id="auth-status" class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Auto-Save Enabled</p>
+                    <p id="auth-status" class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Instant Sync Enabled</p>
                 </div>
                 <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-[#d4af37] hover:text-white transition uppercase tracking-widest border border-[#d4af37]/30 px-4 py-2 rounded-lg">Return to Chat</button>
             </div>
@@ -72,7 +72,7 @@
                 </div>
 
                 <div class="pt-4 border-t border-white/5">
-                    <p class="text-[7px] text-center text-gray-600 uppercase tracking-widest leading-loose">Changes are synchronized automatically with the cloud as you make them.</p>
+                    <p class="text-[7px] text-center text-gray-600 uppercase tracking-widest leading-loose">Changes are synchronized instantly with the cloud.</p>
                 </div>
             </div>
         </div>
@@ -98,7 +98,6 @@
         const appId = "chatlaxy-v1-production";
 
         let localProfile = JSON.parse(localStorage.getItem('chatlaxy_session_v6'));
-        let debounceTimer;
 
         if (!localProfile) window.location.href = 'index.html';
 
@@ -110,17 +109,15 @@
         // Auth setup
         onAuthStateChanged(auth, (user) => {
             if (!user) signInAnonymously(auth);
-            else console.log("Cloud Ready");
         });
 
-        // The Auto-Save Logic
+        // Optimized Instant Save Logic
         const triggerSave = async (updates = {}) => {
             const status = document.getElementById('save-status');
             status.className = 'saving';
-            status.innerText = 'Synchronizing...';
+            status.innerText = 'Syncing...';
 
             try {
-                // Merge current state
                 const currentBio = document.getElementById('edit-bio').value;
                 const fullUpdates = {
                     ...updates,
@@ -129,11 +126,11 @@
                     lastSync: Date.now()
                 };
 
-                // 1. Cloud Sync
+                // Perform cloud sync without awaiting to keep UI snappy, or await for confirmation
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
                 await setDoc(docRef, fullUpdates, { merge: true });
 
-                // 2. Local Sync
+                // Local Sync
                 const accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
                 const idx = accounts.findIndex(a => a.username === localProfile.username);
                 if (idx !== -1) {
@@ -143,47 +140,34 @@
                 localProfile = { ...localProfile, ...fullUpdates };
                 localStorage.setItem('chatlaxy_session_v6', JSON.stringify(localProfile));
 
-                // 3. Status Visual
                 status.className = 'saved';
-                status.innerText = 'Cloud Synced';
-                setTimeout(() => { status.className = ''; }, 2000);
+                status.innerText = 'Saved';
+                setTimeout(() => { status.className = ''; }, 1000);
             } catch (err) {
                 console.error(err);
-                status.innerText = 'Sync Error';
+                status.innerText = 'Error';
             }
         };
 
-        // Bio Auto-save (Debounced)
+        // Bio Auto-save (Removed debounce for instant feel)
         document.getElementById('edit-bio').oninput = () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => triggerSave(), 1000);
+            triggerSave();
         };
 
-        // File Compression & Auto-save
+        // Instant Upload
         const setupAutoUpload = (id, field, isImage) => {
             document.getElementById(id).onchange = (e) => {
                 const f = e.target.files[0];
                 if (!f) return;
                 const r = new FileReader();
-                r.onload = async (ev) => {
-                    let result = ev.target.result;
-                    if (isImage) {
-                        const img = new Image();
-                        img.src = result;
-                        await new Promise(res => img.onload = res);
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = id === 'pfp-input' ? 200 : 800;
-                        canvas.height = (canvas.width / img.width) * img.height;
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        result = canvas.toDataURL('image/jpeg', 0.6);
-                        
-                        if(field === 'pfp') document.getElementById('prev-pfp').src = result;
-                        if(field === 'banner') document.getElementById('prev-banner').style.backgroundImage = `url(${result})`;
-                    } else {
-                        document.getElementById('music-label').innerText = "Audio Updated";
-                    }
+                r.onload = (ev) => {
+                    const result = ev.target.result;
+                    // Update UI Immediately
+                    if(field === 'pfp') document.getElementById('prev-pfp').src = result;
+                    if(field === 'banner') document.getElementById('prev-banner').style.backgroundImage = `url(${result})`;
+                    if(field === 'music') document.getElementById('music-label').innerText = "Audio Ready";
                     
+                    // Fire save instantly
                     const update = {};
                     update[field] = result;
                     triggerSave(update);
