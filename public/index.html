@@ -44,17 +44,6 @@
         .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* RANK STYLES */
-        .rank-tag { padding: 1px 4px; border-radius: 3px; font-size: 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 900; display: inline-block; vertical-align: middle; }
-        
-        .rank-dev { background: linear-gradient(90deg, #00f2fe, #4facfe); color: #fff; box-shadow: 0 0 5px rgba(79, 172, 254, 0.3); }
-        .rank-ceo { background: #ff0055; color: #fff; }
-        .rank-owner { background: #ffd700; color: #000; }
-        .rank-admin { background: #ff4d4d; color: #fff; }
-        .rank-mod { background: #2ecc71; color: #fff; }
-        .rank-vip { background: #9b59b6; color: #fff; }
-        .rank-member { background: #333; color: #aaa; }
-
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: var(--luxury-black); }
         ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
@@ -129,7 +118,6 @@
                 </div>
                 
                 <h2 id="modal-name" class="serif text-2xl gold-gradient mb-1">Username</h2>
-                <div id="modal-rank-container" class="flex justify-center mb-4"></div>
 
                 <div class="py-4 border-y border-white/5 my-4 space-y-3 text-left">
                     <div>
@@ -156,7 +144,6 @@
             <div class="flex items-center gap-3 group cursor-pointer" onclick="viewProfile(myProfile.username)">
                 <div class="text-right hidden sm:block">
                     <p id="header-username" class="text-[10px] font-black text-white uppercase tracking-wider leading-none">Guest</p>
-                    <div id="header-rank-container" class="mt-0.5"></div>
                 </div>
                 <img id="header-pfp" src="" class="w-10 h-10 rounded-xl border border-transparent group-hover:border-gold/30 transition-all object-cover shadow-lg bg-black">
             </div>
@@ -206,22 +193,6 @@
         let myProfile = null;
         let chatHistory = [];
         let globalUsers = [];
-
-        // UPDATED RANKS
-        const RANK_CONFIG = {
-            DEVELOPER: { name: 'Dev', class: 'rank-dev' },
-            CEO: { name: 'CEO', class: 'rank-ceo' },
-            OWNER: { name: 'Owner', class: 'rank-owner' },
-            ADMIN: { name: 'Admin', class: 'rank-admin' },
-            MOD: { name: 'Mod', class: 'rank-mod' },
-            VIP: { name: 'VIP', class: 'rank-vip' },
-            MEMBER: { name: 'Member', class: 'rank-member' }
-        };
-
-        function getRankTag(rankKey) {
-            const r = RANK_CONFIG[rankKey] || RANK_CONFIG.MEMBER;
-            return `<span class="rank-tag ${r.class}">${r.name}</span>`;
-        }
 
         window.onload = () => {
             const savedHistory = localStorage.getItem('chatlaxy_history_v6');
@@ -281,10 +252,8 @@
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
             if(db.some(u => u.username.toLowerCase() === user.toLowerCase())) return showAlert("Taken.");
             
-            // FIXED REGISTRATION: EVERYONE IS AUTOMATICALLY MEMBER
             myProfile = {
                 username: user, password: pass, age: age, gender: gender,
-                rank: 'MEMBER', // Automatically Member for everyone
                 status: "online", 
                 pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`,
                 banner: '', music: '', customBio: ''
@@ -301,7 +270,6 @@
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('header-username').innerText = myProfile.username;
             document.getElementById('header-pfp').src = myProfile.pfp;
-            document.getElementById('header-rank-container').innerHTML = getRankTag(myProfile.rank);
             document.getElementById('my-status-dot').className = `status-dot status-${myProfile.status}`;
             document.getElementById('my-status-text').innerText = (myProfile.status || 'online').toUpperCase();
             renderMessages();
@@ -318,7 +286,6 @@
             
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
-            document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
             document.getElementById('modal-bio').innerText = user.customBio || `${user.age}Y • ${user.gender}`;
             
             const banner = document.getElementById('modal-banner');
@@ -377,7 +344,6 @@
                     </div>
                     <div class="hidden lg:block overflow-hidden">
                         <p class="text-[9px] font-black text-white uppercase truncate">${u.username}</p>
-                        ${getRankTag(u.rank)}
                     </div>
                 `;
                 list.appendChild(div);
@@ -416,7 +382,6 @@
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="serif text-sm font-bold text-white">${liveSender.username}</span>
-                            ${getRankTag(liveSender.rank)}
                             <span class="text-[7px] text-gray-700 font-black uppercase">${m.timestamp}</span>
                         </div>
                         <p class="text-[11px] text-gray-300 font-medium">${m.text}</p>
