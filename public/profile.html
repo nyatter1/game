@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile | Chatlaxy Elite</title>
-    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --luxury-gold: #d4af37; --luxury-black: #0a0c10; --luxury-dark: #161a21; --border-color: #222222; }
-        body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; display: flex; align-items: center; justify-center; min-height: 100vh; margin: 0; }
         .serif { font-family: 'Cormorant Garamond', serif; }
         .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(20px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -20,16 +19,13 @@
         .banner-preview { width: 100%; height: 120px; background-size: cover; background-position: center; background-color: #1a1a1a; border-radius: 1rem; border: 1px solid var(--border-color); }
         .pfp-preview { width: 80px; height: 80px; border-radius: 1.5rem; object-fit: cover; border: 3px solid var(--luxury-dark); background: #000; }
         #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
-        .progress-container { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 20px; }
-        #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #d4af37, #f9e29c); transition: width 0.1s linear; }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
-        <div class="w-10 h-10 border-2 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin mb-2"></div>
-        <p class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Compressing & Saving</p>
-        <div class="progress-container"><div id="progress-bar"></div></div>
+        <div class="w-10 h-10 border-2 border-gold/20 border-t-gold rounded-full animate-spin mb-4"></div>
+        <p id="loading-text" class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Uploading to Cloud</p>
     </div>
 
     <div class="max-w-md w-full mx-auto p-6">
@@ -37,7 +33,7 @@
             <div class="flex items-center justify-between mb-8">
                 <div>
                     <h1 class="serif text-3xl gold-gradient">Edit Profile</h1>
-                    <p class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Refine your presence</p>
+                    <p class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Cloud Storage Enabled</p>
                 </div>
                 <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-gray-500 hover:text-white transition uppercase tracking-widest">Cancel</button>
             </div>
@@ -62,133 +58,108 @@
                 </div>
 
                 <div class="space-y-4">
-                    <input type="text" id="edit-user" class="input-field" placeholder="Username">
-                    <textarea id="edit-bio" class="input-field h-24 resize-none" placeholder="Biography"></textarea>
-                    <div onclick="document.getElementById('music-input').click()" class="upload-btn py-3">
-                        <p id="music-label" class="text-[8px] font-bold text-white truncate">Upload Audio (.mp3)</p>
-                        <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
+                    <div>
+                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Biography</label>
+                        <textarea id="edit-bio" class="input-field h-24 resize-none" placeholder="Tell your story..."></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Profile Music (.mp3)</label>
+                        <div onclick="document.getElementById('music-input').click()" class="upload-btn py-3">
+                            <p id="music-label" class="text-[8px] font-bold text-white truncate">Click to upload song</p>
+                            <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
+                        </div>
                     </div>
                 </div>
 
-                <button id="save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[11px] hover:brightness-110 transition shadow-xl mt-4">Save Changes</button>
+                <button id="save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[11px] hover:brightness-110 transition shadow-xl mt-4">Sync to Cloud</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let currentUser = null;
-        let originalUsername = "";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        window.onload = () => {
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let user = null;
+        let userData = null;
+        let pendingPfp = null, pendingBanner = null, pendingMusic = null;
+
+        // Auth Logic
+        onAuthStateChanged(auth, async (u) => {
+            if (u) {
+                user = u;
+                loadProfile();
+            } else {
+                await signInAnonymously(auth);
+            }
+        });
+
+        async function loadProfile() {
             const session = localStorage.getItem('chatlaxy_session_v6');
             if (!session) { window.location.href = 'index.html'; return; }
-            currentUser = JSON.parse(session);
-            originalUsername = currentUser.username;
-
-            document.getElementById('edit-user').value = currentUser.username;
-            document.getElementById('edit-bio').value = currentUser.customBio || '';
-            if (currentUser.pfp) document.getElementById('prev-pfp').src = currentUser.pfp;
-            if (currentUser.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${currentUser.banner})`;
-            if (currentUser.music) document.getElementById('music-label').innerText = "Audio Loaded";
-        };
-
-        // --- IMAGE COMPRESSION LOGIC ---
-        async function compressImage(file, maxWidth, maxHeight) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                        } else {
-                            if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to 70% quality
-                    };
-                };
-            });
+            const localData = JSON.parse(session);
+            
+            // Try to get fresh cloud data
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', localData.username);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                userData = docSnap.data();
+                document.getElementById('edit-bio').value = userData.customBio || '';
+                document.getElementById('prev-pfp').src = userData.pfp || '';
+                if (userData.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${userData.banner})`;
+                if (userData.music) document.getElementById('music-label').innerText = "Song currently active";
+            }
         }
 
-        document.getElementById('pfp-input').onchange = async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const compressed = await compressImage(file, 200, 200); // PFPs don't need to be huge
-                currentUser.pfp = compressed;
-                document.getElementById('prev-pfp').src = compressed;
-            }
-        };
-
-        document.getElementById('banner-input').onchange = async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const compressed = await compressImage(file, 800, 300); // Banners can be wider
-                currentUser.banner = compressed;
-                document.getElementById('prev-banner').style.backgroundImage = `url(${compressed})`;
-            }
-        };
-
-        document.getElementById('music-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                if (file.size > 2 * 1024 * 1024) { // 2MB Limit for Audio
-                    alert("Audio file too large. Please keep it under 2MB.");
-                    return;
-                }
+        // File Readers
+        const handleFile = (inputId, callback) => {
+            document.getElementById(inputId).onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) return alert("File too large (max 2MB)");
                 const reader = new FileReader();
+                reader.onload = (ev) => callback(ev.target.result);
                 reader.readAsDataURL(file);
-                reader.onload = (ev) => {
-                    currentUser.music = ev.target.result;
-                    document.getElementById('music-label').innerText = file.name;
-                };
-            }
+            };
         };
 
-        document.getElementById('save-btn').onclick = () => {
-            const newName = document.getElementById('edit-user').value.trim();
-            if (!newName) return alert("Username required");
+        handleFile('pfp-input', (res) => { pendingPfp = res; document.getElementById('prev-pfp').src = res; });
+        handleFile('banner-input', (res) => { pendingBanner = res; document.getElementById('prev-banner').style.backgroundImage = `url(${res})`; });
+        handleFile('music-input', (res) => { pendingMusic = res; document.getElementById('music-label').innerText = "New Audio Loaded"; });
 
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-            if (newName.toLowerCase() !== originalUsername.toLowerCase() && db.some(u => u.username.toLowerCase() === newName.toLowerCase())) {
-                alert("Username taken."); return;
+        document.getElementById('save-btn').onclick = async () => {
+            if (!user || !userData) return;
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            try {
+                const updates = {
+                    customBio: document.getElementById('edit-bio').value.trim()
+                };
+                if (pendingPfp) updates.pfp = pendingPfp;
+                if (pendingBanner) updates.banner = pendingBanner;
+                if (pendingMusic) updates.music = pendingMusic;
+
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userData.username);
+                await updateDoc(docRef, updates);
+                
+                // Update local session to keep sync
+                const newSession = { ...userData, ...updates };
+                localStorage.setItem('chatlaxy_session_v6', JSON.stringify(newSession));
+                
+                window.location.href = 'index.html';
+            } catch (e) {
+                console.error(e);
+                alert("Error saving: Profile might be too large for free cloud tier. Try smaller images.");
+                document.getElementById('loading-overlay').style.display = 'none';
             }
-
-            currentUser.username = newName;
-            currentUser.customBio = document.getElementById('edit-bio').value.trim();
-
-            const overlay = document.getElementById('loading-overlay');
-            const bar = document.getElementById('progress-bar');
-            overlay.style.display = 'flex';
-
-            let p = 0;
-            const interval = setInterval(() => {
-                p += 10;
-                bar.style.width = p + '%';
-                if (p >= 100) {
-                    clearInterval(interval);
-                    try {
-                        const idx = db.findIndex(u => u.username === originalUsername);
-                        if (idx !== -1) db[idx] = currentUser; else db.push(currentUser);
-                        
-                        localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
-                        localStorage.setItem('chatlaxy_session_v6', JSON.stringify(currentUser));
-                        window.location.href = 'index.html';
-                    } catch (err) {
-                        alert("Storage full! Try smaller images or remove the audio file.");
-                        overlay.style.display = 'none';
-                    }
-                }
-            }, 50);
         };
     </script>
 </body>
