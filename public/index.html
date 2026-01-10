@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatlaxy | Elite Social</title>
+    <title>Chatlaxy | Elite Social Protocol</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -24,7 +24,7 @@
             overflow: hidden;
             height: 100vh;
         }
-        .app-container { height: 100vh; display: flex; flex-direction: column; max-width: 1600px; margin: 0 auto; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+        .app-container { height: 100vh; display: flex; max-width: 1600px; margin: 0 auto; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
         .serif { font-family: 'Cormorant Garamond', serif; }
         .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -35,8 +35,8 @@
         
         .status-dot { width: 8px; height: 8px; border-radius: 50%; transition: all 0.3s; border: 1px solid rgba(0,0,0,0.5); }
         .status-online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .status-away { background: #eab308; }
-        .status-dnd { background: #ef4444; }
+        .status-away { background: #eab308; box-shadow: 0 0 8px #eab308; }
+        .status-dnd { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
 
         .message-row { border-bottom: 1px solid rgba(255, 255, 255, 0.02); padding: 1rem 0; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -56,19 +56,22 @@
 
         .file-upload-btn { display: block; width: 100%; padding: 0.8rem; border: 1px dashed #444; border-radius: 0.75rem; text-align: center; font-size: 0.75rem; color: #888; cursor: pointer; transition: all 0.2s; }
         .file-upload-btn:hover { border-color: var(--luxury-gold); color: white; }
+
+        .dropdown-animate { animation: dropdownIn 0.2s ease-out forwards; }
+        @keyframes dropdownIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        #profileDropdown { z-index: 9999; }
+        #dropdownOverlay { z-index: 9998; }
     </style>
 </head>
-<body>
+<body class="selection:bg-[#d4af37]/30">
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 overflow-y-auto">
         <div class="w-full max-w-md text-center py-10">
             <h1 class="serif text-7xl gold-gradient mb-2">Chatlaxy</h1>
             <p class="text-[9px] text-gray-600 uppercase tracking-[0.6em] mb-12 font-bold">The Elite Social Protocol</p>
-            
             <div class="glass p-10 rounded-[3rem] space-y-6 relative overflow-hidden">
-                
-                <!-- VIEW: LOGIN -->
                 <div id="view-login" class="auth-view active">
                     <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Access Vault</p>
                     <div class="space-y-4">
@@ -78,8 +81,6 @@
                     <button onclick="attemptLogin()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition shadow-lg">Login</button>
                     <p class="mt-6 text-[9px] text-gray-500">New here? <span onclick="switchAuthView('signup')" class="text-[#d4af37] cursor-pointer hover:underline">Apply for Membership</span></p>
                 </div>
-
-                <!-- VIEW: SIGNUP STEP 1 -->
                 <div id="view-signup" class="auth-view">
                     <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Application: Phase 1</p>
                     <div class="space-y-4">
@@ -89,8 +90,6 @@
                     <button onclick="switchAuthView('signup-2')" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition">Next Phase</button>
                     <p class="mt-6 text-[9px] text-gray-500">Already a member? <span onclick="switchAuthView('login')" class="text-[#d4af37] cursor-pointer hover:underline">Login</span></p>
                 </div>
-
-                <!-- VIEW: SIGNUP STEP 2 -->
                 <div id="view-signup-2" class="auth-view">
                     <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Application: Final Stats</p>
                     <div class="space-y-4">
@@ -104,10 +103,10 @@
                             </select>
                         </div>
                         <div>
-                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-1 text-left px-2">Profile Avatar (Max 250KB)</p>
+                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-1 text-left px-2">Profile Avatar (Max 1MB)</p>
                             <label class="file-upload-btn">
                                 <span id="pfp-label">Choose File</span>
-                                <input type="file" id="reg-pfp-input" accept="image/png, image/jpeg, image/gif" class="hidden" onchange="handleFileLabel(this, 'pfp-label')">
+                                <input type="file" id="reg-pfp-input" accept="image/png, image/jpeg, image/gif" class="hidden" onchange="handleFileLabel(this, 'pfp-label', 1024)">
                             </label>
                         </div>
                     </div>
@@ -120,7 +119,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP STRUCTURE -->
+    <!-- PROFILE MODAL (Dossier View) -->
     <div id="profile-modal" class="fixed inset-0 z-[80] bg-black/95 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
         <div class="w-full max-w-sm glass rounded-[3rem] overflow-hidden" onclick="event.stopPropagation()">
             <div id="view-banner" class="banner-box shadow-inner"></div>
@@ -148,7 +147,6 @@
             <h2 class="serif text-4xl gold-gradient">Adjust Persona</h2>
             <button onclick="toggleEditor()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-gray-500 hover:text-white transition">✕</button>
         </div>
-        
         <div class="flex-1 overflow-y-auto space-y-8 pr-4">
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -166,17 +164,17 @@
                 </div>
             </div>
             <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Avatar (Max 250KB)</label>
+                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Avatar (Max 1MB)</label>
                 <label class="file-upload-btn">
                     <span id="edit-pfp-label">Replace Avatar</span>
-                    <input type="file" id="edit-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-pfp-label')">
+                    <input type="file" id="edit-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-pfp-label', 1024)">
                 </label>
             </div>
             <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Banner (Max 250KB)</label>
+                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Banner (Max 1MB)</label>
                 <label class="file-upload-btn">
                     <span id="edit-banner-label">Replace Banner</span>
-                    <input type="file" id="edit-banner-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-banner-label')">
+                    <input type="file" id="edit-banner-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-banner-label', 1024)">
                 </label>
             </div>
             <div>
@@ -187,95 +185,158 @@
         <button onclick="saveProfile()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] mt-8 shadow-lg">Save Identity</button>
     </div>
 
-    <div class="app-container">
-        <header class="h-24 border-b border-[#222] flex items-center justify-between px-10 bg-[#0a0c10] shrink-0">
-            <div class="flex items-center gap-6">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d4af37] to-[#b8860b] flex items-center justify-center text-black font-black text-xl">C</div>
-                <div>
-                    <span class="serif text-4xl gold-gradient font-bold tracking-tighter">Chatlaxy</span>
-                    <p class="text-[7px] text-gray-600 uppercase tracking-[0.4em] font-bold">Encrypted Session</p>
+    <!-- MAIN APP STRUCTURE -->
+    <div class="app-container w-full">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-[#161a21] border-r border-[#222] flex flex-col p-6 shadow-2xl relative z-40 shrink-0">
+            <div class="mb-10 px-2 flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-[#d4af37] to-[#b8860b] rounded-xl flex items-center justify-center shadow-lg shadow-[#d4af37]/10">
+                    <span class="text-black font-bold text-lg">C</span>
                 </div>
+                <span class="serif text-2xl tracking-wide gold-gradient">CHATLAXY</span>
             </div>
-            <div onclick="toggleEditor()" class="flex items-center gap-5 cursor-pointer group p-2 hover:bg-white/5 rounded-2xl transition-all">
-                <div class="text-right hidden sm:block">
-                    <p id="me-name" class="text-[11px] font-black text-white uppercase tracking-wider">Guest</p>
-                    <p id="me-subtitle" class="text-[8px] text-[#d4af37] font-bold uppercase tracking-tight">VIP Member</p>
-                </div>
-                <img id="me-pfp" src="" class="w-14 h-14 rounded-2xl object-cover border-2 border-white/5 shadow-xl bg-black">
-            </div>
-        </header>
 
-        <div class="flex flex-1 overflow-hidden">
-            <aside class="w-24 lg:w-72 border-r border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
-                <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-8 px-2">Availability</p>
-                <div class="space-y-4">
-                    <button onclick="setStatus('online')" class="flex items-center gap-4 w-full p-3 hover:bg-white/5 rounded-xl transition group">
-                        <div class="status-dot status-online"></div>
-                        <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase hidden lg:block tracking-widest">Active</span>
+            <nav class="flex-1 space-y-6">
+                <!-- Status Toggle Button -->
+                <div class="relative">
+                    <button id="statusBtn" class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-black/40 border border-[#222] hover:border-[#d4af37]/50 transition-all text-sm font-medium">
+                        <div class="flex items-center gap-3">
+                            <div id="statusIndicator" class="status-dot status-online"></div>
+                            <span id="statusText" class="tracking-tight text-zinc-300">Online</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600"><path d="m6 9 6 6 6-6"/></svg>
                     </button>
-                    <button onclick="setStatus('away')" class="flex items-center gap-4 w-full p-3 hover:bg-white/5 rounded-xl transition group">
-                        <div class="status-dot status-away"></div>
-                        <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase hidden lg:block tracking-widest">Away</span>
+                    <div id="statusDropdown" class="hidden absolute left-0 right-0 mt-2 bg-[#161a21] border border-[#222] rounded-xl shadow-2xl z-50 overflow-hidden dropdown-animate">
+                        <button onclick="setStatus('online')" class="w-full text-left px-4 py-3 text-xs hover:bg-black/40 transition-colors flex items-center gap-3 border-b border-[#222]">
+                            <div class="status-dot status-online"></div>
+                            <span class="text-zinc-400">Online</span>
+                        </button>
+                        <button onclick="setStatus('away')" class="w-full text-left px-4 py-3 text-xs hover:bg-black/40 transition-colors flex items-center gap-3 border-b border-[#222]">
+                            <div class="status-dot status-away"></div>
+                            <span class="text-zinc-400">Away</span>
+                        </button>
+                        <button onclick="setStatus('dnd')" class="w-full text-left px-4 py-3 text-xs hover:bg-black/40 transition-colors flex items-center gap-3">
+                            <div class="status-dot status-dnd"></div>
+                            <span class="text-zinc-400">Busy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="px-4 py-2 text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] serif">Navigation</div>
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:bg-black/40 hover:text-[#d4af37] transition-all border border-transparent hover:border-[#222]">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+                        <span class="text-sm font-medium">News Feed</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-[#d4af37] bg-black/40 border border-[#222]">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span class="text-sm font-medium">Lounge Chat</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="mt-auto border-t border-[#222] pt-8">
+                <div class="px-4 py-2 text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] serif flex justify-between items-center">
+                    <span>Elite Circle</span>
+                    <span class="flex h-2 w-2 rounded-full bg-[#22c55e] opacity-75 animate-ping"></span>
+                </div>
+                <div id="user-list" class="mt-2 space-y-3 max-h-[250px] overflow-y-auto pr-2"></div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="flex-1 flex flex-col bg-gradient-to-br from-[#0a0c10] to-[#161a21] relative">
+            <header class="h-20 border-b border-[#222] flex items-center justify-end px-10 relative z-30 shrink-0">
+                <div class="relative">
+                    <button id="profileTrigger" class="flex items-center gap-3 group p-1 rounded-2xl border border-transparent hover:border-[#222] hover:bg-black/20 transition-all focus:outline-none">
+                        <div class="text-right flex flex-col items-end mr-1">
+                            <span id="me-name-header" class="text-[11px] font-bold text-zinc-200 uppercase tracking-widest">Guest</span>
+                            <span id="me-rank-header" class="text-[9px] text-[#d4af37] uppercase font-bold tracking-widest">VIP Member</span>
+                        </div>
+                        <img id="me-pfp-header" src="" class="w-8 h-8 rounded-lg border border-[#d4af37]/30 bg-black shadow-lg object-cover">
                     </button>
-                    <button onclick="setStatus('dnd')" class="flex items-center gap-4 w-full p-3 hover:bg-white/5 rounded-xl transition group">
-                        <div class="status-dot status-dnd"></div>
-                        <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase hidden lg:block tracking-widest">Busy</span>
-                    </button>
+
+                    <!-- Dropdown Overlay -->
+                    <div id="dropdownOverlay" class="hidden fixed inset-0"></div>
+                    <!-- Profile Dropdown -->
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-4 w-72 bg-[#161a21] border border-[#d4af37]/20 rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,1)] dropdown-animate overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex justify-center mb-4">
+                                <img id="me-pfp-dropdown" src="" class="w-16 h-16 rounded-xl border-2 border-[#d4af37]/20 shadow-2xl bg-black object-cover">
+                            </div>
+                            <div class="text-center mb-6">
+                                <h3 id="me-name-dropdown" class="serif text-lg gold-gradient">Username</h3>
+                                <p id="me-rank-dropdown" class="text-[9px] text-[#d4af37] font-bold tracking-[0.3em] uppercase">VIP Member</p>
+                            </div>
+                            <div class="space-y-1">
+                                <button onclick="toggleEditor()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-zinc-400 hover:bg-black/40 hover:text-white transition-all text-left border border-transparent hover:border-[#222]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#d4af37]/70"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    <span>Adjust Persona</span>
+                                </button>
+                                <div class="my-2 border-t border-[#222] opacity-50"></div>
+                                <button onclick="logout()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-all text-left group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-auto pt-8 border-t border-[#222] hidden lg:block">
-                    <p class="text-[8px] font-black text-gray-700 uppercase tracking-[0.4em] mb-4">Your Metadata</p>
-                    <div id="my-stats-box" class="space-y-2"></div>
-                </div>
-            </aside>
-            <main class="flex-1 flex flex-col bg-[#0d0f14] relative">
-                <div id="messages" class="flex-1 overflow-y-auto p-10 space-y-2"></div>
-                <div class="p-10 pt-0">
-                    <form id="chat-form" class="bg-[#161a21] border border-[#222] rounded-[1.5rem] flex items-center px-8 py-2 gap-5 shadow-2xl focus-within:border-[#d4af37]/30 transition-all">
-                        <input type="text" id="msg-input" placeholder="Compose message..." autocomplete="off" class="flex-1 bg-transparent py-5 outline-none text-white text-sm font-medium">
-                        <button type="submit" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] px-10 py-3 rounded-xl text-black font-black uppercase text-[10px] tracking-widest shadow-lg transition">Send</button>
-                    </form>
-                </div>
-            </main>
-            <aside class="w-24 lg:w-72 border-l border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
-                <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-8 px-2">Elite Circle</p>
-                <div id="user-list" class="space-y-6 overflow-y-auto pr-2"></div>
-            </aside>
-        </div>
+            </header>
+
+            <!-- Chat Interface -->
+            <div id="messages" class="flex-1 overflow-y-auto p-10 space-y-2"></div>
+            
+            <div class="p-10 pt-0 shrink-0">
+                <form id="chat-form" class="bg-[#161a21]/50 backdrop-blur-sm border border-[#222] rounded-[1.5rem] flex items-center px-8 py-2 gap-5 shadow-2xl focus-within:border-[#d4af37]/30 transition-all">
+                    <input type="text" id="msg-input" placeholder="Whisper into the void..." autocomplete="off" class="flex-1 bg-transparent py-5 outline-none text-white text-sm font-medium">
+                    <button type="submit" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] px-10 py-3 rounded-xl text-black font-black uppercase text-[10px] tracking-widest shadow-lg transition">Broadcast</button>
+                </form>
+            </div>
+        </main>
     </div>
 
     <script>
         const socket = io();
-        const FILE_SIZE_LIMIT = 250 * 1024; // 250KB limit to keep synchronization fast
         
+        // --- State ---
         let accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts')) || [];
         let session = JSON.parse(localStorage.getItem('chatlaxy_session')) || null;
-        
-        let myProfile = session ? session : {
+        let myProfile = session || {
             username: '',
             pfp: 'https://i.pinimg.com/736x/8f/1c/a2/8f1ca2029e2efce263ee268759d9a13c.jpg',
             banner: 'https://i.pinimg.com/originals/11/4d/9d/114d9dc65147570419d2823871216d8a.gif',
-            bio: 'Legacy Member of Chatlaxy.',
+            bio: 'Legacy Member.',
             age: 21,
             gender: 'Elite',
             status: 'online'
         };
-
         let onlineUsers = [];
         let messages = [];
 
+        // --- DOM Elements (Dropdowns) ---
+        const statusBtn = document.getElementById('statusBtn');
+        const statusDropdown = document.getElementById('statusDropdown');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const profileTrigger = document.getElementById('profileTrigger');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const dropdownOverlay = document.getElementById('dropdownOverlay');
+
+        // --- Auth & Profile Logic ---
         function switchAuthView(view) {
             document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
             document.getElementById(`view-${view}`).classList.add('active');
         }
 
-        function handleFileLabel(input, labelId) {
+        function handleFileLabel(input, labelId, customLimitKb = 250) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                if (file.size > FILE_SIZE_LIMIT) {
-                    input.value = ""; // Reset input
+                const limitBytes = customLimitKb * 1024;
+                if (file.size > limitBytes) {
+                    input.value = "";
                     document.getElementById(labelId).innerText = "File too large!";
                     document.getElementById(labelId).style.color = "#ef4444";
-                    alert(`The file is over the 250KB limit. Large files (especially heavy GIFs) degrade the synchronization protocol. Please use a compressed version.`);
                     return;
                 }
                 document.getElementById(labelId).innerText = file.name;
@@ -299,34 +360,16 @@
             const gender = document.getElementById('reg-gender').value;
             const pfpInput = document.getElementById('reg-pfp-input');
 
-            if(!user || !pass || !age || !gender || !pfpInput.files[0]) {
-                return alert("The dossier requires all fields and an identity image.");
-            }
-
-            if(accounts.some(acc => acc.username.toLowerCase() === user.toLowerCase())) {
-                return alert("This identifier is already claimed by another elite.");
-            }
+            if(!user || !pass || !age || !gender || !pfpInput.files[0]) return alert("Complete the dossier.");
+            if(accounts.some(acc => acc.username.toLowerCase() === user.toLowerCase())) return alert("ID taken.");
 
             const pfpBase64 = await toBase64(pfpInput.files[0]);
-
-            const newAccount = {
-                username: user,
-                password: pass,
-                pfp: pfpBase64,
-                banner: myProfile.banner,
-                bio: myProfile.bio,
-                age: age,
-                gender: gender,
-                status: 'online'
-            };
-
+            const newAccount = { username: user, password: pass, pfp: pfpBase64, banner: myProfile.banner, bio: 'New elite.', age, gender, status: 'online' };
+            
             accounts.push(newAccount);
             localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
-            
-            session = newAccount;
-            myProfile = newAccount;
+            session = newAccount; myProfile = newAccount;
             localStorage.setItem('chatlaxy_session', JSON.stringify(session));
-            
             document.getElementById('auth-screen').classList.add('hidden');
             init();
         }
@@ -334,19 +377,29 @@
         function attemptLogin() {
             const user = document.getElementById('login-username').value.trim();
             const pass = document.getElementById('login-password').value;
-
             const account = accounts.find(acc => acc.username === user && acc.password === pass);
-
-            if(!account) {
-                return alert("Invalid credentials. Access denied.");
-            }
-
-            session = account;
-            myProfile = account;
+            if(!account) return alert("Denied.");
+            session = account; myProfile = account;
             localStorage.setItem('chatlaxy_session', JSON.stringify(session));
-            
             document.getElementById('auth-screen').classList.add('hidden');
             init();
+        }
+
+        function logout() {
+            localStorage.removeItem('chatlaxy_session');
+            window.location.reload();
+        }
+
+        function init() {
+            // Update Header & Dropdown
+            document.getElementById('me-name-header').innerText = myProfile.username;
+            document.getElementById('me-pfp-header').src = myProfile.pfp;
+            document.getElementById('me-pfp-dropdown').src = myProfile.pfp;
+            document.getElementById('me-name-dropdown').innerText = myProfile.username;
+            
+            // Sync Status UI
+            setStatus(myProfile.status);
+            socket.emit('register user', myProfile);
         }
 
         if(session) {
@@ -354,20 +407,48 @@
             init();
         }
 
-        function init() {
-            document.getElementById('me-name').innerText = myProfile.username;
-            document.getElementById('me-pfp').src = myProfile.pfp;
-            
-            const stats = document.getElementById('my-stats-box');
-            stats.innerHTML = `
-                <div class="flex justify-between items-center"><span class="text-[7px] text-gray-600 uppercase">Age</span><span class="text-[9px] text-white font-bold">${myProfile.age}</span></div>
-                <div class="flex justify-between items-center"><span class="text-[7px] text-gray-600 uppercase">Gender</span><span class="text-[9px] text-white font-bold">${myProfile.gender}</span></div>
-            `;
+        // --- Dropdown Interactions ---
+        statusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            statusDropdown.classList.toggle('hidden');
+            profileDropdown.classList.add('hidden');
+            dropdownOverlay.classList.add('hidden');
+        });
 
+        function setStatus(s) {
+            myProfile.status = s;
+            statusText.innerText = s.charAt(0).toUpperCase() + s.slice(1);
+            statusIndicator.className = `status-dot status-${s}`;
+            statusDropdown.classList.add('hidden');
             socket.emit('register user', myProfile);
         }
 
+        profileTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = !profileDropdown.classList.contains('hidden');
+            if (isOpen) {
+                closeDropdowns();
+            } else {
+                profileDropdown.classList.remove('hidden');
+                dropdownOverlay.classList.remove('hidden');
+                statusDropdown.classList.add('hidden');
+            }
+        });
+
+        dropdownOverlay.addEventListener('click', closeDropdowns);
+        function closeDropdowns() {
+            profileDropdown.classList.add('hidden');
+            dropdownOverlay.classList.add('hidden');
+            statusDropdown.classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!statusBtn.contains(e.target)) statusDropdown.classList.add('hidden');
+        });
+
+        // --- Editor ---
         function toggleEditor() {
+            closeDropdowns();
             const panel = document.getElementById('editor-panel');
             document.getElementById('edit-age').value = myProfile.age;
             document.getElementById('edit-gender').value = myProfile.gender;
@@ -382,42 +463,30 @@
 
             const pfpIn = document.getElementById('edit-pfp-input');
             const banIn = document.getElementById('edit-banner-input');
-
-            // Files are already validated in handleFileLabel
             if(pfpIn.files[0]) myProfile.pfp = await toBase64(pfpIn.files[0]);
             if(banIn.files[0]) myProfile.banner = await toBase64(banIn.files[0]);
             
             const accIdx = accounts.findIndex(a => a.username === myProfile.username);
-            if(accIdx !== -1) {
-                accounts[accIdx] = {...myProfile};
-                localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
-            }
+            if(accIdx !== -1) accounts[accIdx] = {...myProfile};
+            localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
             localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
             
-            document.getElementById('me-pfp').src = myProfile.pfp;
             init();
             toggleEditor();
-            socket.emit('register user', myProfile); 
         }
 
-        function setStatus(s) {
-            myProfile.status = s;
-            socket.emit('register user', myProfile);
-        }
-
+        // --- Global Social Logic ---
         function viewProfile(username) {
             const user = onlineUsers.find(u => u.username === username);
             if(!user) return;
-            
             document.getElementById('view-pfp').src = user.pfp;
             document.getElementById('view-banner').style.backgroundImage = `url(${user.banner})`;
             document.getElementById('view-name').innerText = user.username;
             document.getElementById('view-age').innerText = `${user.age} Years`;
             document.getElementById('view-gender').innerText = user.gender;
-            document.getElementById('view-bio').innerText = user.bio || 'No status set.';
+            document.getElementById('view-bio').innerText = user.bio || 'Silence.';
             document.getElementById('view-dot').className = `status-dot status-${user.status}`;
             document.getElementById('view-status-text').innerText = user.status;
-            
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
@@ -427,16 +496,16 @@
             list.innerHTML = '';
             users.forEach(u => {
                 const div = document.createElement('div');
-                div.className = 'flex items-center gap-4 cursor-pointer hover:bg-white/5 p-3 rounded-2xl transition group';
+                div.className = 'flex items-center gap-3 px-4 py-2 bg-black/20 rounded-2xl border border-transparent hover:border-[#222] transition-all cursor-pointer group';
                 div.onclick = () => viewProfile(u.username);
                 div.innerHTML = `
                     <div class="relative shrink-0">
-                        <img src="${u.pfp}" class="w-12 h-12 rounded-2xl object-cover bg-black border border-white/5 group-hover:border-[#d4af37]/40 transition-all">
-                        <div class="absolute -bottom-1 -right-1 status-dot status-${u.status} border-2 border-[#0a0c10]"></div>
+                        <img src="${u.pfp}" class="w-8 h-8 rounded-lg bg-[#161a21] border border-[#222] p-0.5 object-cover group-hover:border-[#d4af37]/40 transition-all">
+                        <div class="absolute -bottom-1 -right-1 status-dot status-${u.status} scale-[0.6] border-2 border-[#161a21]"></div>
                     </div>
-                    <div class="hidden lg:block overflow-hidden">
-                        <p class="text-[11px] font-black text-white uppercase truncate tracking-wide">${u.username}</p>
-                        <p class="text-[8px] text-gray-600 font-bold uppercase truncate">${u.gender} • ${u.age}</p>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-xs font-semibold tracking-tight truncate">${u.username}</span>
+                        <span class="text-[8px] text-zinc-500 font-medium italic truncate">${u.status}</span>
                     </div>
                 `;
                 list.appendChild(div);
