@@ -35,7 +35,7 @@
                     <h1 class="serif text-3xl gold-gradient">Edit Profile</h1>
                     <p id="auth-status" class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Instant Sync Enabled</p>
                 </div>
-                <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-[#d4af37] hover:text-white transition uppercase tracking-widest border border-[#d4af37]/30 px-4 py-2 rounded-lg">Return to Chat</button>
+                <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-[#d4af37] hover:text-white transition uppercase tracking-widest border border-[#d4af37]/30 px-4 py-2 rounded-lg">Discard</button>
             </div>
 
             <div class="space-y-6">
@@ -71,8 +71,9 @@
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-white/5">
-                    <p class="text-[7px] text-center text-gray-600 uppercase tracking-widest leading-loose">Changes are synchronized instantly with the cloud.</p>
+                <div class="pt-4 space-y-4">
+                    <button id="final-save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition shadow-xl">Save & Apply Changes</button>
+                    <p class="text-[7px] text-center text-gray-600 uppercase tracking-widest leading-loose">Applying changes will refresh your session instantly.</p>
                 </div>
             </div>
         </div>
@@ -112,7 +113,7 @@
         });
 
         // Optimized Instant Save Logic
-        const triggerSave = async (updates = {}) => {
+        const triggerSave = async (updates = {}, forceRefresh = false) => {
             const status = document.getElementById('save-status');
             status.className = 'saving';
             status.innerText = 'Syncing...';
@@ -126,7 +127,7 @@
                     lastSync: Date.now()
                 };
 
-                // Perform cloud sync without awaiting to keep UI snappy, or await for confirmation
+                // Cloud Sync
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
                 await setDoc(docRef, fullUpdates, { merge: true });
 
@@ -142,19 +143,29 @@
 
                 status.className = 'saved';
                 status.innerText = 'Saved';
-                setTimeout(() => { status.className = ''; }, 1000);
+
+                if (forceRefresh) {
+                    window.location.href = 'index.html';
+                } else {
+                    setTimeout(() => { status.className = ''; }, 1000);
+                }
             } catch (err) {
                 console.error(err);
                 status.innerText = 'Error';
             }
         };
 
-        // Bio Auto-save (Removed debounce for instant feel)
+        // Final Save Button Action
+        document.getElementById('final-save-btn').onclick = () => {
+            triggerSave({}, true);
+        };
+
+        // Bio Background Sync
         document.getElementById('edit-bio').oninput = () => {
             triggerSave();
         };
 
-        // Instant Upload
+        // Instant Upload & Background Sync
         const setupAutoUpload = (id, field, isImage) => {
             document.getElementById(id).onchange = (e) => {
                 const f = e.target.files[0];
@@ -162,12 +173,10 @@
                 const r = new FileReader();
                 r.onload = (ev) => {
                     const result = ev.target.result;
-                    // Update UI Immediately
                     if(field === 'pfp') document.getElementById('prev-pfp').src = result;
                     if(field === 'banner') document.getElementById('prev-banner').style.backgroundImage = `url(${result})`;
                     if(field === 'music') document.getElementById('music-label').innerText = "Audio Ready";
                     
-                    // Fire save instantly
                     const update = {};
                     update[field] = result;
                     triggerSave(update);
