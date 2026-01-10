@@ -97,7 +97,7 @@
 
     <!-- App Screen -->
     <div id="app-screen" class="hidden flex-grow flex h-screen overflow-hidden">
-        <!-- Sidebar (Classic Style Restored) -->
+        <!-- Sidebar -->
         <aside class="w-80 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex shrink-0">
             <div id="current-user-card" class="relative bg-slate-800 border-b border-slate-700">
                 <div id="my-banner" class="h-28 bg-cover bg-center bg-indigo-900 w-full opacity-80"></div>
@@ -126,7 +126,6 @@
 
         <!-- Main Chat Area -->
         <main class="flex-1 flex flex-col bg-slate-950 relative">
-            <!-- Top Navbar -->
             <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md z-30">
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
@@ -139,7 +138,6 @@
                         <span class="text-xs font-bold text-slate-300">Account</span>
                         <i class="fas fa-chevron-down text-[10px] text-slate-500"></i>
                     </button>
-                    <!-- Nav Dropdown -->
                     <div id="nav-menu" class="hidden absolute top-full right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-[100]">
                         <button onclick="openWallet()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 text-sm">
                             <div class="w-8 h-8 bg-yellow-500/10 rounded-lg flex items-center justify-center text-yellow-500">
@@ -157,16 +155,11 @@
                 </div>
             </header>
 
-            <!-- Blur Overlay for Modals -->
             <div id="chat-blur-overlay" class="absolute inset-0 z-40 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300"></div>
-            
             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
             
-            <!-- Chat Input Area -->
             <div class="p-6 bg-slate-900/90 border-t border-slate-800 relative z-50">
                 <div class="max-w-4xl mx-auto relative flex items-center gap-3">
-                    
-                    <!-- Vertical Plus Menu -->
                     <div id="plus-menu-container" class="relative">
                         <div id="plus-options" class="absolute bottom-16 left-0 flex flex-col gap-2 pointer-events-none">
                             <button onclick="triggerImageUpload()" class="plus-option-btn w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-indigo-500 pointer-events-auto">
@@ -180,7 +173,6 @@
                             <i class="fas fa-plus" id="plus-icon"></i>
                         </button>
                     </div>
-
                     <form id="chat-form" class="flex-1 flex gap-2">
                         <input type="text" id="message-input" autocomplete="off" placeholder="Message the galaxy..." class="flex-1 bg-slate-800/80 text-white rounded-2xl px-6 py-3.5 focus:outline-none border border-slate-700 focus:border-indigo-500 transition-all">
                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-indigo-600/20 active:scale-90">
@@ -204,25 +196,19 @@
                     <i class="fas fa-vault text-3xl text-yellow-500"></i>
                 </div>
                 <h3 class="text-2xl font-black text-white mb-8 tracking-tight">Galactic Wallet</h3>
-                
                 <div class="space-y-4">
                     <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-yellow-600/20 flex items-center justify-center text-yellow-500">
-                                <i class="fas fa-coins text-xl"></i>
-                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-yellow-600/20 flex items-center justify-center text-yellow-500"><i class="fas fa-coins text-xl"></i></div>
                             <div class="text-left">
                                 <span class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Coins</span>
                                 <span id="wallet-coins" class="text-2xl font-black text-white tracking-tighter">0</span>
                             </div>
                         </div>
                     </div>
-
                     <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-600/20 flex items-center justify-center text-emerald-500">
-                                <i class="fas fa-gem text-xl"></i>
-                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-600/20 flex items-center justify-center text-emerald-500"><i class="fas fa-gem text-xl"></i></div>
                             <div class="text-left">
                                 <span class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Gems</span>
                                 <span id="wallet-gems" class="text-2xl font-black text-white tracking-tighter">0</span>
@@ -234,12 +220,10 @@
         </div>
     </div>
 
-    <!-- Theme Picker Modal (Smaller & Compact) -->
+    <!-- Theme Picker Modal -->
     <div id="theme-picker-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden">
-            <div class="p-6 border-b border-slate-800">
-                <h3 class="text-lg font-black text-white">Card Style</h3>
-            </div>
+            <div class="p-6 border-b border-slate-800"><h3 class="text-lg font-black text-white">Card Style</h3></div>
             <div class="p-6 space-y-6">
                 <div>
                     <label class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-3">Accent Color</label>
@@ -263,14 +247,46 @@
         </div>
     </div>
 
-    <!-- Profile Viewer Modal -->
+    <!-- Profile Viewer Modal (Restructured) -->
     <div id="view-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl">
-            <div id="view-banner" class="h-32 bg-cover bg-center bg-slate-800"></div>
-            <div class="px-8 pb-8 -mt-12 relative text-center">
+            <!-- Banner & PFP -->
+            <div id="view-banner" class="h-32 bg-cover bg-center bg-slate-800 relative">
+                <div class="absolute inset-0 bg-black/30"></div>
+            </div>
+            <div class="px-6 pb-8 -mt-12 relative text-center">
                 <img id="view-pfp" src="" class="w-24 h-24 rounded-full border-8 border-slate-900 object-cover mx-auto shadow-xl">
-                <h2 id="view-username" class="text-3xl font-black text-white mt-4 tracking-tighter">Username</h2>
-                <button onclick="closeViewModal()" class="mt-8 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-2xl transition-colors">Close</button>
+                <h2 id="view-username" class="text-2xl font-black text-white mt-3 tracking-tighter">Username</h2>
+                <div class="mt-1">
+                    <span id="view-rank" class="px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-widest">MEMBER</span>
+                </div>
+
+                <!-- Tab Buttons -->
+                <div class="flex gap-2 mt-6 bg-slate-800/50 p-1.5 rounded-2xl border border-white/5">
+                    <button id="tab-info-btn" onclick="switchProfileTab('info')" class="flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all bg-indigo-600 text-white">Account Info</button>
+                    <button id="tab-bio-btn" onclick="switchProfileTab('bio')" class="flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white">Bio</button>
+                </div>
+
+                <!-- Account Info Section -->
+                <div id="view-tab-info" class="mt-6 text-left space-y-4">
+                    <div class="px-4">
+                        <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-1">Age</span>
+                        <span id="view-age" class="text-lg font-bold text-white">--</span>
+                    </div>
+                    <hr class="border-slate-800 mx-4">
+                    <div class="px-4">
+                        <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-1">Gender</span>
+                        <span id="view-gender" class="text-lg font-bold text-white">--</span>
+                    </div>
+                </div>
+
+                <!-- Bio Section -->
+                <div id="view-tab-bio" class="mt-6 text-left hidden px-4">
+                    <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-2">My Story</span>
+                    <p id="view-bio-text" class="text-sm text-slate-300 leading-relaxed italic">No bio available.</p>
+                </div>
+
+                <button onclick="closeViewModal()" class="mt-8 w-full bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-white font-bold py-3 rounded-2xl transition-all border border-white/5">Close Terminal</button>
             </div>
         </div>
     </div>
@@ -583,7 +599,33 @@
                 document.getElementById('view-username').innerText = u.username;
                 document.getElementById('view-pfp').src = u.pfp;
                 document.getElementById('view-banner').style.backgroundImage = `url('${u.banner}')`;
+                document.getElementById('view-rank').innerText = (u.rank || "MEMBER").toUpperCase();
+                document.getElementById('view-age').innerText = u.age || "--";
+                document.getElementById('view-gender').innerText = u.gender || "--";
+                document.getElementById('view-bio-text').innerText = u.bio || "This user hasn't written their galactic legend yet.";
+                
+                // Reset to Info Tab on open
+                switchProfileTab('info');
                 document.getElementById('view-profile-modal').classList.remove('hidden');
+            }
+        };
+
+        window.switchProfileTab = (tab) => {
+            const infoTab = document.getElementById('view-tab-info');
+            const bioTab = document.getElementById('view-tab-bio');
+            const infoBtn = document.getElementById('tab-info-btn');
+            const bioBtn = document.getElementById('tab-bio-btn');
+
+            if (tab === 'info') {
+                infoTab.classList.remove('hidden');
+                bioTab.classList.add('hidden');
+                infoBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all bg-indigo-600 text-white";
+                bioBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white";
+            } else {
+                infoTab.classList.add('hidden');
+                bioTab.classList.remove('hidden');
+                bioBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all bg-indigo-600 text-white";
+                infoBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white";
             }
         };
 
