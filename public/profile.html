@@ -7,137 +7,75 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --gold: #d4af37; 
-            --gold-bright: #f9e29c;
-            --dark: #050505; 
-            --card: #111111;
-        }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: var(--dark); 
-            color: white; 
-            overflow-x: hidden;
-        }
+        :root { --gold: #d4af37; --dark: #050505; --card: #111111; }
+        body { font-family: 'Inter', sans-serif; background: var(--dark); color: white; min-height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
         .serif { font-family: 'Cormorant Garamond', serif; }
+        .glass-panel { background: rgba(18, 18, 18, 0.95); border: 1px solid rgba(212, 175, 55, 0.2); box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+        .gold-text { background: linear-gradient(135deg, #f9e29c, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .input-luxury { background: #000; border: 1px solid #222; transition: all 0.2s; }
+        .input-luxury:focus { border-color: var(--gold); outline: none; }
         
-        /* Luxury Glass Effect */
-        .glass-panel {
-            background: rgba(15, 15, 15, 0.8);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(212, 175, 55, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .gold-text {
-            background: linear-gradient(to bottom right, var(--gold-bright), var(--gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .input-luxury {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid #222;
-            transition: all 0.2s ease;
-        }
-        .input-luxury:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
-            outline: none;
-        }
-
-        /* Status Toast */
         #status-pill {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            padding: 8px 16px;
-            border-radius: 99px;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            transform: translateY(-100px);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 100;
+            position: fixed; top: 20px; right: 20px; padding: 6px 14px; border-radius: 8px;
+            font-size: 9px; font-weight: 900; letter-spacing: 2px; z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: translateY(-10px);
         }
-        #status-pill.show { transform: translateY(0); }
-
-        .pfp-ring {
-            box-shadow: 0 0 0 4px var(--card), 0 0 0 5px rgba(212, 175, 55, 0.2);
-        }
-
-        /* Loading Spinner */
-        .loader {
-            width: 12px; height: 12px;
-            border: 2px solid #000;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            display: inline-block;
-            animation: rotation 1s linear infinite;
-        }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #status-pill.show { opacity: 1; transform: translateY(0); }
+        .bg-sync { background: var(--gold); color: black; }
+        .bg-error { background: #ef4444; color: white; }
+        .bg-success { background: #22c55e; color: white; }
     </style>
 </head>
-<body class="flex items-center justify-center min-height-screen py-10">
+<body>
 
-    <div id="status-pill" class="bg-white text-black flex items-center gap-2">
-        <span id="status-text">SYNCING</span>
-    </div>
+    <div id="status-pill">SYNCING</div>
 
-    <div class="w-full max-w-lg px-4">
-        <div class="glass-panel rounded-[3rem] overflow-hidden">
-            <div class="relative h-40 bg-zinc-900 overflow-hidden">
-                <div id="prev-banner" class="absolute inset-0 bg-cover bg-center transition-opacity duration-500"></div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                
-                <button onclick="window.location.href='index.html'" class="absolute top-6 left-6 z-20 text-[10px] font-bold tracking-widest uppercase bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-white hover:text-black transition">
-                    ← Exit
-                </button>
+    <div class="w-full max-w-lg p-4">
+        <div class="glass-panel rounded-[2.5rem] overflow-hidden">
+            <div class="relative h-32 bg-zinc-900">
+                <div id="prev-banner" class="absolute inset-0 bg-cover bg-center"></div>
+                <div class="absolute inset-0 bg-black/40"></div>
+                <button onclick="window.location.href='index.html'" class="absolute top-4 left-4 text-[9px] font-bold tracking-widest uppercase bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white hover:text-black transition">Discard</button>
             </div>
 
             <div class="px-8 pb-10">
-                <div class="relative flex justify-between items-end -mt-12 mb-8">
-                    <div class="relative group">
-                        <img id="prev-pfp" src="https://via.placeholder.com/150" class="w-24 h-24 rounded-3xl object-cover pfp-ring relative z-10 bg-black">
-                        <div onclick="document.getElementById('pfp-input').click()" class="absolute inset-0 z-20 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 rounded-3xl cursor-pointer transition">
-                            <span class="text-[10px] font-bold">CHANGE</span>
+                <div class="relative flex justify-between items-end -mt-10 mb-6">
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('pfp-input').click()">
+                        <img id="prev-pfp" src="" class="w-20 h-20 rounded-2xl object-cover border-4 border-[#121212] bg-black shadow-2xl">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition">
+                            <span class="text-[8px] font-bold">EDIT</span>
                         </div>
                     </div>
-                    <button id="final-save-btn" class="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-tighter hover:scale-105 transition active:scale-95">
-                        Finish Editing
-                    </button>
+                    <button id="final-save-btn" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition active:scale-95">Save Changes</button>
                 </div>
 
-                <div class="space-y-6">
+                <div class="space-y-5">
                     <div>
-                        <h1 class="serif text-4xl gold-text mb-1">Refine Identity</h1>
-                        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.4em] mb-8">Elite Member Dashboard</p>
+                        <h1 class="serif text-3xl gold-text">Account Settings</h1>
+                        <p class="text-zinc-500 text-[8px] uppercase tracking-[0.3em]">Instant Cloud Sync Enabled</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div onclick="document.getElementById('banner-input').click()" class="input-luxury p-4 rounded-2xl cursor-pointer hover:border-zinc-600 transition group">
-                            <p class="text-[9px] text-zinc-500 font-bold uppercase mb-1">Cover Art</p>
-                            <p class="text-xs font-medium group-hover:text-gold transition">Update Banner</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div onclick="document.getElementById('banner-input').click()" class="input-luxury p-3 rounded-xl cursor-pointer hover:bg-zinc-900 transition">
+                            <p class="text-[8px] text-zinc-500 font-bold uppercase mb-1">Banner Image</p>
+                            <p class="text-[10px] font-medium text-white">Change Cover</p>
                             <input type="file" id="banner-input" class="hidden" accept="image/*">
                         </div>
-                        <div onclick="document.getElementById('music-input').click()" class="input-luxury p-4 rounded-2xl cursor-pointer hover:border-zinc-600 transition group">
-                            <p class="text-[9px] text-zinc-500 font-bold uppercase mb-1">Atmosphere</p>
-                            <p id="music-label" class="text-xs font-medium group-hover:text-gold transition truncate">Select Audio</p>
+                        <div onclick="document.getElementById('music-input').click()" class="input-luxury p-3 rounded-xl cursor-pointer hover:bg-zinc-900 transition">
+                            <p class="text-[8px] text-zinc-500 font-bold uppercase mb-1">Profile Music</p>
+                            <p id="music-label" class="text-[10px] font-medium text-white truncate">Choose Audio</p>
                             <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
                         </div>
                     </div>
 
                     <div>
-                        <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-500 ml-2 mb-2 block">Biography</label>
-                        <textarea id="edit-bio" class="input-luxury w-full h-32 rounded-2xl p-4 text-sm resize-none leading-relaxed" placeholder="Write your legacy..."></textarea>
+                        <label class="text-[8px] font-black uppercase tracking-widest text-zinc-500 ml-1 mb-2 block">Your Story</label>
+                        <textarea id="edit-bio" class="input-luxury w-full h-24 rounded-xl p-4 text-xs leading-relaxed text-zinc-200" placeholder="Describe yourself..."></textarea>
                     </div>
                 </div>
-
                 <input type="file" id="pfp-input" class="hidden" accept="image/*">
             </div>
         </div>
-        
-        <p class="text-center mt-6 text-zinc-600 text-[9px] uppercase tracking-[0.5em]">Global Encryption Active</p>
     </div>
 
     <script type="module">
@@ -160,100 +98,93 @@
         const appId = "chatlaxy-v1-production";
 
         let localProfile = JSON.parse(localStorage.getItem('chatlaxy_session_v6'));
-        if (!localProfile) window.location.href = 'index.html';
+        if (!localProfile) {
+            alert("No session found. Please login.");
+            window.location.href = 'index.html';
+        }
 
-        // Set Initial View
+        // Setup UI
         document.getElementById('prev-pfp').src = localProfile.pfp || '';
         if (localProfile.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${localProfile.banner})`;
         document.getElementById('edit-bio').value = localProfile.customBio || '';
 
-        // Status Indicator Controller
-        const showStatus = (text, isGold = false) => {
+        const notify = (text, type) => {
             const pill = document.getElementById('status-pill');
-            const label = document.getElementById('status-text');
-            label.innerText = text;
-            pill.style.background = isGold ? '#d4af37' : '#ffffff';
-            pill.classList.add('show');
-            if(!isGold) setTimeout(() => pill.classList.remove('show'), 2000);
+            pill.innerText = text;
+            pill.className = `show bg-${type}`;
+            if (type !== 'sync') setTimeout(() => pill.classList.remove('show'), 2000);
         };
 
-        // Instant Sync Core
-        let saveTimeout;
-        const triggerSave = async (updates = {}, forceExit = false) => {
-            if (forceExit) showStatus("FINALIZING...", true);
-            else showStatus("SYNCING...");
+        const syncData = async (updates = {}, redirect = false) => {
+            notify("SYNCING...", "sync");
 
             try {
-                const fullUpdates = {
+                const combinedData = {
+                    ...localProfile,
                     ...updates,
-                    username: localProfile.username,
                     customBio: document.getElementById('edit-bio').value,
                     lastSync: Date.now()
                 };
 
-                // 1. Parallel Cloud Save (Fastest possible)
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
-                const cloudPromise = setDoc(docRef, fullUpdates, { merge: true });
-
-                // 2. Immediate Local Update
-                localProfile = { ...localProfile, ...fullUpdates };
-                localStorage.setItem('chatlaxy_session_v6', JSON.stringify(localProfile));
+                // Update Local Storage Immediately (Speed!)
+                localStorage.setItem('chatlaxy_session_v6', JSON.stringify(combinedData));
                 
                 const accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
                 const idx = accounts.findIndex(a => a.username === localProfile.username);
                 if (idx !== -1) {
-                    accounts[idx] = { ...accounts[idx], ...fullUpdates };
+                    accounts[idx] = combinedData;
                     localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(accounts));
                 }
-
-                await cloudPromise; // Wait for cloud after local is done
                 
-                if (forceExit) window.location.href = 'index.html';
-                else showStatus("SAVED");
+                localProfile = combinedData;
+
+                // Cloud Sync
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
+                await setDoc(docRef, combinedData, { merge: true });
+
+                notify("SAVED", "success");
+                if (redirect) window.location.href = 'index.html';
 
             } catch (err) {
-                console.error(err);
-                showStatus("ERROR");
+                console.warn("Cloud sync failed, saved locally:", err);
+                notify("SAVED LOCALLY", "sync"); // Keep it gold to show it's working but maybe offline
+                if (redirect) window.location.href = 'index.html';
             }
         };
 
-        // Event Listeners
-        document.getElementById('final-save-btn').onclick = () => triggerSave({}, true);
-
-        // Bio: Debounced for performance
+        // Inputs
+        let bioDebounce;
         document.getElementById('edit-bio').oninput = () => {
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => triggerSave(), 800);
+            clearTimeout(bioDebounce);
+            bioDebounce = setTimeout(() => syncData(), 1000);
         };
 
-        // File Handlers: Instant Preview + Instant Sync
-        const handleFile = (id, field) => {
+        const setupFile = (id, key) => {
             document.getElementById(id).onchange = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-
-                // Instant UI Preview (Before Uploading)
                 const reader = new FileReader();
                 reader.onload = (ev) => {
-                    const data = ev.target.result;
-                    if(field === 'pfp') document.getElementById('prev-pfp').src = data;
-                    if(field === 'banner') document.getElementById('prev-banner').style.backgroundImage = `url(${data})`;
-                    if(field === 'music') document.getElementById('music-label').innerText = "Audio Attached";
+                    const val = ev.target.result;
+                    if(key === 'pfp') document.getElementById('prev-pfp').src = val;
+                    if(key === 'banner') document.getElementById('prev-banner').style.backgroundImage = `url(${val})`;
+                    if(key === 'music') document.getElementById('music-label').innerText = "Audio Loaded";
                     
-                    // Sync immediately
-                    const up = {}; up[field] = data;
-                    triggerSave(up);
+                    const up = {}; up[key] = val;
+                    syncData(up);
                 };
                 reader.readAsDataURL(file);
             };
         };
 
-        handleFile('pfp-input', 'pfp');
-        handleFile('banner-input', 'banner');
-        handleFile('music-input', 'music');
+        setupFile('pfp-input', 'pfp');
+        setupFile('banner-input', 'banner');
+        setupFile('music-input', 'music');
 
-        // Silent Auth
-        signInAnonymously(auth);
+        document.getElementById('final-save-btn').onclick = () => syncData({}, true);
+
+        // Silent login
+        signInAnonymously(auth).catch(() => console.log("Offline mode active"));
 
     </script>
 </body>
