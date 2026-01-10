@@ -20,7 +20,7 @@
             color: #e2e8f0; 
             display: flex;
             align-items: center;
-            justify-center;
+            justify-content: center;
             min-height: 100vh;
             margin: 0;
         }
@@ -65,7 +65,7 @@
             width: 80px;
             height: 80px;
             border-radius: 1.5rem;
-            object-cover;
+            object-fit: cover;
             border: 3px solid var(--luxury-dark);
             background: #000;
         }
@@ -85,7 +85,7 @@
 <body>
 
     <div id="loading-overlay">
-        <div class="w-10 h-10 border-2 border-gold/20 border-t-gold rounded-full animate-spin mb-4"></div>
+        <div class="w-10 h-10 border-2 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin mb-4"></div>
         <p class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Finalizing Identity</p>
     </div>
 
@@ -100,7 +100,6 @@
             </div>
 
             <div class="space-y-6">
-                <!-- Visuals -->
                 <div class="relative mb-12">
                     <div id="prev-banner" class="banner-preview mb-[-40px]"></div>
                     <div class="px-6 flex items-end gap-4">
@@ -119,7 +118,6 @@
                     </div>
                 </div>
 
-                <!-- Fields -->
                 <div class="space-y-4">
                     <div>
                         <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Username</label>
@@ -148,6 +146,7 @@
         let pendingPfp = null;
         let pendingBanner = null;
         let pendingMusic = null;
+        let originalUsername = ""; 
 
         window.onload = () => {
             const session = localStorage.getItem('chatlaxy_session_v6');
@@ -156,11 +155,13 @@
                 return;
             }
             currentUser = JSON.parse(session);
-            
+            originalUsername = currentUser.username;
+
             // Populate fields
             document.getElementById('edit-user').value = currentUser.username;
             document.getElementById('edit-bio').value = currentUser.customBio || '';
-            document.getElementById('prev-pfp').src = currentUser.pfp;
+            document.getElementById('prev-pfp').src = currentUser.pfp || 'default-pfp.png';
+            
             if (currentUser.banner) {
                 document.getElementById('prev-banner').style.backgroundImage = `url(${currentUser.banner})`;
             }
@@ -169,7 +170,7 @@
             }
         };
 
-        // Handlers for file inputs
+        // File Handlers
         document.getElementById('pfp-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -203,24 +204,24 @@
             reader.readAsDataURL(file);
         };
 
+        // Save Action
         document.getElementById('save-btn').onclick = () => {
             const newName = document.getElementById('edit-user').value.trim();
             const newBio = document.getElementById('edit-bio').value.trim();
             
             if (!newName) return alert("Username required");
 
-            document.getElementById('loading-overlay').style.display = 'flex';
-
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-            
-            // Check username availability if changed
-            if (newName !== currentUser.username) {
+
+            // Check if name is taken by someone else
+            if (newName.toLowerCase() !== originalUsername.toLowerCase()) {
                 if (db.some(u => u.username.toLowerCase() === newName.toLowerCase())) {
-                    document.getElementById('loading-overlay').style.display = 'none';
                     alert("Username already taken.");
                     return;
                 }
             }
+
+            document.getElementById('loading-overlay').style.display = 'flex';
 
             // Update user object
             currentUser.username = newName;
@@ -229,19 +230,20 @@
             if (pendingBanner) currentUser.banner = pendingBanner;
             if (pendingMusic) currentUser.music = pendingMusic;
 
-            // Sync with DB
-            const idx = db.findIndex(u => u.password === currentUser.password && u.age === currentUser.age);
+            // Sync with Database array
+            const idx = db.findIndex(u => u.username === originalUsername);
             if (idx !== -1) {
-                db[idx] = { ...currentUser };
+                db[idx] = currentUser;
+            } else {
+                db.push(currentUser);
             }
 
             localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
             localStorage.setItem('chatlaxy_session_v6', JSON.stringify(currentUser));
 
-            // Redirect back
             setTimeout(() => {
                 window.location.href = 'index.html';
-            }, 800);
+            }, 1000);
         };
     </script>
 </body>
