@@ -7,660 +7,553 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
+        /* Custom Scrollbar for Dark Mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; 
+        }
         .glass-panel {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .user-card-custom {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .glow-effect {
-            box-shadow: 0 0 15px var(--glow-color);
-        }
-
-        #chat-blur-overlay {
+            background: rgba(31, 41, 55, 0.7);
             backdrop-filter: blur(10px);
-            transition: opacity 0.3s ease;
+            border: 1px solid rgba(75, 85, 99, 0.4);
         }
-
-        .plus-option-btn {
-            transition: all 0.2s ease;
-            transform: scale(0);
-            opacity: 0;
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
         }
-
-        .plus-menu-open .plus-option-btn {
-            transform: scale(1);
-            opacity: 1;
-        }
-
-        .wallet-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased h-screen w-screen overflow-hidden flex flex-col">
+<body class="bg-gray-950 text-gray-100 font-sans antialiased h-screen w-screen overflow-hidden flex flex-col">
 
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
     </div>
 
     <!-- Auth Screen -->
-    <div id="auth-screen" class="hidden flex-grow flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80')] bg-cover bg-center">
-        <div class="absolute inset-0 bg-slate-950/90 backdrop-blur-md"></div>
-        <div class="glass-panel w-full max-w-md p-8 rounded-3xl shadow-2xl relative z-10 border border-white/10">
+    <div id="auth-screen" class="hidden flex-grow flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5980?auto=format&fit=crop&q=80')] bg-cover bg-center">
+        <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm"></div>
+        
+        <div class="glass-panel w-full max-w-md p-8 rounded-2xl shadow-2xl relative z-10">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 mb-4 rotate-3 shadow-lg shadow-indigo-600/40">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-600 mb-4">
                     <i class="fas fa-rocket text-2xl text-white"></i>
                 </div>
-                <h1 class="text-4xl font-black tracking-tighter text-white">CHATLAXY</h1>
+                <h1 class="text-3xl font-bold tracking-tight text-white">Chatlaxy</h1>
+                <p class="text-gray-400 mt-2">Join the galactic conversation.</p>
             </div>
 
-            <div class="flex mb-6 bg-slate-800/50 p-1.5 rounded-2xl">
-                <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2.5 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow-lg transition-all">Login</button>
-                <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 text-sm font-bold rounded-xl text-slate-400 hover:text-white transition-all">Sign Up</button>
+            <!-- Tabs -->
+            <div class="flex mb-6 bg-gray-800 p-1 rounded-lg">
+                <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white shadow transition-all">Login</button>
+                <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-sm font-medium rounded-md text-gray-400 hover:text-white transition-all">Sign Up</button>
             </div>
 
+            <!-- Login Form -->
             <form id="login-form" class="space-y-4">
-                <input type="email" id="login-email" placeholder="Email Address" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-5 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all" required>
-                <input type="password" id="login-password" placeholder="Password" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-5 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all" required>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3.5 rounded-xl transition-all shadow-xl shadow-indigo-600/30 active:scale-95">WARP IN</button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    <input type="email" id="login-email" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                    <input type="password" id="login-password" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/30">
+                    Warp In
+                </button>
             </form>
 
+            <!-- Signup Form -->
             <form id="signup-form" class="space-y-4 hidden">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="signup-username" placeholder="Username" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                    <input type="number" id="signup-age" placeholder="Age" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                        <input type="text" id="signup-username" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Age</label>
+                        <input type="number" id="signup-age" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                    </div>
                 </div>
-                <select id="signup-gender" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none">
-                    <option value="Not Specified">Select Gender...</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-binary">Non-binary</option>
-                </select>
-                <input type="email" id="signup-email" placeholder="Email Address" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                <input type="password" id="signup-password" placeholder="Password (6+ chars)" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required minlength="6">
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3.5 rounded-xl transition-all shadow-xl shadow-indigo-600/30">INITIATE CREW MEMBER</button>
+                <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Gender</label>
+                        <select id="signup-gender" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="Not Specified">Select...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                         <label class="block text-sm font-medium text-gray-300 mb-1">Bio</label>
+                         <input type="text" id="signup-bio" placeholder="Short bio..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    <input type="email" id="signup-email" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                    <input type="password" id="signup-password" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/30">
+                    Create Identity
+                </button>
             </form>
-            <div id="auth-error" class="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center hidden"></div>
+            <div id="auth-error" class="mt-4 text-red-400 text-sm text-center hidden"></div>
         </div>
     </div>
 
     <!-- App Screen -->
     <div id="app-screen" class="hidden flex-grow flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <aside class="w-80 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex shrink-0">
-            <div id="current-user-card" class="relative bg-slate-800 border-b border-slate-700">
-                <div id="my-banner" class="h-28 bg-cover bg-center bg-indigo-900 w-full opacity-80"></div>
-                <div class="px-5 pb-5 -mt-12 relative">
-                    <div class="relative inline-block">
-                        <img id="my-pfp" src="https://ui-avatars.com/api/?name=User" class="w-24 h-24 rounded-full border-4 border-slate-900 object-cover shadow-2xl">
-                        <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-4 border-slate-900 rounded-full"></div>
-                    </div>
-                    <div class="mt-3">
-                        <h2 id="my-username" class="text-xl font-black text-white leading-tight">Loading...</h2>
-                        <div class="flex items-center gap-2 mt-1.5">
-                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 tracking-widest uppercase">Member</span>
+        
+        <!-- Sidebar (Profile & Online Users) -->
+        <aside class="w-80 bg-gray-900 border-r border-gray-800 flex flex-col hidden md:flex">
+            <!-- My Profile Card -->
+            <div id="current-user-card" class="relative bg-gray-800 border-b border-gray-700">
+                <div id="my-banner" class="h-24 bg-cover bg-center bg-indigo-900 w-full opacity-80" style="background-image: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1000&q=80');"></div>
+                <div class="px-4 pb-4 -mt-10 relative">
+                    <img id="my-pfp" src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff" class="w-20 h-20 rounded-full border-4 border-gray-800 object-cover shadow-lg">
+                    <div class="mt-2">
+                        <div class="flex items-center gap-2">
+                            <h2 id="my-username" class="text-lg font-bold text-white leading-tight">Loading...</h2>
+                            <span id="my-rank-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">MEMBER</span>
                         </div>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <div class="flex items-center gap-1 text-xs text-yellow-500">
+                                <i class="fas fa-coins"></i> <span id="my-coins">100</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-xs text-blue-400">
+                                <i class="fas fa-gem"></i> <span id="my-gems">10</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span id="my-status-dot" class="w-2.5 h-2.5 rounded-full bg-green-500 border border-gray-900"></span>
+                            <span id="my-status-text" class="text-xs text-gray-400 truncate">Online</span>
+                        </div>
+                        <p id="my-bio" class="text-xs text-gray-500 mt-2 line-clamp-2 italic">Bio goes here...</p>
                     </div>
-                    <button onclick="openEditModal()" class="absolute top-16 right-5 bg-slate-950/60 hover:bg-slate-800 p-2.5 rounded-2xl text-slate-300 transition-all border border-white/5 backdrop-blur-md">
-                        <i class="fas fa-edit"></i>
+                    <button onclick="openProfileModal()" class="absolute top-4 right-4 bg-gray-900/50 hover:bg-gray-700 p-1.5 rounded-full text-gray-300 transition-colors">
+                        <i class="fas fa-cog"></i>
                     </button>
                 </div>
             </div>
+
+            <!-- Online Users List -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center justify-between">
+                    <span>Crew Online</span>
+                    <span id="online-count" class="bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full text-xs">0</span>
+                </h3>
+                <div id="users-list" class="space-y-3">
+                    <!-- Users injected here -->
+                </div>
+            </div>
             
-            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 px-2">Crew Members (<span id="online-count">0</span>)</h3>
-                <div id="users-list" class="space-y-2"></div>
+            <div class="p-4 border-t border-gray-800">
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-400 transition-colors text-sm py-2">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </button>
             </div>
         </aside>
 
         <!-- Main Chat Area -->
-        <main class="flex-1 flex flex-col bg-slate-950 relative">
-            <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md z-30">
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
-                    <span class="text-xs font-black uppercase tracking-widest text-slate-400">Deep Space Terminal</span>
-                </div>
-                
-                <div class="relative group">
-                    <button id="nav-profile-btn" onclick="toggleNavMenu()" class="flex items-center gap-2 p-1.5 pr-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-all">
-                        <img id="nav-pfp" src="https://ui-avatars.com/api/?name=?" class="w-8 h-8 rounded-xl object-cover">
-                        <span class="text-xs font-bold text-slate-300">Account</span>
-                        <i class="fas fa-chevron-down text-[10px] text-slate-500"></i>
-                    </button>
-                    <div id="nav-menu" class="hidden absolute top-full right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-[100]">
-                        <button onclick="openWallet()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 text-sm">
-                            <div class="w-8 h-8 bg-yellow-500/10 rounded-lg flex items-center justify-center text-yellow-500">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            My Wallet
-                        </button>
-                        <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-red-400 text-sm">
-                            <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400">
-                                <i class="fas fa-power-off"></i>
-                            </div>
-                            Log Out
-                        </button>
-                    </div>
-                </div>
-            </header>
+        <main class="flex-1 flex flex-col bg-gray-950 relative">
+            <!-- Mobile Header -->
+            <div class="md:hidden h-14 bg-gray-900 border-b border-gray-800 flex items-center px-4 justify-between shrink-0">
+                <h1 class="font-bold text-indigo-400">Chatlaxy</h1>
+                <button onclick="document.querySelector('aside').classList.toggle('hidden');" class="text-gray-300">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
 
-            <div id="chat-blur-overlay" class="absolute inset-0 z-40 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300"></div>
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
-            
-            <div class="p-6 bg-slate-900/90 border-t border-slate-800 relative z-50">
-                <div class="max-w-4xl mx-auto relative flex items-center gap-3">
-                    <div id="plus-menu-container" class="relative">
-                        <div id="plus-options" class="absolute bottom-16 left-0 flex flex-col gap-2 pointer-events-none">
-                            <button onclick="triggerImageUpload()" class="plus-option-btn w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-indigo-500 pointer-events-auto">
-                                <i class="fas fa-image"></i>
-                            </button>
-                            <button onclick="openThemePicker()" class="plus-option-btn w-12 h-12 bg-pink-600 text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-pink-500 pointer-events-auto">
-                                <i class="fas fa-palette"></i>
-                            </button>
-                        </div>
-                        <button type="button" onclick="togglePlusMenu()" id="plus-main-btn" class="w-12 h-12 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-2xl flex items-center justify-center transition-all border border-slate-700">
-                            <i class="fas fa-plus" id="plus-icon"></i>
-                        </button>
-                    </div>
-                    <form id="chat-form" class="flex-1 flex gap-2">
-                        <input type="text" id="message-input" autocomplete="off" placeholder="Message the galaxy..." class="flex-1 bg-slate-800/80 text-white rounded-2xl px-6 py-3.5 focus:outline-none border border-slate-700 focus:border-indigo-500 transition-all">
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-indigo-600/20 active:scale-90">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </form>
+            <!-- Chat Messages -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                <div class="flex justify-center opacity-50 text-sm py-4">
+                    <span>Welcome to the bridge. Start chatting!</span>
                 </div>
-                <input type="file" id="chat-image-upload" class="hidden" accept="image/*">
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 bg-gray-900/90 border-t border-gray-800 backdrop-blur-sm">
+                <form id="chat-form" class="flex gap-2 max-w-4xl mx-auto">
+                    <input type="text" id="message-input" autocomplete="off" placeholder="Type a message..." class="flex-1 bg-gray-800 text-white rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 placeholder-gray-500">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-105 shadow-lg shadow-indigo-600/20">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
             </div>
         </main>
     </div>
 
-    <!-- Wallet Modal -->
-    <div id="wallet-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="wallet-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-6">
-                <button onclick="closeWallet()" class="text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="text-center">
-                <div class="w-20 h-20 bg-yellow-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-yellow-500/30">
-                    <i class="fas fa-vault text-3xl text-yellow-500"></i>
-                </div>
-                <h3 class="text-2xl font-black text-white mb-8 tracking-tight">Galactic Wallet</h3>
-                <div class="space-y-4">
-                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-yellow-600/20 flex items-center justify-center text-yellow-500"><i class="fas fa-coins text-xl"></i></div>
-                            <div class="text-left">
-                                <span class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Coins</span>
-                                <span id="wallet-coins" class="text-2xl font-black text-white tracking-tighter">0</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-600/20 flex items-center justify-center text-emerald-500"><i class="fas fa-gem text-xl"></i></div>
-                            <div class="text-left">
-                                <span class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Gems</span>
-                                <span id="wallet-gems" class="text-2xl font-black text-white tracking-tighter">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Theme Picker Modal -->
-    <div id="theme-picker-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden">
-            <div class="p-6 border-b border-slate-800"><h3 class="text-lg font-black text-white">Card Style</h3></div>
-            <div class="p-6 space-y-6">
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-3">Accent Color</label>
-                    <div id="color-grid" class="grid grid-cols-5 gap-3"></div>
-                </div>
-                <div class="space-y-3">
-                    <label class="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700 cursor-pointer">
-                        <span class="text-sm font-bold text-slate-300">Glow Effect</span>
-                        <input type="checkbox" id="theme-glow-toggle" class="w-5 h-5 accent-indigo-500">
-                    </label>
-                    <label class="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700 cursor-pointer">
-                        <span class="text-sm font-bold text-slate-300">Gradient Fill</span>
-                        <input type="checkbox" id="theme-gradient-toggle" class="w-5 h-5 accent-indigo-500">
-                    </label>
-                </div>
-            </div>
-            <div class="p-6 bg-slate-800/20 flex gap-3">
-                <button onclick="closeThemePicker()" class="flex-1 py-3 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
-                <button onclick="applyTheme()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black transition-all">Apply</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Viewer Modal (Restructured) -->
-    <div id="view-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl">
-            <!-- Banner & PFP -->
-            <div id="view-banner" class="h-32 bg-cover bg-center bg-slate-800 relative">
-                <div class="absolute inset-0 bg-black/30"></div>
-            </div>
-            <div class="px-6 pb-8 -mt-12 relative text-center">
-                <img id="view-pfp" src="" class="w-24 h-24 rounded-full border-8 border-slate-900 object-cover mx-auto shadow-xl">
-                <h2 id="view-username" class="text-2xl font-black text-white mt-3 tracking-tighter">Username</h2>
-                <div class="mt-1">
-                    <span id="view-rank" class="px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-widest">MEMBER</span>
-                </div>
-
-                <!-- Tab Buttons -->
-                <div class="flex gap-2 mt-6 bg-slate-800/50 p-1.5 rounded-2xl border border-white/5">
-                    <button id="tab-info-btn" onclick="switchProfileTab('info')" class="flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all bg-indigo-600 text-white">Account Info</button>
-                    <button id="tab-bio-btn" onclick="switchProfileTab('bio')" class="flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white">Bio</button>
-                </div>
-
-                <!-- Account Info Section -->
-                <div id="view-tab-info" class="mt-6 text-left space-y-4">
-                    <div class="px-4">
-                        <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-1">Age</span>
-                        <span id="view-age" class="text-lg font-bold text-white">--</span>
-                    </div>
-                    <hr class="border-slate-800 mx-4">
-                    <div class="px-4">
-                        <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-1">Gender</span>
-                        <span id="view-gender" class="text-lg font-bold text-white">--</span>
-                    </div>
-                </div>
-
-                <!-- Bio Section -->
-                <div id="view-tab-bio" class="mt-6 text-left hidden px-4">
-                    <span class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-2">My Story</span>
-                    <p id="view-bio-text" class="text-sm text-slate-300 leading-relaxed italic">No bio available.</p>
-                </div>
-
-                <button onclick="closeViewModal()" class="mt-8 w-full bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-white font-bold py-3 rounded-2xl transition-all border border-white/5">Close Terminal</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Edit Profile Modal -->
-    <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-[2rem] p-8 shadow-2xl">
-            <h3 class="text-2xl font-black text-white mb-8 tracking-tight">Identity Settings</h3>
-            <div class="space-y-6">
-                <div class="flex flex-col gap-4 bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                    <div class="flex items-center gap-6">
-                        <img id="edit-pfp-preview" src="" class="w-20 h-20 rounded-full bg-slate-700 object-cover border-4 border-slate-900">
-                        <label class="flex-1">
-                            <span class="block text-center bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 py-3 rounded-xl border border-indigo-600/30 cursor-pointer font-bold text-sm">Change Avatar</span>
-                            <input type="file" id="pfp-upload" class="hidden" accept="image/*">
-                        </label>
-                    </div>
-                    <div>
-                        <div id="edit-banner-preview" class="w-full h-20 bg-slate-700 rounded-xl bg-cover bg-center border border-white/5 mb-2"></div>
-                        <label class="block w-full text-center bg-slate-700 hover:bg-slate-600 text-slate-300 py-2 rounded-xl cursor-pointer font-bold text-xs uppercase tracking-widest">Change Banner</label>
-                        <input type="file" id="banner-upload" class="hidden" accept="image/*">
-                    </div>
+    <div id="profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-gray-900 border border-gray-700 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50">
+                <h3 class="text-lg font-bold text-white">Edit Profile</h3>
+                <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Avatar URL</label>
+                    <input type="text" id="edit-pfp" placeholder="https://..." class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-black tracking-widest mb-3">Your Story</label>
-                    <textarea id="edit-bio" rows="4" class="w-full bg-slate-800/80 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Banner URL</label>
+                    <input type="text" id="edit-banner" placeholder="https://..." class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Status Message</label>
+                    <input type="text" id="edit-status" placeholder="What are you doing?" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+                </div>
+                 <div>
+                    <label class="block text-xs uppercase text-gray-500 font-semibold mb-1">Bio</label>
+                    <textarea id="edit-bio" rows="3" placeholder="Tell us about yourself..." class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none"></textarea>
                 </div>
             </div>
-            <div class="mt-8 flex justify-end gap-3">
-                <button onclick="closeEditModal()" class="px-6 py-3 text-slate-400 font-bold hover:text-white transition-all">Discard</button>
-                <button id="save-profile-btn" onclick="saveProfile()" class="px-10 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black transition-all">Save Changes</button>
+            <div class="p-4 border-t border-gray-800 bg-gray-800/50 flex justify-end gap-2">
+                <button onclick="closeProfileModal()" class="px-4 py-2 text-sm text-gray-300 hover:text-white">Cancel</button>
+                <button onclick="saveProfile()" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium">Save Changes</button>
             </div>
         </div>
     </div>
 
+    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, setDoc, doc, updateDoc, limit, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, setDoc, doc, updateDoc, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
             authDomain: "chatlaxy-pro.firebaseapp.com",
             projectId: "chatlaxy-pro",
             storageBucket: "chatlaxy-pro.firebasestorage.app",
             messagingSenderId: "807800533954",
-            appId: "1:807800533954:web:4165776ac52b93e9cb9c5b"
+            appId: "1:807800533954:web:4165776ac52b93e9cb9c5b",
+            measurementId: "G-XJ174Y690H"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        const USERS_COL = `artifacts/chatlaxy-pro-v1/public/data/users`;
-        const MSGS_COL = `artifacts/chatlaxy-pro-v1/public/data/messages`;
+        const APP_ID = "chatlaxy-pro-v1";
+        const USERS_COLLECTION = `artifacts/${APP_ID}/public/data/users`;
+        const MESSAGES_COLLECTION = `artifacts/${APP_ID}/public/data/messages`;
 
+        // State
         let currentUser = null;
         let currentUserData = null;
-        let pendingPfp = null;
-        let pendingBanner = null;
-        let selectedThemeColor = '#6366f1';
+        let messagesUnsubscribe = null;
+        let usersUnsubscribe = null;
 
-        const themeColors = [
-            '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', 
-            '#10b981', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', 
-            '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e',
-            '#00ffea', '#ff00ff', '#facc15', '#ffffff', '#4b5563'
-        ];
+        // --- DOM Elements ---
+        const authScreen = document.getElementById('auth-screen');
+        const appScreen = document.getElementById('app-screen');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const messagesContainer = document.getElementById('chat-messages');
+        const authError = document.getElementById('auth-error');
 
         onAuthStateChanged(auth, async (user) => {
-            document.getElementById('loading-overlay').classList.add('hidden');
             if (user) {
                 currentUser = user;
-                const userDocRef = doc(db, USERS_COL, user.uid);
-                onSnapshot(userDocRef, (snap) => {
-                    if (snap.exists()) {
-                        currentUserData = snap.data();
-                        document.getElementById('my-username').innerText = currentUserData.username;
-                        document.getElementById('my-pfp').src = currentUserData.pfp || `https://ui-avatars.com/api/?name=${currentUserData.username}`;
-                        document.getElementById('my-banner').style.backgroundImage = `url('${currentUserData.banner || ''}')`;
-                        document.getElementById('nav-pfp').src = currentUserData.pfp || `https://ui-avatars.com/api/?name=${currentUserData.username}`;
-                        document.getElementById('wallet-coins').innerText = (currentUserData.wallet?.coins || 0).toLocaleString();
-                        document.getElementById('wallet-gems').innerText = (currentUserData.wallet?.gems || 0).toLocaleString();
+                const userDocRef = doc(db, USERS_COLLECTION, user.uid);
+                
+                onSnapshot(userDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        currentUserData = docSnap.data();
+                        renderMyProfile(currentUserData);
                     }
                 });
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                loadChat();
-                loadUsers();
-                initThemePicker();
+
+                authScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                loadingOverlay.classList.add('hidden');
+                
+                initChat();
+                initUserPresence();
+                startPresenceHeartbeat();
             } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('hidden');
-            }
-        });
-
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-
-        window.toggleNavMenu = () => document.getElementById('nav-menu').classList.toggle('hidden');
-        window.onclick = (e) => {
-            if (!e.target.closest('#nav-profile-btn')) document.getElementById('nav-menu').classList.add('hidden');
-        };
-
-        window.openWallet = () => {
-            document.getElementById('chat-blur-overlay').classList.remove('hidden', 'pointer-events-none');
-            document.getElementById('chat-blur-overlay').style.opacity = '1';
-            document.getElementById('wallet-modal').classList.remove('hidden');
-            document.getElementById('nav-menu').classList.add('hidden');
-        };
-
-        window.closeWallet = () => {
-            document.getElementById('chat-blur-overlay').classList.add('hidden', 'pointer-events-none');
-            document.getElementById('chat-blur-overlay').style.opacity = '0';
-            document.getElementById('wallet-modal').classList.add('hidden');
-        };
-
-        window.togglePlusMenu = () => {
-            const container = document.getElementById('plus-menu-container');
-            const icon = document.getElementById('plus-icon');
-            const isOpen = container.classList.toggle('plus-menu-open');
-            icon.style.transform = isOpen ? 'rotate(45deg)' : 'rotate(0deg)';
-        };
-
-        window.triggerImageUpload = () => {
-            document.getElementById('chat-image-upload').click();
-            togglePlusMenu();
-        };
-
-        window.openThemePicker = () => {
-            document.getElementById('chat-blur-overlay').classList.remove('hidden', 'pointer-events-none');
-            document.getElementById('chat-blur-overlay').style.opacity = '1';
-            document.getElementById('theme-picker-modal').classList.remove('hidden');
-            togglePlusMenu();
-        };
-
-        window.closeThemePicker = () => {
-            document.getElementById('chat-blur-overlay').classList.add('hidden', 'pointer-events-none');
-            document.getElementById('chat-blur-overlay').style.opacity = '0';
-            document.getElementById('theme-picker-modal').classList.add('hidden');
-        };
-
-        document.getElementById('chat-image-upload').addEventListener('change', async (e) => {
-            if (e.target.files[0]) {
-                const b64 = await toBase64(e.target.files[0]);
-                await addDoc(collection(db, MSGS_COL), {
-                    type: 'image',
-                    imageUrl: b64,
-                    uid: currentUser.uid,
-                    username: currentUserData.username,
-                    createdAt: serverTimestamp()
-                });
+                currentUser = null;
+                currentUserData = null;
+                appScreen.classList.add('hidden');
+                authScreen.classList.remove('hidden');
+                loadingOverlay.classList.add('hidden');
+                
+                if (messagesUnsubscribe) messagesUnsubscribe();
+                if (usersUnsubscribe) usersUnsubscribe();
             }
         });
 
         window.switchAuthTab = (tab) => {
-            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
-            document.getElementById('signup-form').classList.toggle('hidden', tab !== 'signup');
-            document.getElementById('tab-login').className = tab === 'login' ? 'flex-1 py-2.5 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow-lg' : 'flex-1 py-2.5 text-sm font-bold rounded-xl text-slate-400';
-            document.getElementById('tab-signup').className = tab === 'signup' ? 'flex-1 py-2.5 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow-lg' : 'flex-1 py-2.5 text-sm font-bold rounded-xl text-slate-400';
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const tabLogin = document.getElementById('tab-login');
+            const tabSignup = document.getElementById('tab-signup');
+            authError.classList.add('hidden');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                tabLogin.classList.add('bg-indigo-600', 'text-white', 'shadow');
+                tabLogin.classList.remove('text-gray-400');
+                tabSignup.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+                tabSignup.classList.add('text-gray-400');
+            } else {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                tabSignup.classList.add('bg-indigo-600', 'text-white', 'shadow');
+                tabSignup.classList.remove('text-gray-400');
+                tabLogin.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+                tabLogin.classList.add('text-gray-400');
+            }
         };
 
+        // --- Signup ---
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
             const username = document.getElementById('signup-username').value;
+            const age = document.getElementById('signup-age').value;
+            const gender = document.getElementById('signup-gender').value;
+            const bio = document.getElementById('signup-bio').value;
+
+            loadingOverlay.classList.remove('hidden');
+            authError.classList.add('hidden');
+
             try {
-                const cred = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, USERS_COL, cred.user.uid), {
-                    uid: cred.user.uid,
-                    username,
-                    age: document.getElementById('signup-age').value,
-                    gender: document.getElementById('signup-gender').value,
-                    pfp: `https://ui-avatars.com/api/?name=${username}`,
-                    banner: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800",
-                    rank: "Member",
-                    bio: "",
-                    wallet: { coins: 1000, gems: 10 },
-                    theme: { color: '#6366f1', glow: false, gradient: false },
-                    lastSeen: serverTimestamp()
-                });
-            } catch (err) {
-                document.getElementById('auth-error').innerText = "Account creation error.";
-                document.getElementById('auth-error').classList.remove('hidden');
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Set initial rank based on username
+                let startingRank = "Member";
+                if (username === "The Plague") startingRank = "CEO";
+                if (username === "Developer") startingRank = "Developer";
+
+                // Create User Profile with Starting Currency
+                const userData = {
+                    uid: user.uid,
+                    username: username,
+                    age: age,
+                    gender: gender,
+                    bio: bio || "New member of the galaxy.",
+                    pfp: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`,
+                    banner: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1000&q=80",
+                    rank: startingRank,
+                    coins: 100, // STARTING COINS
+                    gems: 10,   // STARTING GEMS
+                    status: "Online",
+                    statusMessage: "Just landed.",
+                    lastSeen: serverTimestamp(),
+                    email: email
+                };
+
+                await setDoc(doc(db, USERS_COLLECTION, user.uid), userData);
+                await updateProfile(user, { displayName: username });
+
+            } catch (error) {
+                console.error(error);
+                authError.innerText = error.message.replace("Firebase: ", "");
+                authError.classList.remove('hidden');
+                loadingOverlay.classList.add('hidden');
             }
         });
 
+        // --- Login ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            loadingOverlay.classList.remove('hidden');
+            authError.classList.add('hidden');
             try {
-                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
-            } catch (err) {
-                document.getElementById('auth-error').innerText = "Access Denied.";
-                document.getElementById('auth-error').classList.remove('hidden');
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                authError.innerText = "Invalid credentials or account not found.";
+                authError.classList.remove('hidden');
+                loadingOverlay.classList.add('hidden');
             }
         });
 
         window.logout = () => signOut(auth);
 
-        function loadChat() {
-            const q = query(collection(db, MSGS_COL), orderBy("createdAt", "asc"), limit(80));
-            onSnapshot(q, (snap) => {
-                const container = document.getElementById('chat-messages');
-                container.innerHTML = '';
-                snap.forEach(d => {
-                    const m = d.data();
-                    const isMe = m.uid === currentUser.uid;
-                    const div = document.createElement('div');
-                    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-4 group`;
-                    let content = m.type === 'image' ? 
-                        `<img src="${m.imageUrl}" class="rounded-2xl max-w-[280px] shadow-xl border border-white/5" onclick="window.open('${m.imageUrl}')">` :
-                        `<div class="px-5 py-3 rounded-2xl max-w-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'} text-sm leading-relaxed shadow-lg">${m.text}</div>`;
-                    
-                    div.innerHTML = `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            ${!isMe ? `<span class="text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">${m.username}</span>` : ''}
-                            ${content}
-                        </div>
-                    `;
-                    container.appendChild(div);
+        // --- Chat Logic ---
+        function initChat() {
+            const q = query(collection(db, MESSAGES_COLLECTION), orderBy("createdAt", "asc"));
+            messagesUnsubscribe = onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        appendMessage(change.doc.data());
+                    }
                 });
-                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
             });
         }
 
         document.getElementById('chat-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const input = document.getElementById('message-input');
-            const val = input.value.trim();
-            if (!val) return;
+            const text = input.value.trim();
+            if (!text || !currentUser || !currentUserData) return;
             input.value = '';
-            await addDoc(collection(db, MSGS_COL), {
-                text: val,
-                uid: currentUser.uid,
-                username: currentUserData.username,
-                createdAt: serverTimestamp()
-            });
+            try {
+                await addDoc(collection(db, MESSAGES_COLLECTION), {
+                    text: text,
+                    uid: currentUser.uid,
+                    username: currentUserData.username,
+                    pfp: currentUserData.pfp,
+                    rank: currentUserData.rank,
+                    createdAt: serverTimestamp()
+                });
+                updateMyPresence();
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
         });
 
-        function loadUsers() {
-            onSnapshot(collection(db, USERS_COL), (snap) => {
+        function appendMessage(msg) {
+            const isMe = msg.uid === currentUser?.uid;
+            const div = document.createElement('div');
+            div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-4 group animate-fade-in`;
+            let timeStr = "";
+            if (msg.createdAt) {
+                const date = msg.createdAt.toDate();
+                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            const bubbleClass = isMe 
+                ? 'bg-indigo-600 text-white rounded-l-2xl rounded-tr-2xl' 
+                : 'bg-gray-800 text-gray-200 rounded-r-2xl rounded-tl-2xl';
+
+            const rankTag = msg.rank && msg.rank !== 'Member' ? `<span class="text-[9px] font-bold bg-indigo-500 text-white px-1 rounded ml-1">${msg.rank.toUpperCase()}</span>` : '';
+
+            div.innerHTML = `
+                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%]">
+                    ${!isMe ? `<div class="flex items-center gap-2 mb-1 ml-1">
+                        <img src="${msg.pfp}" class="w-6 h-6 rounded-full border border-gray-700">
+                        <span class="text-xs font-bold text-gray-400">${msg.username}</span>
+                        ${rankTag}
+                    </div>` : ''}
+                    <div class="${bubbleClass} px-5 py-3 shadow-md break-words text-sm leading-relaxed">
+                        ${escapeHtml(msg.text)}
+                    </div>
+                    <span class="text-[10px] text-gray-600 mt-1 px-1">${timeStr}</span>
+                </div>
+            `;
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTo(0, messagesContainer.scrollHeight);
+        }
+
+        function initUserPresence() {
+            const q = query(collection(db, USERS_COLLECTION), orderBy("lastSeen", "desc"), limit(50));
+            usersUnsubscribe = onSnapshot(q, (snapshot) => {
                 const list = document.getElementById('users-list');
                 list.innerHTML = '';
-                document.getElementById('online-count').innerText = snap.size;
-                snap.forEach(d => {
-                    const u = d.data();
-                    const theme = u.theme || { color: '#1f2937', glow: false, gradient: false };
-                    const div = document.createElement('div');
-                    div.className = `flex items-center gap-3 p-3 rounded-2xl cursor-pointer user-card-custom border border-transparent ${theme.glow ? 'glow-effect' : ''}`;
-                    div.onclick = () => viewUserProfile(u.uid);
-                    div.style.setProperty('--glow-color', theme.color + '33');
-                    if (theme.gradient) {
-                        div.style.background = `linear-gradient(135deg, ${theme.color}22 0%, rgba(15,23,42,0) 100%)`;
-                        div.style.borderColor = theme.color + '44';
-                    } else {
-                        div.style.backgroundColor = 'rgba(30,41,59,0.5)';
-                        div.style.borderColor = 'rgba(255,255,255,0.03)';
-                    }
-                    div.innerHTML = `
-                        <div class="relative shrink-0">
-                            <img src="${u.pfp}" class="w-10 h-10 rounded-full object-cover border-2" style="border-color: ${theme.color}">
-                            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></div>
+                let onlineCount = 0;
+                const now = new Date();
+                snapshot.forEach(doc => {
+                    const u = doc.data();
+                    const lastSeen = u.lastSeen?.toDate();
+                    const isOnline = lastSeen && (now - lastSeen) < 5 * 60 * 1000;
+                    if (isOnline) onlineCount++;
+                    const el = document.createElement('div');
+                    el.className = 'flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer group';
+                    el.innerHTML = `
+                        <div class="relative">
+                            <img src="${u.pfp}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-700 group-hover:border-gray-500">
+                            <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${isOnline ? 'bg-green-500' : 'bg-gray-500'}"></span>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <span class="block text-sm font-bold text-slate-200 truncate">${u.username}</span>
-                            <span class="block text-[9px] font-black uppercase tracking-tighter" style="color: ${theme.color}">${u.rank}</span>
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-sm font-semibold text-gray-200 truncate">${u.username}</h4>
+                                <span class="text-[10px] text-gray-500 bg-gray-900 px-1.5 rounded">${u.rank || 'Member'}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 truncate">${u.statusMessage || u.bio}</p>
                         </div>
                     `;
-                    list.appendChild(div);
+                    list.appendChild(el);
                 });
+                document.getElementById('online-count').innerText = onlineCount;
             });
         }
 
-        function initThemePicker() {
-            const grid = document.getElementById('color-grid');
-            grid.innerHTML = '';
-            themeColors.forEach(color => {
-                const btn = document.createElement('button');
-                btn.className = "w-full aspect-square rounded-lg border-2 border-transparent hover:scale-110 transition-all";
-                btn.style.backgroundColor = color;
-                btn.onclick = () => {
-                    selectedThemeColor = color;
-                    document.querySelectorAll('#color-grid button').forEach(b => b.classList.remove('border-white'));
-                    btn.classList.add('border-white');
-                };
-                grid.appendChild(btn);
-            });
+        function updateMyPresence() {
+            if (currentUser) {
+                updateDoc(doc(db, USERS_COLLECTION, currentUser.uid), { lastSeen: serverTimestamp() });
+            }
         }
 
-        window.applyTheme = async () => {
-            await updateDoc(doc(db, USERS_COL, currentUser.uid), {
-                theme: {
-                    color: selectedThemeColor,
-                    glow: document.getElementById('theme-glow-toggle').checked,
-                    gradient: document.getElementById('theme-gradient-toggle').checked
-                }
-            });
-            closeThemePicker();
+        function startPresenceHeartbeat() {
+            updateMyPresence();
+            setInterval(updateMyPresence, 60000);
+        }
+
+        window.openProfileModal = () => {
+            if (!currentUserData) return;
+            document.getElementById('edit-pfp').value = currentUserData.pfp || '';
+            document.getElementById('edit-banner').value = currentUserData.banner || '';
+            document.getElementById('edit-bio').value = currentUserData.bio || '';
+            document.getElementById('edit-status').value = currentUserData.statusMessage || '';
+            document.getElementById('profile-modal').classList.remove('hidden');
         };
 
-        window.viewUserProfile = async (uid) => {
-            const snap = await getDoc(doc(db, USERS_COL, uid));
-            if (snap.exists()) {
-                const u = snap.data();
-                document.getElementById('view-username').innerText = u.username;
-                document.getElementById('view-pfp').src = u.pfp;
-                document.getElementById('view-banner').style.backgroundImage = `url('${u.banner}')`;
-                document.getElementById('view-rank').innerText = (u.rank || "MEMBER").toUpperCase();
-                document.getElementById('view-age').innerText = u.age || "--";
-                document.getElementById('view-gender').innerText = u.gender || "--";
-                document.getElementById('view-bio-text').innerText = u.bio || "This user hasn't written their galactic legend yet.";
-                
-                // Reset to Info Tab on open
-                switchProfileTab('info');
-                document.getElementById('view-profile-modal').classList.remove('hidden');
-            }
+        window.closeProfileModal = () => {
+            document.getElementById('profile-modal').classList.add('hidden');
         };
 
-        window.switchProfileTab = (tab) => {
-            const infoTab = document.getElementById('view-tab-info');
-            const bioTab = document.getElementById('view-tab-bio');
-            const infoBtn = document.getElementById('tab-info-btn');
-            const bioBtn = document.getElementById('tab-bio-btn');
-
-            if (tab === 'info') {
-                infoTab.classList.remove('hidden');
-                bioTab.classList.add('hidden');
-                infoBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all bg-indigo-600 text-white";
-                bioBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white";
-            } else {
-                infoTab.classList.add('hidden');
-                bioTab.classList.remove('hidden');
-                bioBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all bg-indigo-600 text-white";
-                infoBtn.className = "flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white";
-            }
-        };
-
-        window.closeViewModal = () => document.getElementById('view-profile-modal').classList.add('hidden');
-        window.openEditModal = () => {
-            document.getElementById('edit-bio').value = currentUserData.bio || "";
-            document.getElementById('edit-pfp-preview').src = currentUserData.pfp || "";
-            document.getElementById('edit-banner-preview').style.backgroundImage = `url('${currentUserData.banner || ''}')`;
-            document.getElementById('edit-profile-modal').classList.remove('hidden');
-        };
-        window.closeEditModal = () => document.getElementById('edit-profile-modal').classList.add('hidden');
-        
         window.saveProfile = async () => {
-            const btn = document.getElementById('save-profile-btn');
-            btn.innerText = "UPDATING...";
-            const data = { bio: document.getElementById('edit-bio').value };
-            if (pendingPfp) data.pfp = pendingPfp;
-            if (pendingBanner) data.banner = pendingBanner;
-            await updateDoc(doc(db, USERS_COL, currentUser.uid), data);
-            btn.innerText = "SAVE CHANGES";
-            closeEditModal();
+            const newPfp = document.getElementById('edit-pfp').value;
+            const newBanner = document.getElementById('edit-banner').value;
+            const newBio = document.getElementById('edit-bio').value;
+            const newStatus = document.getElementById('edit-status').value;
+            try {
+                await updateDoc(doc(db, USERS_COLLECTION, currentUser.uid), {
+                    pfp: newPfp,
+                    banner: newBanner,
+                    bio: newBio,
+                    statusMessage: newStatus
+                });
+                closeProfileModal();
+            } catch (e) {
+                console.error("Save error:", e);
+                alert("Failed to save profile.");
+            }
         };
 
-        document.getElementById('pfp-upload').addEventListener('change', async (e) => {
-            if (e.target.files[0]) {
-                pendingPfp = await toBase64(e.target.files[0]);
-                document.getElementById('edit-pfp-preview').src = pendingPfp;
-            }
-        });
-        document.getElementById('banner-upload').addEventListener('change', async (e) => {
-            if (e.target.files[0]) {
-                pendingBanner = await toBase64(e.target.files[0]);
-                document.getElementById('edit-banner-preview').style.backgroundImage = `url('${pendingBanner}')`;
-            }
-        });
+        function renderMyProfile(data) {
+            document.getElementById('my-username').innerText = data.username;
+            document.getElementById('my-pfp').src = data.pfp || `https://ui-avatars.com/api/?name=${data.username}`;
+            document.getElementById('my-banner').style.backgroundImage = `url('${data.banner || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1000&q=80'}')`;
+            document.getElementById('my-bio').innerText = data.bio;
+            document.getElementById('my-status-text').innerText = data.statusMessage || "Online";
+            document.getElementById('my-coins').innerText = data.coins || 0;
+            document.getElementById('my-gems').innerText = data.gems || 0;
+            document.getElementById('my-rank-badge').innerText = (data.rank || "MEMBER").toUpperCase();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>
