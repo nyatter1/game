@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --luxury-gold: #d4af37; --luxury-black: #0a0c10; --luxury-dark: #161a21; --border-color: #222222; }
-        body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--luxury-black); color: #e2e8f0; display: flex; align-items: center; justify-center; min-height: 100vh; margin: 0; }
         .serif { font-family: 'Cormorant Garamond', serif; }
         .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(20px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -25,7 +25,7 @@
 
     <div id="loading-overlay">
         <div class="w-10 h-10 border-2 border-gold/20 border-t-gold rounded-full animate-spin mb-4"></div>
-        <p id="loading-text" class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Syncing Profile Data</p>
+        <p id="loading-text" class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Syncing with Chatlaxy Cloud</p>
     </div>
 
     <div class="max-w-md w-full mx-auto p-6">
@@ -33,7 +33,7 @@
             <div class="flex items-center justify-between mb-8">
                 <div>
                     <h1 class="serif text-3xl gold-gradient">Edit Profile</h1>
-                    <p id="auth-status" class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Connecting...</p>
+                    <p class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Connected: chatlaxy-pro</p>
                 </div>
                 <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-gray-500 hover:text-white transition uppercase tracking-widest">Cancel</button>
             </div>
@@ -71,7 +71,7 @@
                     </div>
                 </div>
 
-                <button id="save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[11px] hover:brightness-110 transition shadow-xl mt-4 opacity-50 cursor-not-allowed" disabled>Initializing...</button>
+                <button id="save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[11px] hover:brightness-110 transition shadow-xl mt-4">Save to Global Cloud</button>
             </div>
         </div>
     </div>
@@ -81,7 +81,6 @@
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Constants and Config
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
             authDomain: "chatlaxy-pro.firebaseapp.com",
@@ -96,59 +95,46 @@
         const auth = getAuth(app);
         const appId = "chatlaxy-v1-production";
 
+        let currentUser = null;
+        // Check for session immediately
         let localProfile = JSON.parse(localStorage.getItem('chatlaxy_session_v6'));
-        let pendingPfp = null, pendingBanner = null, pendingMusic = null;
-        let isAuthReady = false;
-
-        // Redirect if no local session
+        
         if (!localProfile) {
+            // If no session found, redirect to the main page to login
             window.location.href = 'index.html';
         }
 
-        // Initialize UI with local data immediately
-        document.getElementById('prev-pfp').src = localProfile.pfp;
-        if (localProfile.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${localProfile.banner})`;
-        document.getElementById('edit-bio').value = localProfile.customBio || '';
+        let pendingPfp = null, pendingBanner = null, pendingMusic = null;
 
-        // Handle Auth State
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                console.log("Authenticated as:", user.uid);
-                isAuthReady = true;
-                document.getElementById('auth-status').innerText = "Cloud Connected";
-                
-                const saveBtn = document.getElementById('save-btn');
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                saveBtn.innerText = "Save to Global Cloud";
-                
+                currentUser = user;
                 loadExistingCloudProfile();
             } else {
-                signInAnonymously(auth).catch(err => {
-                    console.error("Auth Failed", err);
-                    document.getElementById('auth-status').innerText = "Auth Error";
-                });
+                signInAnonymously(auth);
             }
         });
 
         async function loadExistingCloudProfile() {
+            if (!localProfile) return;
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const cloudData = snap.data();
-                    if (cloudData.customBio) document.getElementById('edit-bio').value = cloudData.customBio;
-                    if (cloudData.pfp) document.getElementById('prev-pfp').src = cloudData.pfp;
+                    document.getElementById('edit-bio').value = cloudData.customBio || '';
+                    document.getElementById('prev-pfp').src = cloudData.pfp || localProfile.pfp;
                     if (cloudData.banner) document.getElementById('prev-banner').style.backgroundImage = `url(${cloudData.banner})`;
                     if (cloudData.music) document.getElementById('music-label').innerText = "Cloud Audio Active";
+                } else {
+                    document.getElementById('prev-pfp').src = localProfile.pfp;
                 }
             } catch (err) {
-                console.error("Cloud fetch failed:", err);
+                console.error("Error loading cloud profile:", err);
             }
         }
 
-        // Compression Utility
-        const compressImage = (base64Str, maxWidth = 800, quality = 0.6) => {
+        const compressImage = (base64Str, maxWidth = 800, quality = 0.7) => {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.src = base64Str;
@@ -169,7 +155,6 @@
             });
         };
 
-        // File Readers
         const setupReader = (id, type, cb) => {
             document.getElementById(id).onchange = (e) => {
                 const f = e.target.files[0];
@@ -178,7 +163,10 @@
                 r.onload = async (ev) => {
                     let result = ev.target.result;
                     if (type === 'image') {
-                        result = await compressImage(result, id === 'pfp-input' ? 300 : 800);
+                        result = await compressImage(result, id === 'pfp-input' ? 400 : 1000, 0.6);
+                    }
+                    if (result.length > 1000000) {
+                        return alert("File is still too big (over 1MB). Try a smaller image or shorter song.");
                     }
                     cb(result);
                 };
@@ -188,15 +176,10 @@
 
         setupReader('pfp-input', 'image', (res) => { pendingPfp = res; document.getElementById('prev-pfp').src = res; });
         setupReader('banner-input', 'image', (res) => { pendingBanner = res; document.getElementById('prev-banner').style.backgroundImage = `url(${res})`; });
-        setupReader('music-input', 'audio', (res) => { pendingMusic = res; document.getElementById('music-label').innerText = "Song Selected"; });
+        setupReader('music-input', 'audio', (res) => { pendingMusic = res; document.getElementById('music-label').innerText = "Ready to upload song"; });
 
-        // Save Action
         document.getElementById('save-btn').onclick = async () => {
-            if (!isAuthReady) {
-                alert("Cloud connection not ready. Please wait a moment.");
-                return;
-            }
-
+            if (!currentUser || !localProfile) return alert("Log in first!");
             document.getElementById('loading-overlay').style.display = 'flex';
 
             try {
@@ -210,27 +193,20 @@
                 if (pendingBanner) profileUpdates.banner = pendingBanner;
                 if (pendingMusic) profileUpdates.music = pendingMusic;
 
-                // 1. Update Firestore
+                const totalSize = JSON.stringify(profileUpdates).length;
+                if (totalSize > 1048576) {
+                    throw new Error("Total profile data exceeds 1MB cloud limit. Try smaller files.");
+                }
+
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localProfile.username);
                 await setDoc(docRef, profileUpdates, { merge: true });
 
-                // 2. Update Local Account Database (for index.html offline check)
-                const accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-                const accIndex = accounts.findIndex(a => a.username === localProfile.username);
-                if (accIndex !== -1) {
-                    accounts[accIndex] = { ...accounts[accIndex], ...profileUpdates };
-                    localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(accounts));
-                }
-
-                // 3. Update Active Session
                 const merged = { ...localProfile, ...profileUpdates };
                 localStorage.setItem('chatlaxy_session_v6', JSON.stringify(merged));
-                
-                // Done
                 window.location.href = 'index.html';
             } catch (err) {
                 console.error(err);
-                alert("Failed to save to cloud: " + err.message);
+                alert(err.message || "Cloud Error. Check console.");
                 document.getElementById('loading-overlay').style.display = 'none';
             }
         };
