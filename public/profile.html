@@ -74,19 +74,38 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 100;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+        
+        /* Progress Bar Styling */
+        .progress-container {
+            width: 200px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #d4af37, #f9e29c);
+            transition: width 0.1s linear;
         }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
-        <div class="w-10 h-10 border-2 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin mb-4"></div>
-        <p class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Finalizing Identity</p>
+        <div class="w-10 h-10 border-2 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin mb-2"></div>
+        <p class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Syncing Profile</p>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
     </div>
 
     <div class="max-w-md w-full mx-auto p-6">
@@ -143,11 +162,9 @@
 
     <script>
         let currentUser = null;
-        let pendingPfp = null;
-        let pendingBanner = null;
-        let pendingMusic = null;
         let originalUsername = ""; 
 
+        // Initial Load
         window.onload = () => {
             const session = localStorage.getItem('chatlaxy_session_v6');
             if (!session) {
@@ -157,54 +174,57 @@
             currentUser = JSON.parse(session);
             originalUsername = currentUser.username;
 
-            // Populate fields
+            // Apply existing data to inputs
             document.getElementById('edit-user').value = currentUser.username;
             document.getElementById('edit-bio').value = currentUser.customBio || '';
-            document.getElementById('prev-pfp').src = currentUser.pfp || 'default-pfp.png';
             
+            // Set previews
+            if (currentUser.pfp) document.getElementById('prev-pfp').src = currentUser.pfp;
             if (currentUser.banner) {
                 document.getElementById('prev-banner').style.backgroundImage = `url(${currentUser.banner})`;
             }
             if (currentUser.music) {
-                document.getElementById('music-label').innerText = "Current Audio Loaded";
+                document.getElementById('music-label').innerText = "Audio File Attached";
             }
         };
 
-        // File Handlers
-        document.getElementById('pfp-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        // Helper to convert file to Base64
+        const getBase64 = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                pendingPfp = ev.target.result;
-                document.getElementById('prev-pfp').src = pendingPfp;
-            };
             reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // Live Preview Handlers
+        document.getElementById('pfp-input').onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const base64 = await getBase64(file);
+                currentUser.pfp = base64; // Temporarily update object
+                document.getElementById('prev-pfp').src = base64;
+            }
         };
 
-        document.getElementById('banner-input').onchange = (e) => {
+        document.getElementById('banner-input').onchange = async (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                pendingBanner = ev.target.result;
-                document.getElementById('prev-banner').style.backgroundImage = `url(${pendingBanner})`;
-            };
-            reader.readAsDataURL(file);
+            if (file) {
+                const base64 = await getBase64(file);
+                currentUser.banner = base64; // Temporarily update object
+                document.getElementById('prev-banner').style.backgroundImage = `url(${base64})`;
+            }
         };
 
-        document.getElementById('music-input').onchange = (e) => {
+        document.getElementById('music-input').onchange = async (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            document.getElementById('music-label').innerText = file.name;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                pendingMusic = ev.target.result;
-            };
-            reader.readAsDataURL(file);
+            if (file) {
+                document.getElementById('music-label').innerText = file.name;
+                const base64 = await getBase64(file);
+                currentUser.music = base64;
+            }
         };
 
-        // Save Action
+        // Final Save Logic with Progress Bar
         document.getElementById('save-btn').onclick = () => {
             const newName = document.getElementById('edit-user').value.trim();
             const newBio = document.getElementById('edit-bio').value.trim();
@@ -213,7 +233,7 @@
 
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
 
-            // Check if name is taken by someone else
+            // Name check
             if (newName.toLowerCase() !== originalUsername.toLowerCase()) {
                 if (db.some(u => u.username.toLowerCase() === newName.toLowerCase())) {
                     alert("Username already taken.");
@@ -221,29 +241,47 @@
                 }
             }
 
-            document.getElementById('loading-overlay').style.display = 'flex';
-
-            // Update user object
+            // Update user object with text fields
             currentUser.username = newName;
             currentUser.customBio = newBio;
-            if (pendingPfp) currentUser.pfp = pendingPfp;
-            if (pendingBanner) currentUser.banner = pendingBanner;
-            if (pendingMusic) currentUser.music = pendingMusic;
 
-            // Sync with Database array
-            const idx = db.findIndex(u => u.username === originalUsername);
-            if (idx !== -1) {
-                db[idx] = currentUser;
-            } else {
-                db.push(currentUser);
-            }
+            // Show Loading UI
+            const overlay = document.getElementById('loading-overlay');
+            const bar = document.getElementById('progress-bar');
+            overlay.style.display = 'flex';
 
-            localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
-            localStorage.setItem('chatlaxy_session_v6', JSON.stringify(currentUser));
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    bar.style.width = '100%';
+                    clearInterval(interval);
+                    
+                    // Actual Save to LocalStorage
+                    const idx = db.findIndex(u => u.username === originalUsername);
+                    if (idx !== -1) {
+                        db[idx] = currentUser;
+                    } else {
+                        db.push(currentUser);
+                    }
 
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
+                    try {
+                        localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
+                        localStorage.setItem('chatlaxy_session_v6', JSON.stringify(currentUser));
+                        
+                        // Final delay before refresh
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 500);
+                    } catch (e) {
+                        alert("Storage full! Try a smaller image.");
+                        overlay.style.display = 'none';
+                    }
+                } else {
+                    bar.style.width = progress + '%';
+                }
+            }, 100);
         };
     </script>
 </body>
