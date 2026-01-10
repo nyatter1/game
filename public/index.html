@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatlaxy | Elite Social Protocol</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -31,14 +30,14 @@
         
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: var(--luxury-black); }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         
         .status-dot { width: 8px; height: 8px; border-radius: 50%; transition: all 0.3s; border: 1px solid rgba(0,0,0,0.5); }
         .status-online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
         .status-away { background: #eab308; box-shadow: 0 0 8px #eab308; }
         .status-dnd { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
 
-        .message-row { border-bottom: 1px solid rgba(255, 255, 255, 0.02); padding: 1rem 0; animation: fadeIn 0.3s ease-out; }
+        .message-row { border-bottom: 1px solid rgba(255, 255, 255, 0.02); padding: 0.75rem 0; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .luxury-input { width: 100%; background: #000; border: 1px solid #222; padding: 0.8rem; border-radius: 0.75rem; outline: none; transition: all 0.2s; color: white; font-size: 0.8rem; }
@@ -62,9 +61,14 @@
         
         #profileDropdown { z-index: 9999; }
         #dropdownOverlay { z-index: 9998; }
+
+        /* Custom UI for modern toast */
+        #toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; padding: 1rem 2rem; background: #161a21; border-left: 4px solid var(--luxury-gold); border-radius: 0.5rem; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body class="selection:bg-[#d4af37]/30">
+
+    <div id="toast"></div>
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 overflow-y-auto">
@@ -78,9 +82,10 @@
                         <input type="text" id="login-username" class="luxury-input" placeholder="Username">
                         <input type="password" id="login-password" class="luxury-input" placeholder="Secret Key">
                     </div>
-                    <button onclick="attemptLogin()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition shadow-lg">Login</button>
+                    <button onclick="attemptLogin()" id="login-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition shadow-lg">Login</button>
                     <p class="mt-6 text-[9px] text-gray-500">New here? <span onclick="switchAuthView('signup')" class="text-[#d4af37] cursor-pointer hover:underline">Apply for Membership</span></p>
                 </div>
+
                 <div id="view-signup" class="auth-view">
                     <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Application: Phase 1</p>
                     <div class="space-y-4">
@@ -90,6 +95,7 @@
                     <button onclick="switchAuthView('signup-2')" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition">Next Phase</button>
                     <p class="mt-6 text-[9px] text-gray-500">Already a member? <span onclick="switchAuthView('login')" class="text-[#d4af37] cursor-pointer hover:underline">Login</span></p>
                 </div>
+
                 <div id="view-signup-2" class="auth-view">
                     <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Application: Final Stats</p>
                     <div class="space-y-4">
@@ -103,16 +109,16 @@
                             </select>
                         </div>
                         <div>
-                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-1 text-left px-2">Profile Avatar (Max 1MB)</p>
+                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-1 text-left px-2">Profile Avatar (Max 500KB)</p>
                             <label class="file-upload-btn">
                                 <span id="pfp-label">Choose File</span>
-                                <input type="file" id="reg-pfp-input" accept="image/png, image/jpeg, image/gif" class="hidden" onchange="handleFileLabel(this, 'pfp-label', 1024)">
+                                <input type="file" id="reg-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'pfp-label', 500)">
                             </label>
                         </div>
                     </div>
                     <div class="flex gap-4 mt-8">
                         <button onclick="switchAuthView('signup')" class="flex-1 border border-[#222] py-5 rounded-2xl text-gray-500 font-bold uppercase text-[10px]">Back</button>
-                        <button onclick="finishSignup()" class="flex-[2] bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition">Complete Signup</button>
+                        <button onclick="finishSignup()" id="signup-btn" class="flex-[2] bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition">Complete Signup</button>
                     </div>
                 </div>
             </div>
@@ -164,17 +170,10 @@
                 </div>
             </div>
             <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Avatar (Max 1MB)</label>
+                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Avatar (Max 500KB)</label>
                 <label class="file-upload-btn">
                     <span id="edit-pfp-label">Replace Avatar</span>
-                    <input type="file" id="edit-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-pfp-label', 1024)">
-                </label>
-            </div>
-            <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Banner (Max 1MB)</label>
-                <label class="file-upload-btn">
-                    <span id="edit-banner-label">Replace Banner</span>
-                    <input type="file" id="edit-banner-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-banner-label', 1024)">
+                    <input type="file" id="edit-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-pfp-label', 500)">
                 </label>
             </div>
             <div>
@@ -187,22 +186,20 @@
 
     <!-- MAIN APP STRUCTURE -->
     <div class="app-container w-full">
-        <!-- Sidebar Navigation -->
         <aside class="w-64 bg-[#161a21] border-r border-[#222] flex flex-col p-6 shadow-2xl relative z-40 shrink-0">
             <div class="mb-10 px-2 flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-[#d4af37] to-[#b8860b] rounded-xl flex items-center justify-center shadow-lg shadow-[#d4af37]/10">
+                <div class="w-10 h-10 bg-gradient-to-br from-[#d4af37] to-[#b8860b] rounded-xl flex items-center justify-center shadow-lg">
                     <span class="text-black font-bold text-lg">C</span>
                 </div>
                 <span class="serif text-2xl tracking-wide gold-gradient">CHATLAXY</span>
             </div>
 
             <nav class="flex-1 space-y-6">
-                <!-- Status Toggle Button -->
                 <div class="relative">
                     <button id="statusBtn" class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-black/40 border border-[#222] hover:border-[#d4af37]/50 transition-all text-sm font-medium">
                         <div class="flex items-center gap-3">
                             <div id="statusIndicator" class="status-dot status-online"></div>
-                            <span id="statusText" class="tracking-tight text-zinc-300">Online</span>
+                            <span id="statusText" class="tracking-tight text-zinc-300 text-xs">Online</span>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600"><path d="m6 9 6 6 6-6"/></svg>
                     </button>
@@ -223,14 +220,10 @@
                 </div>
 
                 <div class="space-y-2">
-                    <div class="px-4 py-2 text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] serif">Navigation</div>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:bg-black/40 hover:text-[#d4af37] transition-all border border-transparent hover:border-[#222]">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
-                        <span class="text-sm font-medium">News Feed</span>
-                    </a>
+                    <div class="px-4 py-2 text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] serif">Protocol</div>
                     <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-[#d4af37] bg-black/40 border border-[#222]">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        <span class="text-sm font-medium">Lounge Chat</span>
+                        <span class="text-xs font-medium uppercase tracking-widest">Lounge Chat</span>
                     </a>
                 </div>
             </nav>
@@ -238,27 +231,26 @@
             <div class="mt-auto border-t border-[#222] pt-8">
                 <div class="px-4 py-2 text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] serif flex justify-between items-center">
                     <span>Elite Circle</span>
-                    <span class="flex h-2 w-2 rounded-full bg-[#22c55e] opacity-75 animate-ping"></span>
+                    <span class="flex h-1.5 w-1.5 rounded-full bg-[#22c55e]"></span>
                 </div>
-                <div id="user-list" class="mt-2 space-y-3 max-h-[250px] overflow-y-auto pr-2"></div>
+                <div id="user-list" class="mt-2 space-y-2 max-h-[250px] overflow-y-auto pr-2">
+                    <!-- Users injected here -->
+                </div>
             </div>
         </aside>
 
-        <!-- Main Workspace -->
         <main class="flex-1 flex flex-col bg-gradient-to-br from-[#0a0c10] to-[#161a21] relative">
             <header class="h-20 border-b border-[#222] flex items-center justify-end px-10 relative z-30 shrink-0">
                 <div class="relative">
                     <button id="profileTrigger" class="flex items-center gap-3 group p-1 rounded-2xl border border-transparent hover:border-[#222] hover:bg-black/20 transition-all focus:outline-none">
                         <div class="text-right flex flex-col items-end mr-1">
-                            <span id="me-name-header" class="text-[11px] font-bold text-zinc-200 uppercase tracking-widest">Guest</span>
-                            <span id="me-rank-header" class="text-[9px] text-[#d4af37] uppercase font-bold tracking-widest">VIP Member</span>
+                            <span id="me-name-header" class="text-[10px] font-bold text-zinc-200 uppercase tracking-widest">Guest</span>
+                            <span id="me-rank-header" class="text-[8px] text-[#d4af37] uppercase font-bold tracking-widest">VIP Member</span>
                         </div>
                         <img id="me-pfp-header" src="" class="w-8 h-8 rounded-lg border border-[#d4af37]/30 bg-black shadow-lg object-cover">
                     </button>
 
-                    <!-- Dropdown Overlay -->
                     <div id="dropdownOverlay" class="hidden fixed inset-0"></div>
-                    <!-- Profile Dropdown -->
                     <div id="profileDropdown" class="hidden absolute right-0 mt-4 w-72 bg-[#161a21] border border-[#d4af37]/20 rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,1)] dropdown-animate overflow-hidden">
                         <div class="p-6">
                             <div class="flex justify-center mb-4">
@@ -269,13 +261,13 @@
                                 <p id="me-rank-dropdown" class="text-[9px] text-[#d4af37] font-bold tracking-[0.3em] uppercase">VIP Member</p>
                             </div>
                             <div class="space-y-1">
-                                <button onclick="toggleEditor()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-zinc-400 hover:bg-black/40 hover:text-white transition-all text-left border border-transparent hover:border-[#222]">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#d4af37]/70"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <button onclick="toggleEditor()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-xs text-zinc-400 hover:bg-black/40 hover:text-white transition-all text-left border border-transparent hover:border-[#222]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#d4af37]/70"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                     <span>Adjust Persona</span>
                                 </button>
                                 <div class="my-2 border-t border-[#222] opacity-50"></div>
-                                <button onclick="logout()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-all text-left group">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                                <button onclick="logout()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-xs text-red-400 hover:bg-red-500/10 transition-all text-left group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                                     <span>Logout</span>
                                 </button>
                             </div>
@@ -284,8 +276,12 @@
                 </div>
             </header>
 
-            <!-- Chat Interface -->
-            <div id="messages" class="flex-1 overflow-y-auto p-10 space-y-2"></div>
+            <div id="messages" class="flex-1 overflow-y-auto p-10 space-y-1">
+                <div class="flex flex-col items-center justify-center h-full text-zinc-700 opacity-20">
+                    <h2 class="serif text-5xl mb-4">Chatlaxy Lounge</h2>
+                    <p class="text-[10px] tracking-[0.5em] uppercase">Encrypted Connection Established</p>
+                </div>
+            </div>
             
             <div class="p-10 pt-0 shrink-0">
                 <form id="chat-form" class="bg-[#161a21]/50 backdrop-blur-sm border border-[#222] rounded-[1.5rem] flex items-center px-8 py-2 gap-5 shadow-2xl focus-within:border-[#d4af37]/30 transition-all">
@@ -296,264 +292,314 @@
         </main>
     </div>
 
-    <script>
-        const socket = io();
-        
+    <!-- FIREBASE & CORE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Config ---
+        const firebaseConfig = JSON.parse(window.__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-social';
+
         // --- State ---
-        let accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts')) || [];
-        let session = JSON.parse(localStorage.getItem('chatlaxy_session')) || null;
-        let myProfile = session || {
-            username: '',
-            pfp: 'https://i.pinimg.com/736x/8f/1c/a2/8f1ca2029e2efce263ee268759d9a13c.jpg',
-            banner: 'https://i.pinimg.com/originals/11/4d/9d/114d9dc65147570419d2823871216d8a.gif',
-            bio: 'Legacy Member.',
-            age: 21,
-            gender: 'Elite',
-            status: 'online'
+        let currentUser = null;
+        let onlineUsers = {};
+
+        const DEFAULT_PFP = "https://i.pinimg.com/736x/8f/1c/a2/8f1ca2029e2efce263ee268759d9a13c.jpg";
+        const DEFAULT_BANNER = "https://i.pinimg.com/originals/11/4d/9d/114d9dc65147570419d2823871216d8a.gif";
+
+        // --- Utility ---
+        window.showToast = (msg) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
         };
-        let onlineUsers = [];
-        let messages = [];
 
-        // --- DOM Elements (Dropdowns) ---
-        const statusBtn = document.getElementById('statusBtn');
-        const statusDropdown = document.getElementById('statusDropdown');
-        const statusIndicator = document.getElementById('statusIndicator');
-        const statusText = document.getElementById('statusText');
-        const profileTrigger = document.getElementById('profileTrigger');
-        const profileDropdown = document.getElementById('profileDropdown');
-        const dropdownOverlay = document.getElementById('dropdownOverlay');
-
-        // --- Auth & Profile Logic ---
-        function switchAuthView(view) {
-            document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${view}`).classList.add('active');
-        }
-
-        function handleFileLabel(input, labelId, customLimitKb = 250) {
+        window.handleFileLabel = (input, labelId, limitKb) => {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                const limitBytes = customLimitKb * 1024;
-                if (file.size > limitBytes) {
+                if (file.size > limitKb * 1024) {
                     input.value = "";
                     document.getElementById(labelId).innerText = "File too large!";
-                    document.getElementById(labelId).style.color = "#ef4444";
                     return;
                 }
                 document.getElementById(labelId).innerText = file.name;
-                document.getElementById(labelId).style.color = "#d4af37";
             }
-        }
+        };
 
-        function toBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = e => reject(e);
+        });
 
-        async function finishSignup() {
+        // --- UI Logic ---
+        window.switchAuthView = (view) => {
+            document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
+        };
+
+        window.toggleEditor = () => {
+            document.getElementById('profileDropdown').classList.add('hidden');
+            document.getElementById('dropdownOverlay').classList.add('hidden');
+            const panel = document.getElementById('editor-panel');
+            if(currentUser) {
+                document.getElementById('edit-age').value = currentUser.age || 21;
+                document.getElementById('edit-gender').value = currentUser.gender || 'Elite';
+                document.getElementById('edit-bio').value = currentUser.bio || '';
+            }
+            panel.classList.toggle('active');
+        };
+
+        // --- Auth Logic ---
+        window.attemptLogin = async () => {
+            const userIn = document.getElementById('login-username').value.trim();
+            const passIn = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+            
+            if(!userIn || !passIn) return showToast("Enter credentials.");
+            btn.disabled = true;
+            btn.innerText = "AUTHENTICATING...";
+
+            try {
+                // In this simplified version, we use the username as the primary ID mapping
+                const userDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userIn));
+                if (userDoc.exists() && userDoc.data().password === passIn) {
+                    localStorage.setItem('chatlaxy_user_id', userIn);
+                    window.location.reload();
+                } else {
+                    showToast("Access Denied.");
+                }
+            } catch (e) {
+                showToast("System Error.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "LOGIN";
+            }
+        };
+
+        window.finishSignup = async () => {
             const user = document.getElementById('reg-username').value.trim();
             const pass = document.getElementById('reg-password').value;
             const age = document.getElementById('reg-age').value;
             const gender = document.getElementById('reg-gender').value;
-            const pfpInput = document.getElementById('reg-pfp-input');
+            const pfpIn = document.getElementById('reg-pfp-input');
+            const btn = document.getElementById('signup-btn');
 
-            if(!user || !pass || !age || !gender || !pfpInput.files[0]) return alert("Complete the dossier.");
-            if(accounts.some(acc => acc.username.toLowerCase() === user.toLowerCase())) return alert("ID taken.");
+            if(!user || !pass || !age || !gender) return showToast("Complete Dossier.");
+            btn.disabled = true;
+            btn.innerText = "PROCESSING...";
 
-            const pfpBase64 = await toBase64(pfpInput.files[0]);
-            const newAccount = { username: user, password: pass, pfp: pfpBase64, banner: myProfile.banner, bio: 'New elite.', age, gender, status: 'online' };
-            
-            accounts.push(newAccount);
-            localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
-            session = newAccount; myProfile = newAccount;
-            localStorage.setItem('chatlaxy_session', JSON.stringify(session));
-            document.getElementById('auth-screen').classList.add('hidden');
-            init();
-        }
+            try {
+                const userDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user));
+                if(userDoc.exists()) {
+                    showToast("ID already registered.");
+                    return;
+                }
 
-        function attemptLogin() {
-            const user = document.getElementById('login-username').value.trim();
-            const pass = document.getElementById('login-password').value;
-            const account = accounts.find(acc => acc.username === user && acc.password === pass);
-            if(!account) return alert("Denied.");
-            session = account; myProfile = account;
-            localStorage.setItem('chatlaxy_session', JSON.stringify(session));
-            document.getElementById('auth-screen').classList.add('hidden');
-            init();
-        }
+                let pfp = DEFAULT_PFP;
+                if(pfpIn.files[0]) pfp = await toBase64(pfpIn.files[0]);
 
-        function logout() {
-            localStorage.removeItem('chatlaxy_session');
-            window.location.reload();
-        }
+                const userData = {
+                    username: user,
+                    password: pass,
+                    age: age,
+                    gender: gender,
+                    pfp: pfp,
+                    banner: DEFAULT_BANNER,
+                    bio: "Newly initialized elite.",
+                    status: 'online',
+                    lastSeen: serverTimestamp()
+                };
 
-        function init() {
-            // Update Header & Dropdown
-            document.getElementById('me-name-header').innerText = myProfile.username;
-            document.getElementById('me-pfp-header').src = myProfile.pfp;
-            document.getElementById('me-pfp-dropdown').src = myProfile.pfp;
-            document.getElementById('me-name-dropdown').innerText = myProfile.username;
-            
-            // Sync Status UI
-            setStatus(myProfile.status);
-            socket.emit('register user', myProfile);
-        }
-
-        if(session) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            init();
-        }
-
-        // --- Dropdown Interactions ---
-        statusBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            statusDropdown.classList.toggle('hidden');
-            profileDropdown.classList.add('hidden');
-            dropdownOverlay.classList.add('hidden');
-        });
-
-        function setStatus(s) {
-            myProfile.status = s;
-            statusText.innerText = s.charAt(0).toUpperCase() + s.slice(1);
-            statusIndicator.className = `status-dot status-${s}`;
-            statusDropdown.classList.add('hidden');
-            socket.emit('register user', myProfile);
-        }
-
-        profileTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = !profileDropdown.classList.contains('hidden');
-            if (isOpen) {
-                closeDropdowns();
-            } else {
-                profileDropdown.classList.remove('hidden');
-                dropdownOverlay.classList.remove('hidden');
-                statusDropdown.classList.add('hidden');
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user), userData);
+                localStorage.setItem('chatlaxy_user_id', user);
+                window.location.reload();
+            } catch (e) {
+                showToast("Registry Failed.");
+            } finally {
+                btn.disabled = false;
             }
-        });
-
-        dropdownOverlay.addEventListener('click', closeDropdowns);
-        function closeDropdowns() {
-            profileDropdown.classList.add('hidden');
-            dropdownOverlay.classList.add('hidden');
-            statusDropdown.classList.add('hidden');
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!statusBtn.contains(e.target)) statusDropdown.classList.add('hidden');
-        });
-
-        // --- Editor ---
-        function toggleEditor() {
-            closeDropdowns();
-            const panel = document.getElementById('editor-panel');
-            document.getElementById('edit-age').value = myProfile.age;
-            document.getElementById('edit-gender').value = myProfile.gender;
-            document.getElementById('edit-bio').value = myProfile.bio;
-            panel.classList.toggle('active');
-        }
-
-        async function saveProfile() {
-            myProfile.age = document.getElementById('edit-age').value;
-            myProfile.gender = document.getElementById('edit-gender').value;
-            myProfile.bio = document.getElementById('edit-bio').value;
-
-            const pfpIn = document.getElementById('edit-pfp-input');
-            const banIn = document.getElementById('edit-banner-input');
-            if(pfpIn.files[0]) myProfile.pfp = await toBase64(pfpIn.files[0]);
-            if(banIn.files[0]) myProfile.banner = await toBase64(banIn.files[0]);
-            
-            const accIdx = accounts.findIndex(a => a.username === myProfile.username);
-            if(accIdx !== -1) accounts[accIdx] = {...myProfile};
-            localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
-            localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
-            
-            init();
-            toggleEditor();
-        }
-
-        // --- Global Social Logic ---
-        function viewProfile(username) {
-            const user = onlineUsers.find(u => u.username === username);
-            if(!user) return;
-            document.getElementById('view-pfp').src = user.pfp;
-            document.getElementById('view-banner').style.backgroundImage = `url(${user.banner})`;
-            document.getElementById('view-name').innerText = user.username;
-            document.getElementById('view-age').innerText = `${user.age} Years`;
-            document.getElementById('view-gender').innerText = user.gender;
-            document.getElementById('view-bio').innerText = user.bio || 'Silence.';
-            document.getElementById('view-dot').className = `status-dot status-${user.status}`;
-            document.getElementById('view-status-text').innerText = user.status;
-            document.getElementById('profile-modal').classList.remove('hidden');
-        }
-
-        socket.on('update user list', (users) => {
-            onlineUsers = users;
-            const list = document.getElementById('user-list');
-            list.innerHTML = '';
-            users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center gap-3 px-4 py-2 bg-black/20 rounded-2xl border border-transparent hover:border-[#222] transition-all cursor-pointer group';
-                div.onclick = () => viewProfile(u.username);
-                div.innerHTML = `
-                    <div class="relative shrink-0">
-                        <img src="${u.pfp}" class="w-8 h-8 rounded-lg bg-[#161a21] border border-[#222] p-0.5 object-cover group-hover:border-[#d4af37]/40 transition-all">
-                        <div class="absolute -bottom-1 -right-1 status-dot status-${u.status} scale-[0.6] border-2 border-[#161a21]"></div>
-                    </div>
-                    <div class="flex flex-col overflow-hidden">
-                        <span class="text-xs font-semibold tracking-tight truncate">${u.username}</span>
-                        <span class="text-[8px] text-zinc-500 font-medium italic truncate">${u.status}</span>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-            renderMessages();
-        });
-
-        const chatForm = document.getElementById('chat-form');
-        chatForm.onsubmit = (e) => {
-            e.preventDefault();
-            const input = document.getElementById('msg-input');
-            if(!input.value.trim()) return;
-            socket.emit('global message', {
-                text: input.value.trim(),
-                sender: myProfile,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-            });
-            input.value = '';
         };
 
-        socket.on('global message', (msg) => {
-            messages.push(msg);
-            if(messages.length > 60) messages.shift();
-            renderMessages();
+        window.logout = () => {
+            localStorage.removeItem('chatlaxy_user_id');
+            window.location.reload();
+        };
+
+        // --- Profile Actions ---
+        window.setStatus = async (s) => {
+            if(!currentUser) return;
+            document.getElementById('statusDropdown').classList.add('hidden');
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), {
+                status: s
+            });
+        };
+
+        window.saveProfile = async () => {
+            const age = document.getElementById('edit-age').value;
+            const gender = document.getElementById('edit-gender').value;
+            const bio = document.getElementById('edit-bio').value;
+            const pfpIn = document.getElementById('edit-pfp-input');
+
+            let updates = { age, gender, bio };
+            if(pfpIn.files[0]) updates.pfp = await toBase64(pfpIn.files[0]);
+
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), updates);
+            toggleEditor();
+            showToast("Identity Updated.");
+        };
+
+        window.viewDossier = (username) => {
+            const u = onlineUsers[username];
+            if(!u) return;
+            document.getElementById('view-pfp').src = u.pfp || DEFAULT_PFP;
+            document.getElementById('view-banner').style.backgroundImage = `url(${u.banner || DEFAULT_BANNER})`;
+            document.getElementById('view-name').innerText = u.username;
+            document.getElementById('view-age').innerText = `${u.age || '--'} Years`;
+            document.getElementById('view-gender').innerText = u.gender || '--';
+            document.getElementById('view-bio').innerText = u.bio || "This user prefers silence.";
+            document.getElementById('view-dot').className = `status-dot status-${u.status || 'online'}`;
+            document.getElementById('view-status-text').innerText = u.status || 'online';
+            document.getElementById('profile-modal').classList.remove('hidden');
+        };
+
+        // --- Core Init ---
+        const startApp = async () => {
+            await signInAnonymously(auth);
+            const savedUid = localStorage.getItem('chatlaxy_user_id');
+            
+            if(!savedUid) {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                return;
+            }
+
+            // Load My Profile
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'users', savedUid), (snapshot) => {
+                if(!snapshot.exists()) {
+                    logout();
+                    return;
+                }
+                currentUser = snapshot.data();
+                document.getElementById('auth-screen').classList.add('hidden');
+                
+                // Update Sidebar Profile
+                document.getElementById('me-pfp-header').src = currentUser.pfp;
+                document.getElementById('me-name-header').innerText = currentUser.username;
+                document.getElementById('me-pfp-dropdown').src = currentUser.pfp;
+                document.getElementById('me-name-dropdown').innerText = currentUser.username;
+                
+                // Update Status UI
+                const s = currentUser.status || 'online';
+                document.getElementById('statusText').innerText = s.charAt(0).toUpperCase() + s.slice(1);
+                document.getElementById('statusIndicator').className = `status-dot status-${s}`;
+            });
+
+            // Listen for Global Users
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snapshot) => {
+                const list = document.getElementById('user-list');
+                list.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const u = doc.data();
+                    onlineUsers[u.username] = u;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-black/20 cursor-pointer transition-all border border-transparent hover:border-[#222]';
+                    div.onclick = () => viewDossier(u.username);
+                    div.innerHTML = `
+                        <div class="relative">
+                            <img src="${u.pfp}" class="w-7 h-7 rounded-lg object-cover">
+                            <div class="absolute -bottom-0.5 -right-0.5 status-dot status-${u.status} border-2 border-[#161a21]"></div>
+                        </div>
+                        <span class="text-[10px] font-medium text-zinc-400 truncate">${u.username}</span>
+                    `;
+                    list.appendChild(div);
+                });
+            }, (err) => console.error(err));
+
+            // Listen for Messages
+            const messagesQuery = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+            onSnapshot(messagesQuery, (snapshot) => {
+                const container = document.getElementById('messages');
+                const sorted = snapshot.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+                
+                if(sorted.length > 0) {
+                    container.innerHTML = '';
+                    sorted.slice(-50).forEach(msg => {
+                        const row = document.createElement('div');
+                        row.className = 'message-row group flex gap-4 px-2 hover:bg-white/5 transition-colors rounded-lg';
+                        row.innerHTML = `
+                            <img src="${msg.pfp || DEFAULT_PFP}" onclick="viewDossier('${msg.username}')" class="w-8 h-8 rounded-lg mt-1 cursor-pointer object-cover shadow-lg border border-[#222]">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold gold-gradient uppercase cursor-pointer" onclick="viewDossier('${msg.username}')">${msg.username}</span>
+                                    <span class="text-[8px] text-zinc-600 font-medium">${new Date(msg.timestamp?.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                </div>
+                                <p class="text-xs text-zinc-300 leading-relaxed">${msg.text}</p>
+                            </div>
+                        `;
+                        container.appendChild(row);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, (err) => console.error(err));
+        };
+
+        // --- Interaction Handlers ---
+        document.getElementById('chat-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if(!text || !currentUser) return;
+
+            input.value = '';
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                    username: currentUser.username,
+                    pfp: currentUser.pfp,
+                    text: text,
+                    timestamp: serverTimestamp()
+                });
+            } catch (err) {
+                showToast("Transmission Failed.");
+            }
+        };
+
+        // Generic Dropdown Handling
+        document.getElementById('statusBtn').onclick = (e) => {
+            e.stopPropagation();
+            document.getElementById('statusDropdown').classList.toggle('hidden');
+            document.getElementById('profileDropdown').classList.add('hidden');
+            document.getElementById('dropdownOverlay').classList.add('hidden');
+        };
+
+        document.getElementById('profileTrigger').onclick = (e) => {
+            e.stopPropagation();
+            const d = document.getElementById('profileDropdown');
+            const o = document.getElementById('dropdownOverlay');
+            d.classList.toggle('hidden');
+            o.classList.toggle('hidden');
+            document.getElementById('statusDropdown').classList.add('hidden');
+        };
+
+        document.getElementById('dropdownOverlay').onclick = () => {
+            document.getElementById('profileDropdown').classList.add('hidden');
+            document.getElementById('dropdownOverlay').classList.add('hidden');
+        };
+
+        document.addEventListener('click', () => {
+            document.getElementById('statusDropdown').classList.add('hidden');
         });
 
-        function renderMessages() {
-            const container = document.getElementById('messages');
-            container.innerHTML = '';
-            messages.forEach(m => {
-                const liveSender = onlineUsers.find(u => u.username === m.sender.username) || m.sender;
-                const div = document.createElement('div');
-                div.className = 'message-row flex gap-5';
-                div.innerHTML = `
-                    <img src="${liveSender.pfp}" onclick="viewProfile('${liveSender.username}')" class="w-12 h-12 rounded-2xl object-cover cursor-pointer bg-black border border-white/5 shrink-0 hover:border-[#d4af37]/50 transition-all">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-1.5">
-                            <span class="serif text-lg font-bold text-white tracking-tight">${liveSender.username}</span>
-                            <span class="text-[7px] text-[#d4af37] font-black bg-[#d4af37]/10 px-2 py-0.5 rounded-full uppercase tracking-widest">${liveSender.gender}</span>
-                            <span class="text-[8px] text-gray-700 font-black uppercase tracking-tighter ml-auto">${m.timestamp}</span>
-                        </div>
-                        <p class="text-[12px] text-gray-300 leading-relaxed font-medium">${m.text}</p>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-            container.scrollTop = container.scrollHeight;
-        }
+        // Initialize
+        window.onload = startApp;
+
     </script>
 </body>
 </html>
