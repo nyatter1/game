@@ -1,10 +1,10 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatlaxy | Elite Social Protocol</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,525 +13,595 @@
             --luxury-dark: #161a21;
             --border-color: #222222;
         }
-        html { font-size: 14px; }
         body { 
             font-family: 'Inter', sans-serif; 
             background: var(--luxury-black); 
             color: #e2e8f0; 
             margin: 0; 
-            padding: 0; 
-            overflow: hidden;
             height: 100vh;
+            overflow: hidden;
         }
-        .app-container { height: 100vh; display: flex; max-width: 100%; margin: 0 auto; }
         .serif { font-family: 'Cormorant Garamond', serif; }
-        .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(22, 26, 33, 0.85); backdrop-filter: blur(12px); border: 1px solid var(--border-color); }
         
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-track { background: var(--luxury-black); }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-        
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; transition: all 0.3s; border: 1px solid rgba(0,0,0,0.5); }
-        .status-online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .status-away { background: #eab308; box-shadow: 0 0 8px #eab308; }
-        .status-dnd { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
-
-        .message-row { border-bottom: 1px solid rgba(255, 255, 255, 0.02); padding: 1rem 0; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        .luxury-input { width: 100%; background: #000; border: 1px solid #222; padding: 0.8rem; border-radius: 0.75rem; outline: none; transition: all 0.2s; color: white; font-size: 0.8rem; }
+        .luxury-input { width: 100%; background: #000; border: 1px solid #333; padding: 0.8rem; border-radius: 0.75rem; outline: none; transition: all 0.2s; color: white; font-size: 0.85rem; }
         .luxury-input:focus { border-color: var(--luxury-gold); box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
         
-        .banner-box { width: 100%; height: 120px; background-size: cover; background-position: center; background-color: #1a1a1a; position: relative; }
-        .pfp-main { width: 90px; height: 90px; border-radius: 24px; object-fit: cover; border: 4px solid var(--luxury-dark); margin-top: -45px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; }
-        
-        .auth-view { display: none; }
-        .auth-view.active { display: block; animation: slideIn 0.4s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .pfp-ring { position: relative; padding: 2px; border-radius: 14px; background: linear-gradient(135deg, #333 0%, #111 100%); transition: all 0.3s; }
+        .pfp-ring.online { background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%); box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
 
-        .file-upload-btn { display: block; width: 100%; padding: 0.8rem; border: 1px dashed #444; border-radius: 0.75rem; text-align: center; font-size: 0.75rem; color: #888; cursor: pointer; transition: all 0.2s; }
-        .file-upload-btn:hover { border-color: var(--luxury-gold); color: white; }
+        .banner-edit-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; }
+        .banner-box:hover .banner-edit-overlay { opacity: 1; }
 
-        .dropdown-animate { animation: dropdownIn 0.2s ease-out forwards; }
-        @keyframes dropdownIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        /* Editing Styles */
+        .editable-active { 
+            background: #0a0c10 !important; 
+            border: 1px solid var(--luxury-gold) !important; 
+            padding: 8px 12px !important; 
+            border-radius: 12px; 
+            color: white !important; 
+            outline: none; 
+            width: 100%; 
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); 
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+        }
         
-        /* Direct Edit Styles */
-        .my-profile-view [data-editable] { cursor: pointer !important; position: relative; }
-        .my-profile-view [data-editable]:hover { outline: 1px dashed var(--luxury-gold); outline-offset: 4px; }
-        .my-profile-view .pfp-main:hover { filter: brightness(0.8); }
-        .my-profile-view .banner-box:hover::after { content: 'Change Banner'; position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; text-transform: uppercase; font-weight: bold; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        .pfp-edit-btn { position: absolute; inset: 0; z-index: 20; border-radius: 1.5rem; background: rgba(0,0,0,0.6); opacity: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.2s; }
+        .pfp-container:hover .pfp-edit-btn { opacity: 1; }
+
+        .auth-view { display: none; animation: fadeIn 0.4s ease; }
+        .auth-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="selection:bg-[#d4af37]/30">
+<body>
 
-    <!-- AUTH SCREEN -->
-    <div id="auth-screen" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 overflow-y-auto">
-        <div class="w-full max-w-md text-center py-10">
-            <h1 class="serif text-7xl gold-gradient mb-2">Chatlaxy</h1>
-            <p class="text-[9px] text-gray-600 uppercase tracking-[0.6em] mb-12 font-bold">The Elite Social Protocol</p>
-            <div class="glass p-10 rounded-[3rem] space-y-6 relative overflow-hidden">
+    <!-- AUTHENTICATION LAYER -->
+    <div id="auth-layer" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-6 bg-[url('https://images.unsplash.com/photo-1634152962476-4b8a00e1915c?q=80&w=2500&auto=format&fit=crop')] bg-cover bg-center">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+        <div class="w-full max-w-md text-center relative z-10">
+            <h1 class="serif text-7xl gold-gradient mb-2 drop-shadow-2xl">Chatlaxy</h1>
+            <p class="text-[9px] text-gray-400 uppercase tracking-[0.6em] mb-10 font-bold">The Elite Social Protocol</p>
+            
+            <div class="glass p-10 rounded-[2.5rem] shadow-2xl border-white/10">
+                
+                <!-- LOGIN FORM -->
                 <div id="view-login" class="auth-view active">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Identify Yourself</p>
+                    <h2 class="text-white serif text-2xl mb-6">Access Terminal</h2>
                     <div class="space-y-4">
-                        <input type="text" id="login-username" class="luxury-input" placeholder="Alias">
-                        <input type="password" id="login-password" class="luxury-input" placeholder="Passkey">
+                        <input type="text" id="login-id" class="luxury-input" placeholder="Username or Email">
+                        <input type="password" id="login-pass" class="luxury-input" placeholder="Password">
                     </div>
-                    <button onclick="attemptLogin()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition shadow-lg">Enter Protocol</button>
-                    <p class="mt-6 text-[9px] text-gray-500">New? <span onclick="switchAuthView('signup')" class="text-[#d4af37] cursor-pointer hover:underline">Request Access</span></p>
+                    <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition mt-8 shadow-[0_0_20px_rgba(212,175,55,0.3)]">Enter Protocol</button>
+                    <p class="mt-6 text-[10px] text-gray-500">No clearance? <span onclick="switchAuth('signup')" class="text-[#d4af37] cursor-pointer hover:underline font-bold">Request Access</span></p>
                 </div>
+
+                <!-- SIGNUP FORM -->
                 <div id="view-signup" class="auth-view">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Phase 1: Credentials</p>
-                    <div class="space-y-4">
-                        <input type="text" id="reg-username" class="luxury-input" placeholder="Unique Alias">
-                        <input type="password" id="reg-password" class="luxury-input" placeholder="Secure Passkey">
-                    </div>
-                    <button onclick="switchAuthView('signup-2')" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition">Continue</button>
-                    <p class="mt-6 text-[9px] text-gray-500">Already here? <span onclick="switchAuthView('login')" class="text-[#d4af37] cursor-pointer hover:underline">Login</span></p>
-                </div>
-                <div id="view-signup-2" class="auth-view">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Phase 2: Persona</p>
-                    <div class="space-y-4">
-                        <div class="flex gap-4">
-                            <input type="number" id="reg-age" class="luxury-input" placeholder="Age">
-                            <select id="reg-gender" class="luxury-input">
+                    <h2 class="text-white serif text-2xl mb-6">New Identity</h2>
+                    <div class="space-y-3 text-left">
+                        <input type="text" id="reg-user" class="luxury-input" placeholder="Username">
+                        <input type="email" id="reg-email" class="luxury-input" placeholder="Email Address">
+                        <input type="password" id="reg-pass" class="luxury-input" placeholder="Password">
+                        
+                        <div class="flex gap-3">
+                            <input type="number" id="reg-age" class="luxury-input w-24" placeholder="Age" min="7" max="1000">
+                            <select id="reg-gender" class="luxury-input cursor-pointer">
                                 <option value="" disabled selected>Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
-                                <option value="Elite">Elite</option>
+                                <option value="Furry">Furry</option>
+                                <option value="Gay">Gay</option>
+                                <option value="Lesbian">Lesbian</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
-                        <div>
-                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-1 text-left px-2">Avatar</p>
-                            <label class="file-upload-btn">
-                                <span id="pfp-label">Choose Image</span>
-                                <input type="file" id="reg-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'pfp-label', 1024)">
-                            </label>
-                        </div>
                     </div>
-                    <div class="flex gap-4 mt-8">
-                        <button onclick="switchAuthView('signup')" class="flex-1 border border-[#222] py-5 rounded-2xl text-gray-500 font-bold uppercase text-[10px]">Back</button>
-                        <button onclick="finishSignup()" class="flex-[2] bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition">Finish</button>
-                    </div>
+                    <button onclick="handleSignup()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition mt-8 shadow-[0_0_20px_rgba(212,175,55,0.3)]">Establish Identity</button>
+                    <p class="mt-6 text-[10px] text-gray-500">Has clearance? <span onclick="switchAuth('login')" class="text-[#d4af37] cursor-pointer hover:underline font-bold">Login</span></p>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <!-- DOSSIER MODAL -->
-    <div id="profile-modal" class="fixed inset-0 z-[80] bg-black/95 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeDossier()">
-        <div id="dossier-card" class="w-full max-w-sm glass rounded-[3rem] overflow-hidden relative" onclick="event.stopPropagation()">
-            
-            <div id="view-banner" class="banner-box shadow-inner" data-editable onclick="triggerEdit('banner')"></div>
-            <div class="px-10 pb-10 flex flex-col items-center">
-                <img id="view-pfp" src="" class="pfp-main bg-black" data-editable onclick="triggerEdit('pfp')">
-                <h2 id="view-name" class="serif text-4xl gold-gradient mt-4" data-editable onclick="triggerEdit('name')">Username</h2>
-                
-                <div class="flex gap-3 mt-2">
-                    <span id="view-age" class="text-[9px] font-black bg-white/5 px-3 py-1 rounded-full text-gray-400 uppercase tracking-tighter">-- Years</span>
-                    <span id="view-gender" class="text-[9px] font-black bg-white/5 px-3 py-1 rounded-full text-gray-400 uppercase tracking-tighter">--</span>
-                </div>
-
-                <div id="view-status-badge" class="flex items-center gap-2 mt-4">
-                    <div id="view-dot" class="status-dot"></div>
-                    <span id="view-status-text" class="text-[8px] font-black uppercase tracking-widest text-gray-500">Offline</span>
-                </div>
-
-                <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-[#222] to-transparent my-6"></div>
-                
-                <p id="view-bio" class="text-gray-300 text-xs text-center italic leading-relaxed px-4 min-h-[40px]" data-editable onclick="triggerEdit('bio')">"No bio provided."</p>
-                
-                <button onclick="closeDossier()" class="mt-8 w-full border border-[#222] py-4 rounded-xl text-[9px] font-black text-gray-500 uppercase tracking-widest hover:text-white hover:border-white/20 transition">Exit Dossier</button>
-            </div>
-            
-            <input type="file" id="hidden-pfp-input" class="hidden" accept="image/*" onchange="performUpdate('pfp', this)">
-            <input type="file" id="hidden-banner-input" class="hidden" accept="image/*" onchange="performUpdate('banner', this)">
-        </div>
-    </div>
-
-    <!-- MAIN APP STRUCTURE -->
-    <div class="app-container w-full h-screen flex">
-        <!-- Sidebar Navigation (Left) -->
-        <aside class="w-64 bg-[#161a21] border-r border-[#222] flex flex-col p-6 shadow-2xl relative z-40 shrink-0">
-            <div class="mb-10 px-2 flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-[#d4af37] to-[#b8860b] rounded-xl flex items-center justify-center shadow-lg shadow-[#d4af37]/10">
-                    <span class="text-black font-bold text-lg">C</span>
-                </div>
-                <span class="serif text-2xl tracking-wide gold-gradient">CHATLAXY</span>
-            </div>
-
-            <nav class="flex-1 space-y-6">
-                <div class="relative">
-                    <button id="statusBtn" class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-black/40 border border-[#222] hover:border-[#d4af37]/50 transition-all text-sm font-medium">
-                        <div class="flex items-center gap-3">
-                            <div id="statusIndicator" class="status-dot status-online"></div>
-                            <span id="statusText" class="tracking-tight text-zinc-300">Online</span>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600"><path d="m6 9 6 6 6-6"/></svg>
-                    </button>
-                    <div id="statusDropdown" class="hidden absolute left-0 right-0 mt-2 bg-[#161a21] border border-[#222] rounded-xl shadow-2xl z-50 overflow-hidden dropdown-animate">
-                        <button onclick="setStatus('online')" class="w-full text-left px-4 py-3 text-xs hover:bg-black/40 transition-colors flex items-center gap-3 border-b border-[#222]">
-                            <div class="status-dot status-online"></div>
-                            <span class="text-zinc-400">Online</span>
-                        </button>
-                        <button onclick="setStatus('away')" class="w-full text-left px-4 py-3 text-xs hover:bg-black/40 transition-colors flex items-center gap-3 border-b border-[#222]">
-                            <div class="status-dot status-away"></div>
-                            <span class="text-zinc-400">Away</span>
-                        </button>
-                        <button onclick="setStatus('dnd')" class="w-full text-left px-4 py-3 text-xs hover:bg-black/40 transition-colors flex items-center gap-3">
-                            <div class="status-dot status-dnd"></div>
-                            <span class="text-zinc-400">Busy</span>
-                        </button>
+    <!-- MAIN APP INTERFACE -->
+    <div id="app-root" class="h-screen flex hidden bg-[#050505]">
+        
+        <!-- SIDEBAR (LEFT) -->
+        <aside class="w-72 bg-[#0c0e12] border-r border-[#1a1a1a] flex flex-col shrink-0 z-20">
+            <div class="p-8 pb-4">
+                <h2 class="serif text-3xl gold-gradient mb-8 tracking-wide">Chatlaxy</h2>
+                <div class="space-y-1">
+                    <p class="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2 mb-4">News Feed</p>
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 mb-4">
+                        <p class="text-[10px] text-gray-400 leading-relaxed">System Update 4.2: Image transmission protocols enabled. Identity modification systems online.</p>
+                        <span class="text-[8px] text-[#d4af37] mt-2 block uppercase font-bold">Admin System</span>
                     </div>
                 </div>
-
-                <div class="space-y-2">
-                    <div class="px-4 py-2 text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] serif">System</div>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:bg-black/40 hover:text-[#d4af37] transition-all border border-transparent hover:border-[#222]">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
-                        <span class="text-sm font-medium">News</span>
-                    </a>
+            </div>
+            
+            <!-- My Profile Preview (Bottom Left) -->
+            <div class="mt-auto p-6 border-t border-[#1a1a1a]">
+                <div class="flex items-center gap-4 cursor-pointer group p-2 rounded-xl hover:bg-white/5 transition" onclick="openProfile(currentUser.id)">
+                    <img id="my-avatar-side" src="" class="w-10 h-10 rounded-xl bg-zinc-900 object-cover border border-white/5 group-hover:border-[#d4af37]/50 transition shadow-lg">
+                    <div class="overflow-hidden">
+                        <p id="my-name-side" class="text-xs font-bold text-white uppercase tracking-wider truncate">Guest</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <p class="text-[9px] text-[#d4af37] font-bold">My Profile</p>
+                        </div>
+                    </div>
                 </div>
-            </nav>
-
-            <div class="mt-auto border-t border-[#222] pt-8">
-                <button onclick="logout()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-all text-left group">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                    <span>Logout</span>
+                <button onclick="logout()" class="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-lg text-[10px] uppercase font-bold text-red-900 hover:bg-red-900/10 hover:text-red-500 transition border border-transparent hover:border-red-900/20">
+                    Logout
                 </button>
             </div>
         </aside>
 
-        <!-- Main Workspace (Center) -->
-        <main class="flex-1 flex flex-col bg-gradient-to-br from-[#0a0c10] to-[#161a21] relative">
-            <header class="h-20 border-b border-[#222] flex items-center justify-end px-10 relative z-30 shrink-0">
-                <div class="relative">
-                    <button id="profileTrigger" class="flex items-center gap-3 group p-1 rounded-2xl border border-transparent hover:border-[#222] hover:bg-black/20 transition-all focus:outline-none">
-                        <div class="text-right flex flex-col items-end mr-1">
-                            <span id="me-name-header" class="text-[11px] font-bold text-zinc-200 uppercase tracking-widest">Guest</span>
-                            <span id="me-rank-header" class="text-[9px] text-[#d4af37] uppercase font-bold tracking-widest">VIP Member</span>
-                        </div>
-                        <img id="me-pfp-header" src="" class="w-8 h-8 rounded-lg border border-[#d4af37]/30 bg-black shadow-lg object-cover">
-                    </button>
-
-                    <div id="dropdownOverlay" class="hidden fixed inset-0"></div>
-                    <div id="profileDropdown" class="hidden absolute right-0 mt-4 w-72 bg-[#161a21] border border-[#d4af37]/20 rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,1)] dropdown-animate overflow-hidden">
-                        <div class="p-6">
-                            <div class="flex justify-center mb-4">
-                                <img id="me-pfp-dropdown" src="" class="w-16 h-16 rounded-xl border-2 border-[#d4af37]/20 shadow-2xl bg-black object-cover">
-                            </div>
-                            <div class="text-center mb-6">
-                                <h3 id="me-name-dropdown" class="serif text-lg gold-gradient">Username</h3>
-                                <p id="me-rank-dropdown" class="text-[9px] text-[#d4af37] font-bold tracking-[0.3em] uppercase">VIP Member</p>
-                            </div>
-                            <div class="space-y-1">
-                                <button onclick="viewProfile(myProfile.username)" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-zinc-400 hover:bg-black/40 hover:text-white transition-all text-left border border-transparent hover:border-[#222]">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#d4af37]/70"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                    <span>My Profile</span>
-                                </button>
-                                <div class="my-2 border-t border-[#222] opacity-50"></div>
-                                <button onclick="logout()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-all text-left group">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                                    <span>Logout</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+        <!-- CENTER CHAT -->
+        <main class="flex-1 flex flex-col relative z-10">
+            <header class="h-20 border-b border-[#1a1a1a] flex items-center justify-between px-8 bg-[#0c0e12]/80 backdrop-blur-md">
+                <div class="flex items-center gap-4">
+                    <div class="status-dot bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Global Encryption Active</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="status-indicator" class="text-[10px] font-bold text-[#d4af37] border border-[#d4af37]/20 px-3 py-1 rounded-full bg-[#d4af37]/5">ONLINE</span>
                 </div>
             </header>
 
-            <!-- Chat Interface -->
-            <div id="messages" class="flex-1 overflow-y-auto p-10 space-y-2"></div>
-            
-            <div class="p-10 pt-0 shrink-0">
-                <form id="chat-form" class="bg-[#161a21]/50 backdrop-blur-sm border border-[#222] rounded-[1.5rem] flex items-center px-8 py-2 gap-5 shadow-2xl focus-within:border-[#d4af37]/30 transition-all">
-                    <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" class="flex-1 bg-transparent py-5 outline-none text-white text-sm font-medium">
-                    <button type="submit" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] px-10 py-3 rounded-xl text-black font-black uppercase text-[10px] tracking-widest shadow-lg transition">Send</button>
-                </form>
+            <div id="chat-feed" class="flex-1 overflow-y-auto p-8 space-y-6 scroll-smooth">
+                <!-- Chat messages go here -->
+            </div>
+
+            <div class="p-8 pt-0">
+                <div class="glass rounded-2xl flex items-center p-2 border-[#333] shadow-2xl relative">
+                    <!-- Image Upload Button -->
+                    <button onclick="triggerChatImage()" class="p-3 text-gray-400 hover:text-[#d4af37] transition hover:bg-white/5 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </button>
+                    
+                    <input type="text" id="msg-input" class="flex-1 bg-transparent border-none outline-none px-4 text-sm text-white placeholder-gray-600" placeholder="Broadcast a thought...">
+                    
+                    <button onclick="sendMsg()" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] p-3 px-6 rounded-xl text-black hover:scale-105 transition shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
             </div>
         </main>
 
-        <!-- Social Tab (Right) -->
-        <aside class="w-72 bg-[#161a21] border-l border-[#222] flex flex-col p-6 shadow-2xl relative z-40 shrink-0">
-             <div class="px-2 mb-8">
-                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em] serif mb-1">Presence</div>
-                <h3 class="serif text-xl gold-gradient">Players Online</h3>
+        <!-- USERS ONLINE (RIGHT) -->
+        <aside class="w-72 bg-[#0c0e12] border-l border-[#1a1a1a] flex flex-col shrink-0 z-20">
+            <div class="p-8 border-b border-[#1a1a1a]">
+                <h3 class="serif text-xl gold-gradient mb-1">Presence</h3>
+                <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Active Operatives</p>
             </div>
-            
-            <div class="px-2 mb-4 flex justify-between items-center bg-black/20 p-3 rounded-xl border border-[#222]">
-                <span class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest">Total Active</span>
-                <span id="online-count" class="text-xs font-black text-[#d4af37]">0</span>
-            </div>
-
-            <div id="user-list" class="flex-1 overflow-y-auto space-y-3 pr-2">
-                <!-- User entries injected here -->
+            <div id="online-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Dynamic User List -->
             </div>
         </aside>
+
     </div>
 
+    <!-- PROFILE MODAL (DOSSIER) -->
+    <div id="profile-modal" class="fixed inset-0 z-[110] bg-black/95 backdrop-blur-xl hidden flex items-center justify-center p-6" onclick="closeProfile()">
+        <div class="w-full max-w-sm glass rounded-[3rem] overflow-hidden relative shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10" onclick="event.stopPropagation()">
+            
+            <!-- Banner -->
+            <div id="prof-banner" class="h-40 bg-zinc-900 bg-cover bg-center relative banner-box transition-all">
+                <div id="banner-edit-overlay" class="banner-edit-overlay hidden" onclick="triggerFile('banner')">
+                    <span class="text-[9px] font-bold text-white uppercase tracking-widest bg-black/70 px-4 py-2 rounded-full backdrop-blur-md border border-white/10">Upload Banner (Max 1MB)</span>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="px-10 pb-12 flex flex-col items-center -mt-16 relative z-10">
+                
+                <!-- PFP -->
+                <div class="relative pfp-container">
+                    <img id="prof-pfp" src="" class="w-32 h-32 rounded-[2.5rem] border-[6px] border-[#0a0c10] object-cover bg-[#0a0c10] shadow-2xl">
+                    <div id="pfp-edit-overlay" class="pfp-edit-btn hidden" onclick="triggerFile('pfp')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                </div>
+
+                <!-- Editable Fields -->
+                <div class="mt-6 text-center w-full flex flex-col items-center justify-start gap-2">
+                    
+                    <!-- Username -->
+                    <div class="w-full flex justify-center group relative">
+                        <h2 id="prof-name" class="serif text-4xl gold-gradient cursor-default transition-opacity">Username</h2>
+                        <div id="name-hint" class="absolute -right-4 top-1 text-[#d4af37] opacity-0 text-[10px] hidden">✎</div>
+                    </div>
+
+                    <!-- Rank/Gender Display -->
+                    <div class="flex gap-2 mb-2">
+                        <span id="prof-rank" class="text-[9px] font-black bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[#d4af37] uppercase tracking-widest">VIP</span>
+                        <span id="prof-gender" class="text-[9px] font-black bg-white/5 border border-white/10 px-3 py-1 rounded-full text-gray-400 uppercase tracking-widest">Unknown</span>
+                        <span id="prof-age" class="text-[9px] font-black bg-white/5 border border-white/10 px-3 py-1 rounded-full text-gray-400 uppercase tracking-widest">00</span>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="w-16 h-[2px] bg-[#d4af37]/30 my-2"></div>
+
+                    <!-- Bio -->
+                    <div class="w-full relative group">
+                        <p id="prof-bio" class="text-xs text-gray-300 italic px-4 leading-relaxed cursor-default min-h-[40px] flex items-center justify-center transition-colors hover:text-white">No bio available.</p>
+                    </div>
+
+                </div>
+
+                <button onclick="closeProfile()" class="mt-8 w-full border border-white/10 py-4 rounded-2xl text-[10px] font-black text-gray-500 uppercase tracking-widest hover:border-[#d4af37] hover:text-[#d4af37] transition bg-black/40">Close Dossier</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="upload-pfp" class="hidden" accept="image/*" onchange="handleFile('pfp')">
+    <input type="file" id="upload-banner" class="hidden" accept="image/*" onchange="handleFile('banner')">
+    <input type="file" id="upload-chat-img" class="hidden" accept="image/*" onchange="handleChatImage()">
+
     <script>
-        const socket = io();
+        // --- DATA LAYER ---
+        const DB_USERS_KEY = 'chatlaxy_users_v2';
+        const DB_SESSION_KEY = 'chatlaxy_session_v2';
+        const DEFAULT_PFP = 'local/default.png'; // Handled via fallback in code if local missing
+        const FALLBACK_PFP = 'https://api.dicebear.com/7.x/shapes/svg?seed=Default'; // Reliable fallback
         
-        // --- State ---
-        let accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts')) || [];
-        let session = JSON.parse(localStorage.getItem('chatlaxy_session')) || null;
-        let myProfile = session || {
-            username: '',
-            pfp: 'https://i.pinimg.com/736x/8f/1c/a2/8f1ca2029e2efce263ee268759d9a13c.jpg',
-            banner: 'https://i.pinimg.com/originals/11/4d/9d/114d9dc65147570419d2823871216d8a.gif',
-            bio: 'Legacy Member.',
-            age: 21,
-            gender: 'Elite',
-            status: 'online'
+        let currentUser = null;
+        let users = [];
+
+        // --- INIT ---
+        window.onload = () => {
+            // Load Users DB
+            const storedUsers = localStorage.getItem(DB_USERS_KEY);
+            if (storedUsers) users = JSON.parse(storedUsers);
+
+            // Check Session
+            const session = localStorage.getItem(DB_SESSION_KEY);
+            if (session) {
+                const sessionUser = JSON.parse(session);
+                // Validate session against DB to ensure latest data
+                const dbUser = users.find(u => u.id === sessionUser.id);
+                if (dbUser) {
+                    currentUser = dbUser;
+                    launchApp();
+                } else {
+                    localStorage.removeItem(DB_SESSION_KEY);
+                }
+            }
         };
-        let onlineUsers = [];
-        let messages = [];
 
-        // --- DOM Elements ---
-        const statusBtn = document.getElementById('statusBtn');
-        const statusDropdown = document.getElementById('statusDropdown');
-        const statusIndicator = document.getElementById('statusIndicator');
-        const statusText = document.getElementById('statusText');
-        const profileTrigger = document.getElementById('profileTrigger');
-        const profileDropdown = document.getElementById('profileDropdown');
-        const dropdownOverlay = document.getElementById('dropdownOverlay');
-        const dossierCard = document.getElementById('dossier-card');
-
-        // --- Auth Logic ---
-        function switchAuthView(view) {
+        // --- AUTH LOGIC ---
+        function switchAuth(view) {
             document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${view}`).classList.add('active');
+            document.getElementById('view-' + view).classList.add('active');
         }
 
-        function handleFileLabel(input, labelId, customLimitKb = 250) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                if (file.size > customLimitKb * 1024) {
-                    input.value = "";
-                    document.getElementById(labelId).innerText = "Too large";
-                    return;
-                }
-                document.getElementById(labelId).innerText = file.name;
+        function handleSignup() {
+            const user = document.getElementById('reg-user').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const age = parseInt(document.getElementById('reg-age').value);
+            const gender = document.getElementById('reg-gender').value;
+
+            // Validation
+            if (!user || !email || !pass || !gender) return alert('All fields required.');
+            if (age < 7 || age > 1000 || isNaN(age)) return alert('Age must be between 7 and 1000.');
+            if (users.some(u => u.username.toLowerCase() === user.toLowerCase())) return alert('Username taken.');
+            if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) return alert('Email already registered.');
+
+            // Create User
+            const newUser = {
+                id: crypto.randomUUID(),
+                username: user,
+                email: email,
+                password: pass,
+                age: age,
+                gender: gender,
+                bio: "New to the protocol.",
+                pfp: FALLBACK_PFP, // Using fallback URL to ensure image loads. 
+                // Note: To strictly use 'local/default.png', set this to 'local/default.png' but it will break if file missing.
+                banner: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=1000",
+                lastActive: Date.now()
+            };
+
+            users.push(newUser);
+            saveUsers();
+            loginUser(newUser);
+        }
+
+        function handleLogin() {
+            const id = document.getElementById('login-id').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+
+            const user = users.find(u => (u.username === id || u.email === id) && u.password === pass);
+            
+            if (user) {
+                loginUser(user);
+            } else {
+                alert('Invalid credentials.');
             }
         }
 
-        function toBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        async function finishSignup() {
-            const user = document.getElementById('reg-username').value.trim();
-            const pass = document.getElementById('reg-password').value;
-            const age = document.getElementById('reg-age').value;
-            const gender = document.getElementById('reg-gender').value;
-            const pfpInput = document.getElementById('reg-pfp-input');
-
-            if(!user || !pass || !age || !gender || !pfpInput.files[0]) return;
-            if(accounts.some(acc => acc.username.toLowerCase() === user.toLowerCase())) return;
-
-            const pfpBase64 = await toBase64(pfpInput.files[0]);
-            const newAccount = { username: user, password: pass, pfp: pfpBase64, banner: 'https://i.pinimg.com/originals/11/4d/9d/114d9dc65147570419d2823871216d8a.gif', bio: 'Member of the Circle.', age, gender, status: 'online' };
-            
-            accounts.push(newAccount);
-            localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
-            session = newAccount; myProfile = newAccount;
-            localStorage.setItem('chatlaxy_session', JSON.stringify(session));
-            document.getElementById('auth-screen').classList.add('hidden');
-            init();
-        }
-
-        function attemptLogin() {
-            const user = document.getElementById('login-username').value.trim();
-            const pass = document.getElementById('login-password').value;
-            const account = accounts.find(acc => acc.username === user && acc.password === pass);
-            if(!account) return;
-            session = account; myProfile = account;
-            localStorage.setItem('chatlaxy_session', JSON.stringify(session));
-            document.getElementById('auth-screen').classList.add('hidden');
-            init();
+        function loginUser(user) {
+            currentUser = user;
+            localStorage.setItem(DB_SESSION_KEY, JSON.stringify(user));
+            launchApp();
         }
 
         function logout() {
-            localStorage.removeItem('chatlaxy_session');
-            window.location.reload();
+            localStorage.removeItem(DB_SESSION_KEY);
+            location.reload();
         }
 
-        function init() {
-            document.getElementById('me-name-header').innerText = myProfile.username;
-            document.getElementById('me-pfp-header').src = myProfile.pfp;
-            document.getElementById('me-pfp-dropdown').src = myProfile.pfp;
-            document.getElementById('me-name-dropdown').innerText = myProfile.username;
-            setStatus(myProfile.status);
-            socket.emit('register user', myProfile);
+        function saveUsers() {
+            localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
         }
 
-        if(session) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            init();
-        }
-
-        // --- Navigation Interactions ---
-        statusBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            statusDropdown.classList.toggle('hidden');
-        });
-
-        function setStatus(s) {
-            myProfile.status = s;
-            statusText.innerText = s.charAt(0).toUpperCase() + s.slice(1);
-            statusIndicator.className = `status-dot status-${s}`;
-            statusDropdown.classList.add('hidden');
-            socket.emit('register user', myProfile);
-        }
-
-        profileTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('hidden');
-            dropdownOverlay.classList.toggle('hidden');
-        });
-
-        dropdownOverlay.addEventListener('click', () => {
-            profileDropdown.classList.add('hidden');
-            dropdownOverlay.classList.add('hidden');
-        });
-
-        // --- Dossier Logic ---
-        function viewProfile(username) {
-            const user = onlineUsers.find(u => u.username === username) || (username === myProfile.username ? myProfile : null);
-            if(!user) return;
+        function launchApp() {
+            document.getElementById('auth-layer').classList.add('hidden');
+            document.getElementById('app-root').classList.remove('hidden');
+            updateGlobalUI();
             
-            const isMe = (username === myProfile.username);
-            dossierCard.classList.toggle('my-profile-view', isMe);
-
-            updateDossierUI(user);
-            document.getElementById('profile-modal').classList.remove('hidden');
-        }
-
-        function updateDossierUI(user) {
-            document.getElementById('view-pfp').src = user.pfp;
-            document.getElementById('view-banner').style.backgroundImage = `url(${user.banner})`;
-            document.getElementById('view-name').innerText = user.username;
-            document.getElementById('view-age').innerText = `${user.age} Years`;
-            document.getElementById('view-gender').innerText = user.gender;
-            document.getElementById('view-bio').innerText = user.bio || 'Silence.';
-            document.getElementById('view-dot').className = `status-dot status-${user.status}`;
-            document.getElementById('view-status-text').innerText = user.status;
-        }
-
-        function closeDossier() {
-            document.getElementById('profile-modal').classList.add('hidden');
-        }
-
-        // Inline Editing Triggers (Direct Click)
-        function triggerEdit(type) {
-            // Only allow editing if it's currently the user's own profile view
-            if (!dossierCard.classList.contains('my-profile-view')) return;
-            
-            if(type === 'pfp') document.getElementById('hidden-pfp-input').click();
-            if(type === 'banner') document.getElementById('hidden-banner-input').click();
-            
-            if(type === 'name') {
-                const newName = prompt("New Alias:", myProfile.username);
-                if(newName && newName.length < 20) performUpdate('name', newName);
-            }
-            
-            if(type === 'bio') {
-                const newBio = prompt("New Signature:", myProfile.bio);
-                if(newBio !== null) performUpdate('bio', newBio);
+            // Welcome msg
+            const feed = document.getElementById('chat-feed');
+            if(feed.children.length === 0) {
+                addMessage({ username: 'System', pfp: 'https://ui-avatars.com/api/?name=System&background=0D8ABC&color=fff' }, 'Protocol Connection Established.', 'text', true);
             }
         }
 
-        async function performUpdate(type, value) {
-            if(type === 'pfp') myProfile.pfp = await toBase64(value.files[0]);
-            if(type === 'banner') myProfile.banner = await toBase64(value.files[0]);
-            if(type === 'name') myProfile.username = value;
-            if(type === 'bio') myProfile.bio = value;
+        // --- GLOBAL UI UPDATER ---
+        // Updates Sidebar, Online List, and persists changes
+        function updateGlobalUI() {
+            // 1. Update Sidebar Profile
+            document.getElementById('me-name-side').innerText = currentUser.username;
+            document.getElementById('my-avatar-side').src = currentUser.pfp;
 
-            // Sync with local storage
-            const idx = accounts.findIndex(a => a.username === session.username);
-            if(idx !== -1) accounts[idx] = {...myProfile};
-            localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
-            localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
-            
-            // Sync globally
-            updateDossierUI(myProfile);
-            init();
-        }
-
-        // --- Social Socket Logic ---
-        socket.on('update user list', (users) => {
-            onlineUsers = users;
-            document.getElementById('online-count').innerText = users.length;
-            const list = document.getElementById('user-list');
+            // 2. Update Online List (Right Sidebar)
+            const list = document.getElementById('online-list');
             list.innerHTML = '';
-            users.forEach(u => {
+            
+            // Sort: Me first, then others
+            const sortedUsers = [...users].sort((a, b) => (a.id === currentUser.id ? -1 : 1));
+
+            sortedUsers.forEach(u => {
+                const isMe = u.id === currentUser.id;
                 const div = document.createElement('div');
-                div.className = 'flex items-center gap-4 px-4 py-3 bg-black/20 rounded-2xl border border-[#222] hover:border-[#d4af37]/40 transition-all cursor-pointer group hover:bg-black/40';
-                div.onclick = () => viewProfile(u.username);
+                div.className = "flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-[#d4af37]/30 cursor-pointer transition group";
+                div.onclick = () => openProfile(u.id);
                 div.innerHTML = `
                     <div class="relative shrink-0">
-                        <img src="${u.pfp}" class="w-10 h-10 rounded-xl bg-[#161a21] border border-[#222] p-0.5 object-cover group-hover:border-[#d4af37]/60 transition-all">
-                        <div class="absolute -bottom-1 -right-1 status-dot status-${u.status} scale-[0.7] border-2 border-[#161a21]"></div>
+                        <img src="${u.pfp}" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 group-hover:border-[#d4af37]">
+                        <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0c0e12]"></div>
                     </div>
-                    <div class="flex flex-col overflow-hidden">
-                        <span class="text-xs font-bold tracking-tight text-white group-hover:text-[#d4af37] transition-colors truncate">${u.username}</span>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[7px] text-[#d4af37] font-black uppercase tracking-widest">${u.gender}</span>
-                            <span class="text-[8px] text-zinc-600 font-medium italic truncate">• ${u.status}</span>
+                    <div class="overflow-hidden">
+                        <p class="text-[11px] font-bold text-gray-200 uppercase tracking-wider truncate group-hover:text-[#d4af37] transition">${u.username}</p>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[8px] font-bold bg-[#d4af37]/10 text-[#d4af37] px-1.5 py-0.5 rounded uppercase">${u.gender}</span>
+                            <span class="text-[8px] text-gray-600">${isMe ? 'YOU' : 'ONLINE'}</span>
                         </div>
                     </div>
                 `;
                 list.appendChild(div);
             });
-            renderMessages();
-        });
 
-        const chatForm = document.getElementById('chat-form');
-        chatForm.onsubmit = (e) => {
-            e.preventDefault();
-            const input = document.getElementById('msg-input');
-            if(!input.value.trim()) return;
-            socket.emit('global message', {
-                text: input.value.trim(),
-                sender: myProfile,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-            });
-            input.value = '';
-        };
-
-        socket.on('global message', (msg) => {
-            messages.push(msg);
-            if(messages.length > 60) messages.shift();
-            renderMessages();
-        });
-
-        function renderMessages() {
-            const container = document.getElementById('messages');
-            container.innerHTML = '';
-            messages.forEach(m => {
-                const liveSender = onlineUsers.find(u => u.username === m.sender.username) || m.sender;
-                const div = document.createElement('div');
-                div.className = 'message-row flex gap-5';
-                div.innerHTML = `
-                    <img src="${liveSender.pfp}" onclick="viewProfile('${liveSender.username}')" class="w-12 h-12 rounded-2xl object-cover cursor-pointer bg-black border border-white/5 shrink-0 hover:border-[#d4af37]/50 transition-all">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-1.5">
-                            <span class="serif text-lg font-bold text-white tracking-tight">${liveSender.username}</span>
-                            <span class="text-[7px] text-[#d4af37] font-black bg-[#d4af37]/10 px-2 py-0.5 rounded-full uppercase tracking-widest">${liveSender.gender}</span>
-                            <span class="text-[8px] text-gray-700 font-black uppercase tracking-tighter ml-auto">${m.timestamp}</span>
-                        </div>
-                        <p class="text-[12px] text-gray-300 leading-relaxed font-medium">${m.text}</p>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-            container.scrollTop = container.scrollHeight;
+            // 3. Save to DB
+            saveUsers();
+            localStorage.setItem(DB_SESSION_KEY, JSON.stringify(currentUser));
         }
+
+
+        // --- PROFILE SYSTEM ---
+        function openProfile(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+            const isMe = user.id === currentUser.id;
+            const modal = document.getElementById('profile-modal');
+
+            // Set content
+            document.getElementById('prof-name').innerText = user.username;
+            document.getElementById('prof-bio').innerText = user.bio;
+            document.getElementById('prof-pfp').src = user.pfp;
+            document.getElementById('prof-banner').style.backgroundImage = `url(${user.banner})`;
+            document.getElementById('prof-gender').innerText = user.gender;
+            document.getElementById('prof-age').innerText = user.age;
+
+            // Set editing state
+            const editOverlayPfp = document.getElementById('pfp-edit-overlay');
+            const editOverlayBanner = document.getElementById('banner-edit-overlay');
+            const nameEl = document.getElementById('prof-name');
+            const bioEl = document.getElementById('prof-bio');
+            const nameHint = document.getElementById('name-hint');
+
+            if (isMe) {
+                editOverlayPfp.classList.remove('hidden');
+                editOverlayPfp.classList.add('flex');
+                editOverlayBanner.classList.remove('hidden');
+                editOverlayBanner.classList.add('flex');
+                
+                // Name Editing
+                nameEl.classList.add('hover:text-[#d4af37]');
+                nameEl.onclick = () => enableEdit('username', nameEl);
+                nameHint.classList.remove('hidden');
+
+                // Bio Editing
+                bioEl.classList.add('hover:text-white', 'hover:bg-white/5', 'rounded-lg');
+                bioEl.onclick = () => enableEdit('bio', bioEl);
+            } else {
+                editOverlayPfp.classList.add('hidden');
+                editOverlayBanner.classList.add('hidden');
+                
+                nameEl.classList.remove('hover:text-[#d4af37]');
+                nameEl.onclick = null;
+                nameHint.classList.add('hidden');
+
+                bioEl.classList.remove('hover:text-white', 'hover:bg-white/5', 'rounded-lg');
+                bioEl.onclick = null;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeProfile() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        // --- INLINE EDITING ---
+        function enableEdit(field, element) {
+            const currentVal = element.innerText;
+            const parent = element.parentElement;
+            
+            // Create Input
+            const input = document.createElement(field === 'bio' ? 'textarea' : 'input');
+            input.value = currentVal;
+            input.className = 'editable-active';
+            
+            if (field === 'bio') {
+                input.style.height = '80px';
+                input.style.resize = 'none';
+            } else {
+                input.style.fontSize = '2rem';
+                input.style.fontWeight = 'bold';
+            }
+
+            // Replace
+            element.style.display = 'none';
+            parent.appendChild(input);
+            input.focus();
+
+            // Save on Blur or Enter (if not textarea)
+            const save = () => {
+                const newVal = input.value.trim();
+                if (newVal) {
+                    currentUser[field] = newVal;
+                    element.innerText = newVal;
+                    // Update Global DB & UI
+                    const dbIdx = users.findIndex(u => u.id === currentUser.id);
+                    if(dbIdx !== -1) users[dbIdx] = currentUser;
+                    updateGlobalUI(); 
+                }
+                element.style.display = 'block';
+                input.remove();
+            };
+
+            input.onblur = save;
+            if (field !== 'bio') {
+                input.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); input.blur(); }};
+            }
+        }
+
+        // --- FILE HANDLING ---
+        function triggerFile(type) {
+            document.getElementById('upload-' + type).click();
+        }
+
+        function handleFile(type) {
+            const input = document.getElementById('upload-' + type);
+            const file = input.files[0];
+            if (!file) return;
+
+            // 1MB Limit
+            if (file.size > 1024 * 1024) {
+                alert('File is too large. Max 1MB.');
+                input.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const result = e.target.result;
+                currentUser[type] = result;
+                
+                // Update Modal Immediately
+                if (type === 'pfp') document.getElementById('prof-pfp').src = result;
+                if (type === 'banner') document.getElementById('prof-banner').style.backgroundImage = `url(${result})`;
+
+                // Update DB & Global UI
+                const dbIdx = users.findIndex(u => u.id === currentUser.id);
+                if(dbIdx !== -1) users[dbIdx] = currentUser;
+                updateGlobalUI();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- CHAT SYSTEM ---
+        function sendMsg() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMessage(currentUser, text, 'text');
+            input.value = '';
+        }
+
+        function triggerChatImage() {
+            document.getElementById('upload-chat-img').click();
+        }
+
+        function handleChatImage() {
+            const input = document.getElementById('upload-chat-img');
+            const file = input.files[0];
+            if (!file) return;
+
+            // 1MB Limit
+            if (file.size > 1024 * 1024) {
+                alert('Image too large. Max 1MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                addMessage(currentUser, e.target.result, 'image');
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+
+        function addMessage(sender, content, type, isSystem = false) {
+            const feed = document.getElementById('chat-feed');
+            const div = document.createElement('div');
+            div.className = "flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300";
+            
+            const isMe = sender.id === currentUser?.id;
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            let contentHTML = '';
+            if (type === 'text') {
+                contentHTML = `<p class="text-sm text-gray-300 leading-relaxed">${content}</p>`;
+            } else if (type === 'image') {
+                contentHTML = `<img src="${content}" class="max-w-[200px] rounded-xl border border-white/10 mt-1 hover:scale-105 transition cursor-pointer">`;
+            }
+
+            div.innerHTML = `
+                <div class="shrink-0 pt-1">
+                    <img src="${sender.pfp}" class="w-10 h-10 rounded-xl bg-black object-cover border border-white/10 cursor-pointer hover:border-[#d4af37]" onclick="openProfile('${sender.id || ''}')">
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[11px] font-bold text-white uppercase tracking-wider cursor-pointer hover:text-[#d4af37]" onclick="openProfile('${sender.id || ''}')">${sender.username}</span>
+                        ${isSystem ? '<span class="text-[8px] bg-blue-500/20 text-blue-400 px-1 rounded uppercase font-bold">SYS</span>' : ''}
+                        ${!isSystem ? `<span class="text-[8px] bg-[#d4af37]/10 text-[#d4af37] px-1 rounded uppercase font-bold">${sender.gender || 'Unknown'}</span>` : ''}
+                        <span class="text-[9px] text-gray-600 font-bold ml-2">${time}</span>
+                    </div>
+                    ${contentHTML}
+                </div>
+            `;
+            
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        document.getElementById('msg-input').onkeydown = (e) => { if (e.key === 'Enter') sendMsg(); }
     </script>
 </body>
 </html>
