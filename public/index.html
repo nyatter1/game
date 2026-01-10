@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatlaxy | Elite Social Protocol</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Kept socket.io script reference as requested, though logic is local-storage based for standalone use -->
+    <script src="/socket.io/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -132,7 +134,7 @@
             <!-- My Profile Preview (Bottom Left) -->
             <div class="mt-auto p-6 border-t border-[#1a1a1a]">
                 <div class="flex items-center gap-4 cursor-pointer group p-2 rounded-xl hover:bg-white/5 transition" onclick="openProfile(currentUser.id)">
-                    <img id="my-avatar-side" src="" class="w-10 h-10 rounded-xl bg-zinc-900 object-cover border border-white/5 group-hover:border-[#d4af37]/50 transition shadow-lg">
+                    <img id="my-avatar-side" src="" onerror="this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Default'" class="w-10 h-10 rounded-xl bg-zinc-900 object-cover border border-white/5 group-hover:border-[#d4af37]/50 transition shadow-lg">
                     <div class="overflow-hidden">
                         <p id="my-name-side" class="text-xs font-bold text-white uppercase tracking-wider truncate">Guest</p>
                         <div class="flex items-center gap-2 mt-1">
@@ -208,7 +210,7 @@
                 
                 <!-- PFP -->
                 <div class="relative pfp-container">
-                    <img id="prof-pfp" src="" class="w-32 h-32 rounded-[2.5rem] border-[6px] border-[#0a0c10] object-cover bg-[#0a0c10] shadow-2xl">
+                    <img id="prof-pfp" src="" onerror="this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Default'" class="w-32 h-32 rounded-[2.5rem] border-[6px] border-[#0a0c10] object-cover bg-[#0a0c10] shadow-2xl">
                     <div id="pfp-edit-overlay" class="pfp-edit-btn hidden" onclick="triggerFile('pfp')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     </div>
@@ -254,8 +256,9 @@
         // --- DATA LAYER ---
         const DB_USERS_KEY = 'chatlaxy_users_v2';
         const DB_SESSION_KEY = 'chatlaxy_session_v2';
-        const DEFAULT_PFP = 'local/default.png'; // Handled via fallback in code if local missing
-        const FALLBACK_PFP = 'https://api.dicebear.com/7.x/shapes/svg?seed=Default'; // Reliable fallback
+        // Note: 'local/default.png' will only work if the file exists relative to this HTML file.
+        // Added onerror handler to img tags to fallback gracefully if it doesn't.
+        const DEFAULT_PFP = 'local/default.png'; 
         
         let currentUser = null;
         let users = [];
@@ -309,8 +312,7 @@
                 age: age,
                 gender: gender,
                 bio: "New to the protocol.",
-                pfp: FALLBACK_PFP, // Using fallback URL to ensure image loads. 
-                // Note: To strictly use 'local/default.png', set this to 'local/default.png' but it will break if file missing.
+                pfp: DEFAULT_PFP, // Set strictly to what user asked
                 banner: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=1000",
                 lastActive: Date.now()
             };
@@ -364,7 +366,7 @@
         // Updates Sidebar, Online List, and persists changes
         function updateGlobalUI() {
             // 1. Update Sidebar Profile
-            document.getElementById('me-name-side').innerText = currentUser.username;
+            document.getElementById('my-name-side').innerText = currentUser.username;
             document.getElementById('my-avatar-side').src = currentUser.pfp;
 
             // 2. Update Online List (Right Sidebar)
@@ -381,7 +383,7 @@
                 div.onclick = () => openProfile(u.id);
                 div.innerHTML = `
                     <div class="relative shrink-0">
-                        <img src="${u.pfp}" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 group-hover:border-[#d4af37]">
+                        <img src="${u.pfp}" onerror="this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Default'" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 group-hover:border-[#d4af37]">
                         <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0c0e12]"></div>
                     </div>
                     <div class="overflow-hidden">
@@ -584,7 +586,7 @@
 
             div.innerHTML = `
                 <div class="shrink-0 pt-1">
-                    <img src="${sender.pfp}" class="w-10 h-10 rounded-xl bg-black object-cover border border-white/10 cursor-pointer hover:border-[#d4af37]" onclick="openProfile('${sender.id || ''}')">
+                    <img src="${sender.pfp}" onerror="this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Default'" class="w-10 h-10 rounded-xl bg-black object-cover border border-white/10 cursor-pointer hover:border-[#d4af37]" onclick="openProfile('${sender.id || ''}')">
                 </div>
                 <div>
                     <div class="flex items-center gap-2 mb-1">
