@@ -50,33 +50,49 @@
         .banner-box { width: 100%; height: 120px; background-size: cover; background-position: center; background-color: #1a1a1a; position: relative; }
         .pfp-main { width: 90px; height: 90px; border-radius: 24px; object-fit: cover; border: 4px solid var(--luxury-dark); margin-top: -45px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; }
         
-        .signup-step { display: none; }
-        .signup-step.active { display: block; animation: slideIn 0.4s ease-out; }
+        .auth-view { display: none; }
+        .auth-view.active { display: block; animation: slideIn 0.4s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .file-upload-btn { display: block; width: 100%; padding: 0.8rem; border: 1px dashed #444; border-radius: 0.75rem; text-align: center; font-size: 0.75rem; color: #888; cursor: pointer; transition: all 0.2s; }
+        .file-upload-btn:hover { border-color: var(--luxury-gold); color: white; }
     </style>
 </head>
 <body>
 
-    <!-- FULL SIGNUP / AUTH SCREEN -->
+    <!-- AUTH SCREEN -->
     <div id="auth-screen" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 overflow-y-auto">
         <div class="w-full max-w-md text-center py-10">
             <h1 class="serif text-7xl gold-gradient mb-2">Chatlaxy</h1>
             <p class="text-[9px] text-gray-600 uppercase tracking-[0.6em] mb-12 font-bold">The Elite Social Protocol</p>
             
             <div class="glass p-10 rounded-[3rem] space-y-6 relative overflow-hidden">
-                <!-- STEP 1: Basic Credentials -->
-                <div id="step-1" class="signup-step active">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Step 1: Identity</p>
+                
+                <!-- VIEW: LOGIN -->
+                <div id="view-login" class="auth-view active">
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Access Vault</p>
                     <div class="space-y-4">
-                        <input type="text" id="reg-username" class="luxury-input" placeholder="Desired Username">
-                        <input type="password" id="reg-password" class="luxury-input" placeholder="Secret Key (Password)">
+                        <input type="text" id="login-username" class="luxury-input" placeholder="Username">
+                        <input type="password" id="login-password" class="luxury-input" placeholder="Secret Key">
                     </div>
-                    <button onclick="nextStep(2)" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 active:scale-95 transition shadow-[0_0_20px_rgba(212,175,55,0.2)]">Next Phase</button>
+                    <button onclick="attemptLogin()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition shadow-lg">Login</button>
+                    <p class="mt-6 text-[9px] text-gray-500">New here? <span onclick="switchAuthView('signup')" class="text-[#d4af37] cursor-pointer hover:underline">Apply for Membership</span></p>
                 </div>
 
-                <!-- STEP 2: Personal Stats -->
-                <div id="step-2" class="signup-step">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Step 2: Personal Stats</p>
+                <!-- VIEW: SIGNUP STEP 1 -->
+                <div id="view-signup" class="auth-view">
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Application: Phase 1</p>
+                    <div class="space-y-4">
+                        <input type="text" id="reg-username" class="luxury-input" placeholder="Username">
+                        <input type="password" id="reg-password" class="luxury-input" placeholder="Create Password">
+                    </div>
+                    <button onclick="switchAuthView('signup-2')" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] mt-8 hover:brightness-110 transition">Next Phase</button>
+                    <p class="mt-6 text-[9px] text-gray-500">Already a member? <span onclick="switchAuthView('login')" class="text-[#d4af37] cursor-pointer hover:underline">Login</span></p>
+                </div>
+
+                <!-- VIEW: SIGNUP STEP 2 -->
+                <div id="view-signup-2" class="auth-view">
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Application: Final Stats</p>
                     <div class="space-y-4">
                         <div class="flex gap-4">
                             <input type="number" id="reg-age" class="luxury-input" placeholder="Age">
@@ -84,50 +100,48 @@
                                 <option value="" disabled selected>Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
-                                <option value="Elite">Non-Binary</option>
-                                <option value="Private">Private</option>
+                                <option value="Elite">Elite</option>
                             </select>
                         </div>
-                        <input type="text" id="reg-pfp" class="luxury-input" placeholder="Avatar URL (Optional)">
+                        <div>
+                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-2 text-left px-2">Profile Dossier Image</p>
+                            <label class="file-upload-btn">
+                                <span id="pfp-label">Choose File</span>
+                                <input type="file" id="reg-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'pfp-label')">
+                            </label>
+                        </div>
                     </div>
                     <div class="flex gap-4 mt-8">
-                        <button onclick="nextStep(1)" class="flex-1 border border-[#222] py-5 rounded-2xl text-gray-500 font-bold uppercase text-[10px]">Back</button>
-                        <button onclick="finishSignup()" class="flex-[2] bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 active:scale-95 transition">Enter Vault</button>
+                        <button onclick="switchAuthView('signup')" class="flex-1 border border-[#222] py-5 rounded-2xl text-gray-500 font-bold uppercase text-[10px]">Back</button>
+                        <button onclick="finishSignup()" class="flex-[2] bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 transition">Complete Signup</button>
                     </div>
                 </div>
             </div>
-            <p class="mt-8 text-[9px] text-gray-700 uppercase tracking-widest">Authentication required for entry</p>
         </div>
     </div>
 
-    <!-- PROFILE MODAL (MEMBER VIEW) -->
+    <!-- MAIN APP STRUCTURE (Remains same for UI consistency) -->
     <div id="profile-modal" class="fixed inset-0 z-[80] bg-black/95 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
         <div class="w-full max-w-sm glass rounded-[3rem] overflow-hidden" onclick="event.stopPropagation()">
             <div id="view-banner" class="banner-box shadow-inner"></div>
             <div class="px-10 pb-10 flex flex-col items-center">
                 <img id="view-pfp" src="" class="pfp-main bg-black">
                 <h2 id="view-name" class="serif text-4xl gold-gradient mt-4">Username</h2>
-                
                 <div class="flex gap-3 mt-2">
                     <span id="view-age" class="text-[9px] font-black bg-white/5 px-3 py-1 rounded-full text-gray-400 uppercase tracking-tighter">-- Years</span>
                     <span id="view-gender" class="text-[9px] font-black bg-white/5 px-3 py-1 rounded-full text-gray-400 uppercase tracking-tighter">--</span>
                 </div>
-
                 <div id="view-status-badge" class="flex items-center gap-2 mt-4">
                     <div id="view-dot" class="status-dot"></div>
                     <span id="view-status-text" class="text-[8px] font-black uppercase tracking-widest text-gray-500">Offline</span>
                 </div>
-
                 <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-[#222] to-transparent my-6"></div>
-
                 <p id="view-bio" class="text-gray-300 text-xs text-center italic leading-relaxed px-4 min-h-[40px]">"No bio provided."</p>
-                
                 <button onclick="document.getElementById('profile-modal').classList.add('hidden')" class="mt-8 w-full border border-[#222] py-4 rounded-xl text-[9px] font-black text-gray-500 uppercase tracking-widest hover:text-white hover:border-white/20 transition">Close Dossier</button>
             </div>
         </div>
     </div>
 
-    <!-- PROFILE EDITOR -->
     <div id="editor-panel" class="fixed inset-y-0 right-0 w-full max-w-md z-[90] glass editor-panel p-10 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
         <div class="flex justify-between items-center mb-10">
             <h2 class="serif text-4xl gold-gradient">Adjust Persona</h2>
@@ -151,27 +165,31 @@
                 </div>
             </div>
             <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-3 block">Avatar URL</label>
-                <input type="text" id="edit-pfp" class="luxury-input" placeholder="GIFs supported">
+                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-3 block">Upload Avatar</label>
+                <label class="file-upload-btn">
+                    <span id="edit-pfp-label">Replace Avatar</span>
+                    <input type="file" id="edit-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-pfp-label')">
+                </label>
             </div>
             <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-3 block">Banner Image URL</label>
-                <input type="text" id="edit-banner" class="luxury-input">
+                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-3 block">Upload Banner</label>
+                <label class="file-upload-btn">
+                    <span id="edit-banner-label">Replace Banner</span>
+                    <input type="file" id="edit-banner-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-banner-label')">
+                </label>
             </div>
             <div>
                 <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-3 block">Signature Bio</label>
                 <textarea id="edit-bio" class="luxury-input h-32 resize-none" placeholder="How should the world remember you?"></textarea>
             </div>
         </div>
-
         <button onclick="saveProfile()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-5 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] mt-8 shadow-lg">Save Identity</button>
     </div>
 
     <div class="app-container">
-        <!-- HEADER -->
         <header class="h-24 border-b border-[#222] flex items-center justify-between px-10 bg-[#0a0c10] shrink-0">
             <div class="flex items-center gap-6">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d4af37] to-[#b8860b] flex items-center justify-center text-black font-black text-xl shadow-[0_0_15px_rgba(212,175,55,0.3)]">C</div>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#d4af37] to-[#b8860b] flex items-center justify-center text-black font-black text-xl">C</div>
                 <div>
                     <span class="serif text-4xl gold-gradient font-bold tracking-tighter">Chatlaxy</span>
                     <p class="text-[7px] text-gray-600 uppercase tracking-[0.4em] font-bold">Encrypted Session</p>
@@ -182,12 +200,11 @@
                     <p id="me-name" class="text-[11px] font-black text-white uppercase tracking-wider">Guest</p>
                     <p id="me-subtitle" class="text-[8px] text-[#d4af37] font-bold uppercase tracking-tight">VIP Member</p>
                 </div>
-                <img id="me-pfp" src="" class="w-14 h-14 rounded-2xl object-cover border-2 border-white/5 group-hover:border-[#d4af37]/50 transition-all shadow-xl bg-black">
+                <img id="me-pfp" src="" class="w-14 h-14 rounded-2xl object-cover border-2 border-white/5 shadow-xl bg-black">
             </div>
         </header>
 
         <div class="flex flex-1 overflow-hidden">
-            <!-- SIDEBAR: STATUS & STATS -->
             <aside class="w-24 lg:w-72 border-r border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
                 <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-8 px-2">Availability</p>
                 <div class="space-y-4">
@@ -204,27 +221,20 @@
                         <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase hidden lg:block tracking-widest">Busy</span>
                     </button>
                 </div>
-
                 <div class="mt-auto pt-8 border-t border-[#222] hidden lg:block">
                     <p class="text-[8px] font-black text-gray-700 uppercase tracking-[0.4em] mb-4">Your Metadata</p>
-                    <div id="my-stats-box" class="space-y-2">
-                        <!-- Stats filled by JS -->
-                    </div>
+                    <div id="my-stats-box" class="space-y-2"></div>
                 </div>
             </aside>
-
-            <!-- CHAT AREA -->
             <main class="flex-1 flex flex-col bg-[#0d0f14] relative">
                 <div id="messages" class="flex-1 overflow-y-auto p-10 space-y-2"></div>
                 <div class="p-10 pt-0">
                     <form id="chat-form" class="bg-[#161a21] border border-[#222] rounded-[1.5rem] flex items-center px-8 py-2 gap-5 shadow-2xl focus-within:border-[#d4af37]/30 transition-all">
                         <input type="text" id="msg-input" placeholder="Compose message..." autocomplete="off" class="flex-1 bg-transparent py-5 outline-none text-white text-sm font-medium">
-                        <button type="submit" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] px-10 py-3 rounded-xl text-black font-black uppercase text-[10px] tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition">Send</button>
+                        <button type="submit" class="bg-gradient-to-r from-[#d4af37] to-[#b8860b] px-10 py-3 rounded-xl text-black font-black uppercase text-[10px] tracking-widest shadow-lg transition">Send</button>
                     </form>
                 </div>
             </main>
-
-            <!-- MEMBERS -->
             <aside class="w-24 lg:w-72 border-l border-[#222] bg-[#0a0c10] flex flex-col p-8 shrink-0">
                 <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-8 px-2">Elite Circle</p>
                 <div id="user-list" class="space-y-6 overflow-y-auto pr-2"></div>
@@ -234,7 +244,12 @@
 
     <script>
         const socket = io();
-        let myProfile = JSON.parse(localStorage.getItem('chatlaxy_v2_profile')) || {
+        
+        // Account Storage
+        let accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts')) || [];
+        let session = JSON.parse(localStorage.getItem('chatlaxy_session')) || null;
+        
+        let myProfile = session ? session : {
             username: '',
             pfp: 'https://i.pinimg.com/736x/8f/1c/a2/8f1ca2029e2efce263ee268759d9a13c.jpg',
             banner: 'https://i.pinimg.com/originals/11/4d/9d/114d9dc65147570419d2823871216d8a.gif',
@@ -243,37 +258,92 @@
             gender: 'Elite',
             status: 'online'
         };
+
         let onlineUsers = [];
         let messages = [];
 
-        // Signup Logic
-        function nextStep(step) {
-            document.querySelectorAll('.signup-step').forEach(el => el.classList.remove('active'));
-            document.getElementById(`step-${step}`).classList.add('active');
+        // Auth Navigation
+        function switchAuthView(view) {
+            document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
         }
 
-        function finishSignup() {
+        function handleFileLabel(input, labelId) {
+            if (input.files && input.files[0]) {
+                document.getElementById(labelId).innerText = input.files[0].name;
+            }
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Signup Logic
+        async function finishSignup() {
             const user = document.getElementById('reg-username').value.trim();
             const pass = document.getElementById('reg-password').value;
             const age = document.getElementById('reg-age').value;
             const gender = document.getElementById('reg-gender').value;
-            const pfp = document.getElementById('reg-pfp').value.trim();
+            const pfpInput = document.getElementById('reg-pfp-input');
 
-            if(!user || !pass || !age || !gender) {
-                return alert("Complete all required fields, member.");
+            if(!user || !pass || !age || !gender || !pfpInput.files[0]) {
+                return alert("The dossier requires all fields and an identity image.");
             }
 
-            myProfile.username = user;
-            myProfile.age = age;
-            myProfile.gender = gender;
-            if(pfp) myProfile.pfp = pfp;
+            if(accounts.some(acc => acc.username.toLowerCase() === user.toLowerCase())) {
+                return alert("This identifier is already claimed by another elite.");
+            }
 
-            localStorage.setItem('chatlaxy_v2_profile', JSON.stringify(myProfile));
+            const pfpBase64 = await toBase64(pfpInput.files[0]);
+
+            const newAccount = {
+                username: user,
+                password: pass, // Simple for demo, would be hashed in real prod
+                pfp: pfpBase64,
+                banner: myProfile.banner,
+                bio: myProfile.bio,
+                age: age,
+                gender: gender,
+                status: 'online'
+            };
+
+            accounts.push(newAccount);
+            localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
+            
+            // Auto login
+            session = newAccount;
+            myProfile = newAccount;
+            localStorage.setItem('chatlaxy_session', JSON.stringify(session));
+            
             document.getElementById('auth-screen').classList.add('hidden');
             init();
         }
 
-        if(myProfile.username) {
+        // Login Logic
+        function attemptLogin() {
+            const user = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value;
+
+            const account = accounts.find(acc => acc.username === user && acc.password === pass);
+
+            if(!account) {
+                return alert("Invalid credentials. Access denied.");
+            }
+
+            session = account;
+            myProfile = account;
+            localStorage.setItem('chatlaxy_session', JSON.stringify(session));
+            
+            document.getElementById('auth-screen').classList.add('hidden');
+            init();
+        }
+
+        if(session) {
             document.getElementById('auth-screen').classList.add('hidden');
             init();
         }
@@ -296,20 +366,28 @@
             const panel = document.getElementById('editor-panel');
             document.getElementById('edit-age').value = myProfile.age;
             document.getElementById('edit-gender').value = myProfile.gender;
-            document.getElementById('edit-pfp').value = myProfile.pfp;
-            document.getElementById('edit-banner').value = myProfile.banner;
             document.getElementById('edit-bio').value = myProfile.bio;
             panel.classList.toggle('active');
         }
 
-        function saveProfile() {
+        async function saveProfile() {
             myProfile.age = document.getElementById('edit-age').value;
             myProfile.gender = document.getElementById('edit-gender').value;
-            myProfile.pfp = document.getElementById('edit-pfp').value;
-            myProfile.banner = document.getElementById('edit-banner').value;
             myProfile.bio = document.getElementById('edit-bio').value;
+
+            const pfpIn = document.getElementById('edit-pfp-input');
+            const banIn = document.getElementById('edit-banner-input');
+
+            if(pfpIn.files[0]) myProfile.pfp = await toBase64(pfpIn.files[0]);
+            if(banIn.files[0]) myProfile.banner = await toBase64(banIn.files[0]);
             
-            localStorage.setItem('chatlaxy_v2_profile', JSON.stringify(myProfile));
+            // Update storage
+            const accIdx = accounts.findIndex(a => a.username === myProfile.username);
+            if(accIdx !== -1) {
+                accounts[accIdx] = {...myProfile};
+                localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
+            }
+            localStorage.setItem('chatlaxy_session', JSON.stringify(myProfile));
             
             document.getElementById('me-pfp').src = myProfile.pfp;
             init();
