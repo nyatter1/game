@@ -104,10 +104,10 @@
                             </select>
                         </div>
                         <div>
-                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-2 text-left px-2">Profile Dossier Image</p>
+                            <p class="text-[8px] text-gray-600 uppercase tracking-widest mb-1 text-left px-2">Profile Avatar (Max 250KB)</p>
                             <label class="file-upload-btn">
                                 <span id="pfp-label">Choose File</span>
-                                <input type="file" id="reg-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'pfp-label')">
+                                <input type="file" id="reg-pfp-input" accept="image/png, image/jpeg, image/gif" class="hidden" onchange="handleFileLabel(this, 'pfp-label')">
                             </label>
                         </div>
                     </div>
@@ -120,7 +120,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP STRUCTURE (Remains same for UI consistency) -->
+    <!-- MAIN APP STRUCTURE -->
     <div id="profile-modal" class="fixed inset-0 z-[80] bg-black/95 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
         <div class="w-full max-w-sm glass rounded-[3rem] overflow-hidden" onclick="event.stopPropagation()">
             <div id="view-banner" class="banner-box shadow-inner"></div>
@@ -142,6 +142,7 @@
         </div>
     </div>
 
+    <!-- EDITOR PANEL -->
     <div id="editor-panel" class="fixed inset-y-0 right-0 w-full max-w-md z-[90] glass editor-panel p-10 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
         <div class="flex justify-between items-center mb-10">
             <h2 class="serif text-4xl gold-gradient">Adjust Persona</h2>
@@ -165,14 +166,14 @@
                 </div>
             </div>
             <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-3 block">Upload Avatar</label>
+                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Avatar (Max 250KB)</label>
                 <label class="file-upload-btn">
                     <span id="edit-pfp-label">Replace Avatar</span>
                     <input type="file" id="edit-pfp-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-pfp-label')">
                 </label>
             </div>
             <div>
-                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-3 block">Upload Banner</label>
+                <label class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Upload Banner (Max 250KB)</label>
                 <label class="file-upload-btn">
                     <span id="edit-banner-label">Replace Banner</span>
                     <input type="file" id="edit-banner-input" accept="image/*" class="hidden" onchange="handleFileLabel(this, 'edit-banner-label')">
@@ -244,8 +245,8 @@
 
     <script>
         const socket = io();
+        const FILE_SIZE_LIMIT = 250 * 1024; // 250KB limit to keep synchronization fast
         
-        // Account Storage
         let accounts = JSON.parse(localStorage.getItem('chatlaxy_accounts')) || [];
         let session = JSON.parse(localStorage.getItem('chatlaxy_session')) || null;
         
@@ -262,7 +263,6 @@
         let onlineUsers = [];
         let messages = [];
 
-        // Auth Navigation
         function switchAuthView(view) {
             document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
             document.getElementById(`view-${view}`).classList.add('active');
@@ -270,7 +270,16 @@
 
         function handleFileLabel(input, labelId) {
             if (input.files && input.files[0]) {
-                document.getElementById(labelId).innerText = input.files[0].name;
+                const file = input.files[0];
+                if (file.size > FILE_SIZE_LIMIT) {
+                    input.value = ""; // Reset input
+                    document.getElementById(labelId).innerText = "File too large!";
+                    document.getElementById(labelId).style.color = "#ef4444";
+                    alert(`The file is over the 250KB limit. Large files (especially heavy GIFs) degrade the synchronization protocol. Please use a compressed version.`);
+                    return;
+                }
+                document.getElementById(labelId).innerText = file.name;
+                document.getElementById(labelId).style.color = "#d4af37";
             }
         }
 
@@ -283,7 +292,6 @@
             });
         }
 
-        // Signup Logic
         async function finishSignup() {
             const user = document.getElementById('reg-username').value.trim();
             const pass = document.getElementById('reg-password').value;
@@ -303,7 +311,7 @@
 
             const newAccount = {
                 username: user,
-                password: pass, // Simple for demo, would be hashed in real prod
+                password: pass,
                 pfp: pfpBase64,
                 banner: myProfile.banner,
                 bio: myProfile.bio,
@@ -315,7 +323,6 @@
             accounts.push(newAccount);
             localStorage.setItem('chatlaxy_accounts', JSON.stringify(accounts));
             
-            // Auto login
             session = newAccount;
             myProfile = newAccount;
             localStorage.setItem('chatlaxy_session', JSON.stringify(session));
@@ -324,7 +331,6 @@
             init();
         }
 
-        // Login Logic
         function attemptLogin() {
             const user = document.getElementById('login-username').value.trim();
             const pass = document.getElementById('login-password').value;
@@ -361,7 +367,6 @@
             socket.emit('register user', myProfile);
         }
 
-        // Profile Editor
         function toggleEditor() {
             const panel = document.getElementById('editor-panel');
             document.getElementById('edit-age').value = myProfile.age;
@@ -378,10 +383,10 @@
             const pfpIn = document.getElementById('edit-pfp-input');
             const banIn = document.getElementById('edit-banner-input');
 
+            // Files are already validated in handleFileLabel
             if(pfpIn.files[0]) myProfile.pfp = await toBase64(pfpIn.files[0]);
             if(banIn.files[0]) myProfile.banner = await toBase64(banIn.files[0]);
             
-            // Update storage
             const accIdx = accounts.findIndex(a => a.username === myProfile.username);
             if(accIdx !== -1) {
                 accounts[accIdx] = {...myProfile};
@@ -416,7 +421,6 @@
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
-        // Socket Events
         socket.on('update user list', (users) => {
             onlineUsers = users;
             const list = document.getElementById('user-list');
