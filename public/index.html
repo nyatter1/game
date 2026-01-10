@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatlaxy | Elite Social</title>
-    <!-- Favicon link added below -->
     <link rel="icon" type="image/png" href="logo.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -45,6 +44,7 @@
         .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
+        /* RANK STYLES */
         .rank-tag { padding: 1px 4px; border-radius: 3px; font-size: 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 900; display: inline-block; vertical-align: middle; }
         
         .rank-dev { background: linear-gradient(90deg, #00f2fe, #4facfe); color: #fff; box-shadow: 0 0 5px rgba(79, 172, 254, 0.3); }
@@ -77,25 +77,11 @@
         .user-item { transition: all 0.2s; border-left: 2px solid transparent; padding: 0.5rem; }
         .user-item:hover { background: rgba(255,255,255,0.02); border-left-color: var(--luxury-gold); }
 
-        .edit-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(212, 175, 55, 0.3); color: white; border-radius: 8px; padding: 4px 8px; font-size: 10px; width: 100%; }
         .banner-box { width: 100%; height: 90px; background-size: cover; background-position: center; background-color: #1a1a1a; border-bottom: 1px solid var(--border-color); }
-        
-        .save-btn { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border-radius: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; }
-        .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        
-        #loading-overlay { display: none; background: rgba(0,0,0,0.8); z-index: 9999; }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay" class="fixed inset-0 flex flex-col items-center justify-center">
-        <div class="w-8 h-8 border-2 border-gold/20 border-t-gold rounded-full animate-spin mb-4"></div>
-        <p class="text-[8px] font-black uppercase tracking-[0.5em] text-white">Updating Identity...</p>
-    </div>
-
-    <input type="file" id="pfp-input" class="hidden" accept="image/*">
-    <input type="file" id="banner-input" class="hidden" accept="image/*">
-    <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
     <audio id="profile-audio" class="hidden" loop preload="auto"></audio>
 
     <!-- AUTH OVERLAY -->
@@ -135,58 +121,27 @@
     <!-- PROFILE MODAL -->
     <div id="profile-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden" onclick="closeProfile()">
         <div class="w-full max-w-xs glass rounded-[2rem] overflow-hidden modal-animate relative" onclick="event.stopPropagation()">
-            <button id="profile-edit-toggle" class="absolute top-4 right-4 z-20 p-2 bg-black/50 rounded-full hover:bg-white/10 transition hidden">
-                <svg id="pencil-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
-
-            <div id="modal-banner" class="banner-box relative overflow-hidden" onclick="triggerBannerUpload()">
-                <div id="banner-edit-overlay" class="hidden absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span class="text-[7px] text-white font-black uppercase tracking-widest">Change Banner</span>
-                </div>
-            </div>
+            <div id="modal-banner" class="banner-box relative overflow-hidden"></div>
 
             <div class="px-8 pb-8 text-center">
-                <div class="relative -mt-12 group mx-auto w-24 h-24 mb-4" id="modal-pfp-trigger" onclick="triggerPfpUpload()">
+                <div class="relative -mt-12 mx-auto w-24 h-24 mb-4">
                     <img id="modal-pfp" src="" class="w-full h-full rounded-[1.5rem] object-cover border-4 border-[#161a21] shadow-2xl bg-black">
-                    <div id="pfp-edit-overlay-modal" class="hidden absolute inset-0 bg-black/60 rounded-[1.5rem] flex items-center justify-center">
-                        <span class="text-[7px] text-white font-black uppercase tracking-widest text-center px-1">Change PFP</span>
-                    </div>
                 </div>
                 
-                <div id="profile-display-mode">
-                    <h2 id="modal-name" class="serif text-2xl gold-gradient mb-1">Username</h2>
-                    <div id="modal-rank-container" class="flex justify-center mb-4"></div>
-                </div>
-
-                <div id="profile-edit-mode" class="hidden space-y-3 mb-4">
-                    <input type="text" id="edit-username" placeholder="New Username" class="edit-input text-center font-bold">
-                    <button onclick="triggerMusicUpload()" class="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-[8px] text-white font-black uppercase tracking-widest hover:bg-white/10 transition">
-                        <span id="music-filename-label">Update Music (.mp3)</span>
-                    </button>
-                    <button id="final-save-btn" onclick="saveAndRefresh()" class="w-full py-2 save-btn shadow-lg">Save & Refresh All</button>
-                </div>
-                
-                <div id="admin-controls" class="hidden mb-4 p-3 border border-blue-500/20 bg-blue-500/5 rounded-xl text-left">
-                    <p class="text-[7px] text-blue-400 font-black uppercase tracking-[0.1em] mb-1">Dev Tools</p>
-                    <select id="rank-selector" onchange="applyRankChange()" class="w-full bg-black border border-white/5 text-[9px] text-white p-1.5 rounded outline-none uppercase font-black">
-                        <option value="DEVELOPER">Developer</option>
-                        <option value="CEO">CEO</option>
-                        <option value="OWNER">Owner</option>
-                        <option value="MOD">Mod</option>
-                        <option value="MEMBER">Member</option>
-                    </select>
-                </div>
+                <h2 id="modal-name" class="serif text-2xl gold-gradient mb-1">Username</h2>
+                <div id="modal-rank-container" class="flex justify-center mb-4"></div>
 
                 <div class="py-4 border-y border-white/5 my-4 space-y-3 text-left">
                     <div>
                         <p class="text-[8px] text-gray-600 uppercase font-black">Bio Data</p>
                         <p id="modal-bio" class="text-white font-bold uppercase text-[9px] mt-0.5 break-words">-</p>
-                        <textarea id="edit-bio" placeholder="Update your biography..." class="edit-input mt-1 hidden h-16 resize-none"></textarea>
                     </div>
                 </div>
 
-                <button onclick="closeProfile()" class="w-full py-2 text-[8px] text-gray-500 hover:text-white uppercase tracking-[0.2em] font-black transition">Close</button>
+                <div class="space-y-2">
+                    <button id="profile-edit-btn" onclick="window.location.href='profile.html'" class="w-full py-2 bg-white/5 border border-white/10 rounded-xl text-[8px] text-[#d4af37] font-black uppercase tracking-widest hover:bg-white/10 transition hidden">Edit Profile</button>
+                    <button onclick="closeProfile()" class="w-full py-2 text-[8px] text-gray-500 hover:text-white uppercase tracking-[0.2em] font-black transition">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -251,18 +206,15 @@
         let myProfile = null;
         let chatHistory = [];
         let globalUsers = [];
-        let viewingUser = null; 
-        let isEditingProfile = false;
 
-        let pendingPfp = null;
-        let pendingBanner = null;
-        let pendingMusic = null;
-
+        // UPDATED RANKS
         const RANK_CONFIG = {
             DEVELOPER: { name: 'Dev', class: 'rank-dev' },
             CEO: { name: 'CEO', class: 'rank-ceo' },
             OWNER: { name: 'Owner', class: 'rank-owner' },
+            ADMIN: { name: 'Admin', class: 'rank-admin' },
             MOD: { name: 'Mod', class: 'rank-mod' },
+            VIP: { name: 'VIP', class: 'rank-vip' },
             MEMBER: { name: 'Member', class: 'rank-member' }
         };
 
@@ -284,8 +236,10 @@
                     myProfile = JSON.parse(session);
                     const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
                     const updated = db.find(u => u.username === myProfile.username && u.password === myProfile.password);
-                    if(updated) myProfile = updated;
-                    
+                    if(updated) {
+                        myProfile = updated;
+                        localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
+                    }
                     socket.emit('register user', myProfile);
                     enterApp();
                 } catch (e) {
@@ -304,51 +258,6 @@
             const alert = document.getElementById('auth-alert');
             alert.innerText = msg;
             alert.classList.remove('hidden');
-        }
-
-        // UNIFIED SAVE & REFRESH LOGIC
-        function saveAndRefresh() {
-            if(!myProfile) return;
-            
-            document.getElementById('loading-overlay').style.display = 'flex';
-
-            const newUsername = document.getElementById('edit-username').value.trim();
-            const newBio = document.getElementById('edit-bio').value.trim();
-            
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-            
-            // Check for username collision
-            if(newUsername && newUsername !== myProfile.username) {
-                if(db.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    alert("Username already taken.");
-                    return;
-                }
-                myProfile.username = newUsername;
-            }
-
-            // Sync all fields to myProfile
-            if(newBio !== undefined) myProfile.customBio = newBio;
-            if(pendingPfp) myProfile.pfp = pendingPfp;
-            if(pendingBanner) myProfile.banner = pendingBanner;
-            if(pendingMusic) myProfile.music = pendingMusic;
-
-            // Update Database Entry
-            const idx = db.findIndex(u => u.password === myProfile.password && u.age === myProfile.age && u.gender === myProfile.gender);
-            if(idx !== -1) {
-                db[idx] = { ...myProfile };
-            } else {
-                db.push(myProfile);
-            }
-
-            // Persist
-            localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
-            localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
-            
-            // Reload to apply all environmental changes
-            setTimeout(() => {
-                location.reload();
-            }, 600);
         }
 
         document.getElementById('btn-login').onclick = () => {
@@ -371,13 +280,16 @@
             if(!user || !pass || !age || !gender) return showAlert("Fill all.");
             const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
             if(db.some(u => u.username.toLowerCase() === user.toLowerCase())) return showAlert("Taken.");
+            
+            // FIXED REGISTRATION: EVERYONE IS AUTOMATICALLY MEMBER
             myProfile = {
                 username: user, password: pass, age: age, gender: gender,
-                rank: user.toLowerCase() === 'developer' ? 'DEVELOPER' : 'MEMBER',
+                rank: 'MEMBER', // Automatically Member for everyone
                 status: "online", 
                 pfp: `https://ui-avatars.com/api/?name=${user}&background=161a21&color=d4af37`,
                 banner: '', music: '', customBio: ''
             };
+            
             db.push(myProfile);
             localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
             localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
@@ -400,96 +312,10 @@
             location.reload();
         };
 
-        function triggerPfpUpload() { if(isEditingProfile) document.getElementById('pfp-input').click(); }
-        function triggerBannerUpload() { if(isEditingProfile) document.getElementById('banner-input').click(); }
-        function triggerMusicUpload() { if(isEditingProfile) document.getElementById('music-input').click(); }
-
-        document.getElementById('pfp-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                pendingPfp = event.target.result;
-                document.getElementById('modal-pfp').src = pendingPfp;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        document.getElementById('banner-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                pendingBanner = event.target.result;
-                document.getElementById('modal-banner').style.backgroundImage = `url(${pendingBanner})`;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        document.getElementById('music-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            document.getElementById('music-filename-label').innerText = "Music Loaded: " + file.name;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                pendingMusic = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        document.getElementById('profile-edit-toggle').onclick = () => {
-            isEditingProfile = !isEditingProfile;
-            const displayMode = document.getElementById('profile-display-mode');
-            const editMode = document.getElementById('profile-edit-mode');
-            const bioDisplay = document.getElementById('modal-bio');
-            const bioEdit = document.getElementById('edit-bio');
-            const pfpOverlay = document.getElementById('pfp-edit-overlay-modal');
-            const bannerOverlay = document.getElementById('banner-edit-overlay');
-
-            if(isEditingProfile) {
-                document.getElementById('pencil-icon').classList.add('hidden');
-                document.getElementById('eye-icon').classList.remove('hidden');
-                displayMode.classList.add('hidden');
-                editMode.classList.remove('hidden');
-                bioDisplay.classList.add('hidden');
-                bioEdit.classList.remove('hidden');
-                pfpOverlay.classList.remove('hidden');
-                bannerOverlay.classList.remove('hidden');
-                document.getElementById('edit-username').value = myProfile.username;
-                document.getElementById('edit-bio').value = myProfile.customBio || '';
-            } else {
-                document.getElementById('pencil-icon').classList.remove('hidden');
-                document.getElementById('eye-icon').classList.add('hidden');
-                displayMode.classList.remove('hidden');
-                editMode.classList.add('hidden');
-                bioDisplay.classList.remove('hidden');
-                bioEdit.classList.add('hidden');
-                pfpOverlay.classList.add('hidden');
-                bannerOverlay.classList.add('hidden');
-                viewProfile(myProfile.username);
-            }
-        };
-
         function viewProfile(username) {
             const user = globalUsers.find(u => u.username === username) || (myProfile && myProfile.username === username ? myProfile : null);
             if(!user) return;
-            viewingUser = user;
-            isEditingProfile = false;
             
-            pendingPfp = null;
-            pendingBanner = null;
-            pendingMusic = null;
-
-            document.getElementById('pencil-icon').classList.remove('hidden');
-            document.getElementById('eye-icon').classList.add('hidden');
-            document.getElementById('profile-display-mode').classList.remove('hidden');
-            document.getElementById('profile-edit-mode').classList.add('hidden');
-            document.getElementById('modal-bio').classList.remove('hidden');
-            document.getElementById('edit-bio').classList.add('hidden');
-            document.getElementById('pfp-edit-overlay-modal').classList.add('hidden');
-            document.getElementById('banner-edit-overlay').classList.add('hidden');
-            document.getElementById('music-filename-label').innerText = "Update Music (.mp3)";
-
             document.getElementById('modal-pfp').src = user.pfp;
             document.getElementById('modal-name').innerText = user.username;
             document.getElementById('modal-rank-container').innerHTML = getRankTag(user.rank);
@@ -507,27 +333,9 @@
             }
 
             const isMe = myProfile && user.username === myProfile.username;
-            document.getElementById('profile-edit-toggle').classList.toggle('hidden', !isMe);
-            document.getElementById('admin-controls').classList.toggle('hidden', !(myProfile?.rank === 'DEVELOPER'));
+            document.getElementById('profile-edit-btn').classList.toggle('hidden', !isMe);
             
             document.getElementById('profile-modal').classList.remove('hidden');
-        }
-
-        function applyRankChange() {
-            if(myProfile?.rank !== 'DEVELOPER' || !viewingUser) return;
-            const newRank = document.getElementById('rank-selector').value;
-            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
-            const idx = db.findIndex(u => u.username === viewingUser.username);
-            if(idx !== -1) {
-                db[idx].rank = newRank;
-                localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
-                if(viewingUser.username === myProfile.username) {
-                    myProfile.rank = newRank;
-                    localStorage.setItem('chatlaxy_session_v6', JSON.stringify(myProfile));
-                }
-                socket.emit('register user', db[idx]);
-                viewProfile(viewingUser.username);
-            }
         }
 
         function closeProfile() { 
