@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile | Chatlaxy Elite</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --luxury-gold: #d4af37;
+            --luxury-black: #0a0c10;
+            --luxury-dark: #161a21;
+            --border-color: #222222;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--luxury-black); 
+            color: #e2e8f0; 
+            display: flex;
+            align-items: center;
+            justify-center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .serif { font-family: 'Cormorant Garamond', serif; }
+        .glass { background: rgba(22, 26, 33, 0.7); backdrop-filter: blur(20px); border: 1px solid var(--border-color); }
+        .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .input-field {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.85rem;
+            color: white;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus { border-color: var(--luxury-gold); }
+        
+        .upload-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px dashed #444;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--luxury-gold); }
+
+        .banner-preview {
+            width: 100%;
+            height: 120px;
+            background-size: cover;
+            background-position: center;
+            background-color: #1a1a1a;
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        .pfp-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 1.5rem;
+            object-cover;
+            border: 3px solid var(--luxury-dark);
+            background: #000;
+        }
+
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="w-10 h-10 border-2 border-gold/20 border-t-gold rounded-full animate-spin mb-4"></div>
+        <p class="text-[10px] font-black uppercase tracking-[0.4em] gold-gradient">Finalizing Identity</p>
+    </div>
+
+    <div class="max-w-md w-full mx-auto p-6">
+        <div class="glass rounded-[2.5rem] p-8 shadow-2xl">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="serif text-3xl gold-gradient">Edit Profile</h1>
+                    <p class="text-[8px] uppercase tracking-[0.3em] text-gray-500">Refine your presence</p>
+                </div>
+                <button onclick="window.location.href='index.html'" class="text-[8px] font-black text-gray-500 hover:text-white transition uppercase tracking-widest">Cancel</button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Visuals -->
+                <div class="relative mb-12">
+                    <div id="prev-banner" class="banner-preview mb-[-40px]"></div>
+                    <div class="px-6 flex items-end gap-4">
+                        <img id="prev-pfp" src="" class="pfp-preview shadow-xl relative z-10">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div onclick="document.getElementById('pfp-input').click()" class="upload-btn">
+                        <p class="text-[7px] font-black uppercase tracking-widest text-gray-400">Update PFP</p>
+                        <input type="file" id="pfp-input" class="hidden" accept="image/*">
+                    </div>
+                    <div onclick="document.getElementById('banner-input').click()" class="upload-btn">
+                        <p class="text-[7px] font-black uppercase tracking-widest text-gray-400">Update Banner</p>
+                        <input type="file" id="banner-input" class="hidden" accept="image/*">
+                    </div>
+                </div>
+
+                <!-- Fields -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Username</label>
+                        <input type="text" id="edit-user" class="input-field" placeholder="Enter name...">
+                    </div>
+                    <div>
+                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Biography</label>
+                        <textarea id="edit-bio" class="input-field h-24 resize-none" placeholder="Who are you?"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2 block ml-2">Profile Music (.mp3)</label>
+                        <div onclick="document.getElementById('music-input').click()" class="upload-btn py-3">
+                            <p id="music-label" class="text-[8px] font-bold text-white truncate">Click to upload audio</p>
+                            <input type="file" id="music-input" class="hidden" accept="audio/mpeg">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="save-btn" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] py-4 rounded-2xl text-black font-black uppercase tracking-[0.2em] text-[11px] hover:brightness-110 transition shadow-xl mt-4">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let pendingPfp = null;
+        let pendingBanner = null;
+        let pendingMusic = null;
+
+        window.onload = () => {
+            const session = localStorage.getItem('chatlaxy_session_v6');
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = JSON.parse(session);
+            
+            // Populate fields
+            document.getElementById('edit-user').value = currentUser.username;
+            document.getElementById('edit-bio').value = currentUser.customBio || '';
+            document.getElementById('prev-pfp').src = currentUser.pfp;
+            if (currentUser.banner) {
+                document.getElementById('prev-banner').style.backgroundImage = `url(${currentUser.banner})`;
+            }
+            if (currentUser.music) {
+                document.getElementById('music-label').innerText = "Current Audio Loaded";
+            }
+        };
+
+        // Handlers for file inputs
+        document.getElementById('pfp-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                pendingPfp = ev.target.result;
+                document.getElementById('prev-pfp').src = pendingPfp;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('banner-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                pendingBanner = ev.target.result;
+                document.getElementById('prev-banner').style.backgroundImage = `url(${pendingBanner})`;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('music-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('music-label').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                pendingMusic = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('save-btn').onclick = () => {
+            const newName = document.getElementById('edit-user').value.trim();
+            const newBio = document.getElementById('edit-bio').value.trim();
+            
+            if (!newName) return alert("Username required");
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            const db = JSON.parse(localStorage.getItem('chatlaxy_accounts_v6') || "[]");
+            
+            // Check username availability if changed
+            if (newName !== currentUser.username) {
+                if (db.some(u => u.username.toLowerCase() === newName.toLowerCase())) {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    alert("Username already taken.");
+                    return;
+                }
+            }
+
+            // Update user object
+            currentUser.username = newName;
+            currentUser.customBio = newBio;
+            if (pendingPfp) currentUser.pfp = pendingPfp;
+            if (pendingBanner) currentUser.banner = pendingBanner;
+            if (pendingMusic) currentUser.music = pendingMusic;
+
+            // Sync with DB
+            const idx = db.findIndex(u => u.password === currentUser.password && u.age === currentUser.age);
+            if (idx !== -1) {
+                db[idx] = { ...currentUser };
+            }
+
+            localStorage.setItem('chatlaxy_accounts_v6', JSON.stringify(db));
+            localStorage.setItem('chatlaxy_session_v6', JSON.stringify(currentUser));
+
+            // Redirect back
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 800);
+        };
+    </script>
+</body>
+</html>
