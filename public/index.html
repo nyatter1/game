@@ -50,15 +50,6 @@
             background-color: rgba(15, 23, 42, 0.9);
         }
 
-        /* Enhanced Neon Glow */
-        .neon-text {
-            text-shadow: 
-                0 0 7px var(--neon-color), 
-                0 0 14px var(--neon-color), 
-                0 0 21px var(--neon-color), 
-                0 0 42px var(--neon-color);
-        }
-
         /* Fixed Height Grid with Scroll */
         .grid-container {
             scrollbar-width: thin;
@@ -100,11 +91,15 @@
 
             <div class="p-3 border-t border-slate-800 bg-slate-900 relative">
                 <div id="actionMenu" class="hidden absolute bottom-16 left-4 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-52 overflow-hidden z-50">
-                    <button onclick="openColorModal()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
+                    <button onclick="openColorModal()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300 border-b border-slate-700/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 112.828 2.828L11.828 15H10v-1.828z" clip-rule="evenodd" />
                         </svg>
                         Username Colour
+                    </button>
+                    <button onclick="toggleActionMenu()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
+                        <span class="text-lg">🎱</span>
+                        8-Ball
                     </button>
                 </div>
 
@@ -159,17 +154,16 @@
                 <div class="space-y-2">
                     <div class="flex text-[9px] font-black uppercase tracking-wider border-b border-slate-800">
                         <button onclick="setMode('solid')" id="tab-solid" class="flex-1 pb-2 border-b-2 border-yellow-500 text-white">Colour</button>
-                        <button onclick="setMode('neon')" id="tab-neon" class="flex-1 pb-2 border-b-2 border-transparent text-slate-500">Neon</button>
                         <button onclick="setMode('gradient')" id="tab-gradient" class="flex-1 pb-2 border-b-2 border-transparent text-slate-500">Gradient</button>
                     </div>
 
-                    <!-- Scrollable Color Grid (Height limited to keep Font selector visible) -->
+                    <!-- Scrollable Color Grid -->
                     <div id="colorContainer" class="grid-container grid grid-cols-7 gap-1.5 h-32 overflow-y-auto pr-1">
                         <!-- Populated via JS -->
                     </div>
                 </div>
 
-                <!-- Font Selection (Always Visible) -->
+                <!-- Font Selection -->
                 <div class="space-y-1.5">
                     <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest block">Font Style</label>
                     <select id="fontSelect" onchange="updateStyle({font: this.value})" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
@@ -204,11 +198,10 @@
         let currentStyle = JSON.parse(localStorage.getItem(`chat_style_${username}`)) || {
             color: '#ffffff',
             font: "'Inter', sans-serif",
-            type: 'solid',
-            neon: false
+            type: 'solid'
         };
 
-        let currentMode = currentStyle.type === 'gradient' ? 'gradient' : (currentStyle.neon ? 'neon' : 'solid');
+        let currentMode = currentStyle.type === 'gradient' ? 'gradient' : 'solid';
 
         const messageFeed = document.getElementById('messageFeed');
         const chatForm = document.getElementById('chatForm');
@@ -277,12 +270,14 @@
 
         function setMode(mode) {
             currentMode = mode;
-            ['solid', 'neon', 'gradient'].forEach(m => {
+            ['solid', 'gradient'].forEach(m => {
                 const tab = document.getElementById(`tab-${m}`);
-                if (m === mode) {
-                    tab.className = "flex-1 pb-2 border-b-2 border-yellow-500 text-white";
-                } else {
-                    tab.className = "flex-1 pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-400";
+                if (tab) {
+                    if (m === mode) {
+                        tab.className = "flex-1 pb-2 border-b-2 border-yellow-500 text-white";
+                    } else {
+                        tab.className = "flex-1 pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-400";
+                    }
                 }
             });
 
@@ -299,12 +294,10 @@
                 }
                 
                 btn.onclick = () => {
-                    if (mode === 'neon') {
-                        updateStyle({ color: c, neon: true, type: 'solid' });
-                    } else if (mode === 'gradient') {
-                        updateStyle({ color: c, type: 'gradient', neon: false });
+                    if (mode === 'gradient') {
+                        updateStyle({ color: c, type: 'gradient' });
                     } else {
-                        updateStyle({ color: c, type: 'solid', neon: false });
+                        updateStyle({ color: c, type: 'solid' });
                     }
                 };
                 colorContainer.appendChild(btn);
@@ -318,7 +311,6 @@
 
         function applyStyleToElement(el, style) {
             el.style.fontFamily = style.font;
-            el.classList.remove('neon-text');
             el.style.textShadow = 'none';
             el.style.background = 'none';
             el.style.webkitBackgroundClip = 'initial';
@@ -331,16 +323,14 @@
                 el.style.color = 'transparent';
             } else {
                 el.style.color = style.color;
-                if (style.neon) {
-                    el.classList.add('neon-text');
-                    el.style.setProperty('--neon-color', style.color);
-                }
             }
         }
 
         function saveStyle() {
             localStorage.setItem(`chat_style_${username}`, JSON.stringify(currentStyle));
             renderPlayers();
+            // Refresh feed to apply new style to existing messages by user
+            loadMessages();
             closeColorModal();
         }
 
@@ -366,9 +356,10 @@
             });
         }
 
-        function addMessage(user, text, rank = 'Member') {
+        function addMessage(user, text, rank = 'Member', save = true) {
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const messageId = `msg-user-${Date.now()}`;
+            const timestamp = Date.now();
+            const messageId = `msg-user-${timestamp}`;
             
             const messageRow = document.createElement('div');
             messageRow.className = 'flex items-start gap-3 py-1.5 px-2 rounded-lg message-row transition-colors w-full';
@@ -388,7 +379,50 @@
             `;
 
             messageFeed.appendChild(messageRow);
-            if (user === username) applyStyleToElement(document.getElementById(messageId), currentStyle);
+            
+            // Apply current style if it's the current user
+            if (user === username) {
+                applyStyleToElement(document.getElementById(messageId), currentStyle);
+            }
+
+            if (save) {
+                const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+                history.push({ user, text, rank, timeStr, timestamp, style: user === username ? currentStyle : null });
+                localStorage.setItem('chat_history', JSON.stringify(history.slice(-100))); // Keep last 100
+            }
+
+            messageFeed.scrollTop = messageFeed.scrollHeight;
+        }
+
+        function loadMessages() {
+            messageFeed.innerHTML = '';
+            const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+            history.forEach(msg => {
+                const messageId = `msg-hist-${msg.timestamp}`;
+                const messageRow = document.createElement('div');
+                messageRow.className = 'flex items-start gap-3 py-1.5 px-2 rounded-lg message-row transition-colors w-full';
+                messageRow.innerHTML = `
+                    <img src="/default.png" class="w-8 h-8 rounded-full border border-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${msg.user}&background=1e293b&color=fff'">
+                    <div class="flex flex-col flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span id="${messageId}" class="text-[11px] font-black uppercase tracking-wider">${msg.user}</span>
+                                <span class="rank-badge ${getRankClass(msg.rank)}">${msg.rank}</span>
+                            </div>
+                            <span class="text-[9px] text-slate-600">${msg.timeStr}</span>
+                        </div>
+                        <div class="text-[13px] text-slate-200 mt-0.5">${msg.text}</div>
+                    </div>
+                `;
+                messageFeed.appendChild(messageRow);
+                
+                // If it's the current user, use the latest style from localStorage
+                if (msg.user === username) {
+                    applyStyleToElement(document.getElementById(messageId), currentStyle);
+                } else if (msg.style) {
+                    applyStyleToElement(document.getElementById(messageId), msg.style);
+                }
+            });
             messageFeed.scrollTop = messageFeed.scrollHeight;
         }
 
@@ -408,6 +442,7 @@
             document.getElementById('displayUsername').textContent = username;
             document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
             renderPlayers();
+            loadMessages();
         }
     </script>
 </body>
