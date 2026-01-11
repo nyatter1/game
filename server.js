@@ -1,23 +1,31 @@
 const express = require('express');
-const http = require('http');
 const path = require('path');
-
+const cookieParser = require('cookie-parser');
 const app = express();
-const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
 
-// Serve static files from the 'public' directory
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fallback for SPA-like behavior or specific routes
+// Automatic Redirection Logic
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // Check if user is already "logged in" via cookies
+    const username = req.cookies.chat_username;
+
+    if (!username) {
+        // No account found, send to signup/landing page
+        res.redirect('/signup.html');
+    } else {
+        // Account exists, send to main chat
+        res.redirect('/index.html');
+    }
 });
 
-// For Render/Deployment: 
-// The frontend in index.html expects __firebase_config to be available globally.
-// In a real Node environment, we ensure the index.html can access the injected config.
+// Fallback for any other routes
+app.get('*', (req, res) => {
+    res.redirect('/');
+});
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });
