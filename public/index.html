@@ -97,7 +97,7 @@
                         </svg>
                         Username Colour
                     </button>
-                    <button onclick="toggleActionMenu()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
+                    <button onclick="openEightBallModal()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
                         <span class="text-lg">🎱</span>
                         8-Ball
                     </button>
@@ -189,6 +189,27 @@
         </div>
     </div>
 
+    <!-- 8-Ball Modal -->
+    <div id="eightBallModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
+            <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-white">Ask 8ball</h3>
+                <button onclick="closeEightBallModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex justify-center text-4xl py-2">🎱</div>
+                <input type="text" id="eightBallInput" autocomplete="off" placeholder="ASK SOMETHING...." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 text-center uppercase font-bold tracking-wider">
+                <button onclick="submitEightBall()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const username = sessionStorage.getItem('chat_username') || 'Guest';
         const age = sessionStorage.getItem('chat_age');
@@ -209,6 +230,7 @@
         const playerList = document.getElementById('playerList');
         const actionMenu = document.getElementById('actionMenu');
         const colorModal = document.getElementById('colorModal');
+        const eightBallModal = document.getElementById('eightBallModal');
         const usernamePreview = document.getElementById('usernamePreview');
         const colorContainer = document.getElementById('colorContainer');
 
@@ -255,6 +277,13 @@
             'linear-gradient(to right, #00b09b, #96c93d)'
         ];
 
+        const eightBallResponses = [
+            "It is certain.", "It is decidedly so.", "Without a doubt.", "Yes definitely.", "You may rely on it.",
+            "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.",
+            "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",
+            "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."
+        ];
+
         function toggleActionMenu() { actionMenu.classList.toggle('hidden'); }
 
         function openColorModal() {
@@ -267,6 +296,26 @@
         }
 
         function closeColorModal() { colorModal.classList.add('hidden'); }
+
+        function openEightBallModal() {
+            actionMenu.classList.add('hidden');
+            eightBallModal.classList.remove('hidden');
+            document.getElementById('eightBallInput').value = '';
+            document.getElementById('eightBallInput').focus();
+        }
+
+        function closeEightBallModal() { eightBallModal.classList.add('hidden'); }
+
+        function submitEightBall() {
+            const question = document.getElementById('eightBallInput').value.trim();
+            if (!question) return;
+
+            const answer = eightBallResponses[Math.floor(Math.random() * eightBallResponses.length)];
+            const fullMessage = `${username} asked: ${question}<br>8ball answer: ${answer}`;
+            
+            addMessage(username, fullMessage, userRank);
+            closeEightBallModal();
+        }
 
         function setMode(mode) {
             currentMode = mode;
