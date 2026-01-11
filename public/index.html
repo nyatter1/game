@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&family=Playfair+Display:wght@700&family=Bangers&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Roboto+Mono:wght@700&family=Playfair+Display:wght@700&family=Bangers&family=Permanent+Marker&family=Orbitron:wght@700&family=Creepster&family=Monoton&family=Pacifico&family=Press+Start+2P&family=Righteous&family=Lobster&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -38,7 +38,6 @@
         .rank-vip { background: #a855f7; color: white; }
         .rank-super-vip { background: #f59e0b; color: white; }
         
-        /* Action Menu Animation */
         #actionMenu.hidden { display: none; }
         #actionMenu { animation: slideUp 0.2s ease-out; }
         @keyframes slideUp {
@@ -46,21 +45,27 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Modal Blur */
         .modal-overlay {
-            backdrop-filter: blur(8px);
-            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            background-color: rgba(15, 23, 42, 0.85);
         }
 
-        /* Neon Effect */
         .neon-text {
-            text-shadow: 0 0 5px var(--neon-color), 0 0 10px var(--neon-color);
+            text-shadow: 0 0 5px var(--neon-color), 0 0 10px var(--neon-color), 0 0 20px var(--neon-color);
+        }
+
+        /* Color Grid Scrollbar */
+        .grid-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .grid-container::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-200">
 
-    <!-- Header -->
     <header class="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md shrink-0">
         <div class="flex items-center gap-3">
             <img src="https://usagif.com/wp-content/uploads/gifs/banana-91.gif" alt="Logo" class="w-6 h-6 object-contain">
@@ -96,12 +101,6 @@
                         <div class="w-5 h-5 bg-slate-900 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-slate-600">8</div>
                         8-Ball
                     </button>
-                    <button class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300 transition-colors border-t border-slate-700/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9z" clip-rule="evenodd" />
-                        </svg>
-                        User Card
-                    </button>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -110,7 +109,6 @@
                             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
                     </button>
-
                     <form id="chatForm" class="flex-1 flex items-center gap-2">
                         <input type="text" id="messageInput" autocomplete="off" placeholder="Type a message..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-yellow-500 transition-all">
                         <button type="submit" class="bg-yellow-500 hover:bg-yellow-400 text-slate-900 p-2 rounded-xl transition-all shadow-lg shadow-yellow-900/20 shrink-0">
@@ -131,59 +129,65 @@
         </aside>
     </main>
 
-    <!-- Customization Modal -->
+    <!-- Redesigned Customization Modal -->
     <div id="colorModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-white">Customize Username</h3>
-                <button onclick="closeColorModal()" class="text-slate-500 hover:text-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
+                <h3 class="text-sm font-black uppercase tracking-widest text-white">Customise Username</h3>
+                <button onclick="closeColorModal()" class="text-slate-500 hover:text-white transition-colors p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
             
-            <div class="p-6 space-y-6">
-                <!-- Preview -->
-                <div class="bg-slate-950 rounded-xl p-8 border border-slate-800 flex flex-col items-center justify-center gap-2">
-                    <span class="text-[10px] text-slate-600 uppercase font-bold tracking-widest">Live Preview</span>
-                    <div id="usernamePreview" class="text-2xl font-black uppercase tracking-wider transition-all">USER</div>
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-8">
+                <!-- Preview Section -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Preview</label>
+                    <div class="bg-slate-950 rounded-xl p-6 border border-slate-800 flex items-center justify-center min-h-[80px]">
+                        <div id="usernamePreview" class="text-3xl font-black uppercase tracking-wider text-center">USER</div>
+                    </div>
                 </div>
 
-                <!-- Color Grid -->
+                <!-- Tabs for Mode -->
                 <div class="space-y-3">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Select Base Colour</label>
-                    <div id="colorGrid" class="grid grid-cols-6 gap-3">
-                        <button onclick="updateStyle({color: '#ffffff'})" class="w-full aspect-square rounded-lg bg-white"></button>
-                        <button onclick="updateStyle({color: '#f87171'})" class="w-full aspect-square rounded-lg bg-red-400"></button>
-                        <button onclick="updateStyle({color: '#fbbf24'})" class="w-full aspect-square rounded-lg bg-yellow-400"></button>
-                        <button onclick="updateStyle({color: '#4ade80'})" class="w-full aspect-square rounded-lg bg-green-400"></button>
-                        <button onclick="updateStyle({color: '#60a5fa'})" class="w-full aspect-square rounded-lg bg-blue-400"></button>
-                        <button id="nemoBtn" onclick="toggleExtraColors()" class="w-full aspect-square rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-[10px] font-black text-white">NEMO</button>
+                    <div class="flex border-b border-slate-800">
+                        <button onclick="setMode('solid')" id="tab-solid" class="flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 border-yellow-500 text-white">Colour</button>
+                        <button onclick="setMode('neon')" id="tab-neon" class="flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 border-transparent text-slate-500 hover:text-slate-300">Neon</button>
+                        <button onclick="setMode('gradient')" id="tab-gradient" class="flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 border-transparent text-slate-500 hover:text-slate-300">Gradient</button>
                     </div>
-                    <!-- Hidden Extra Colors -->
-                    <div id="extraColors" class="hidden grid grid-cols-6 gap-3 mt-3 animate-in fade-in duration-300">
-                        <button onclick="updateStyle({color: '#c084fc'})" class="w-full aspect-square rounded-lg bg-purple-400"></button>
-                        <button onclick="updateStyle({color: '#f472b6'})" class="w-full aspect-square rounded-lg bg-pink-400"></button>
-                        <button onclick="updateStyle({color: '#2dd4bf'})" class="w-full aspect-square rounded-lg bg-teal-400"></button>
-                        <button onclick="updateStyle({type: 'gradient', color: 'linear-gradient(to right, #f472b6, #fbbf24)'})" class="w-full aspect-square rounded-lg bg-gradient-to-r from-pink-400 to-yellow-400"></button>
-                        <button onclick="updateStyle({type: 'gradient', color: 'linear-gradient(to right, #60a5fa, #4ade80)'})" class="w-full aspect-square rounded-lg bg-gradient-to-r from-blue-400 to-green-400"></button>
-                        <button onclick="updateStyle({neon: true})" class="w-full aspect-square rounded-lg border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">NEON</button>
+
+                    <!-- Scrollable Color Grid -->
+                    <div id="colorContainer" class="grid-container grid grid-cols-8 gap-2 max-h-48 overflow-y-auto pr-2">
+                        <!-- Populated via JS -->
                     </div>
                 </div>
 
                 <!-- Font Selection -->
-                <div class="space-y-3">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Select Font</label>
-                    <select id="fontSelect" onchange="updateStyle({font: this.value})" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Font</label>
+                    <select id="fontSelect" onchange="updateStyle({font: this.value})" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 appearance-none">
                         <option value="'Inter', sans-serif">Standard (Inter)</option>
-                        <option value="'Roboto Mono', monospace">Mono (Gamer)</option>
+                        <option value="'Roboto Mono', monospace">Gamer (Mono)</option>
                         <option value="'Playfair Display', serif">Elegant (Serif)</option>
-                        <option value="'Bangers', cursive">Comic (Bold)</option>
+                        <option value="'Bangers', cursive">Hero (Bangers)</option>
+                        <option value="'Permanent Marker', cursive">Street (Marker)</option>
+                        <option value="'Orbitron', sans-serif">Sci-Fi (Orbitron)</option>
+                        <option value="'Creepster', system-ui">Horror (Creepster)</option>
+                        <option value="'Monoton', cursive">Retro (Monoton)</option>
+                        <option value="'Pacifico', cursive">Script (Pacifico)</option>
+                        <option value="'Press Start 2P', cursive">8-Bit (Press Start)</option>
+                        <option value="'Righteous', cursive">Modern (Righteous)</option>
+                        <option value="'Lobster', cursive">Classic (Lobster)</option>
                     </select>
                 </div>
+            </div>
 
-                <button onclick="saveStyle()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 rounded-xl transition-all">Save Changes</button>
+            <div class="p-4 bg-slate-900 border-t border-slate-800">
+                <button onclick="saveStyle()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg shadow-yellow-900/20">
+                    Save Changes
+                </button>
             </div>
         </div>
     </div>
@@ -194,7 +198,6 @@
         const gender = sessionStorage.getItem('chat_gender');
         const userRank = sessionStorage.getItem('chat_rank') || 'Member';
 
-        // Custom Style State
         let currentStyle = JSON.parse(localStorage.getItem(`chat_style_${username}`)) || {
             color: '#ffffff',
             font: "'Inter', sans-serif",
@@ -202,12 +205,7 @@
             neon: false
         };
 
-        if (!sessionStorage.getItem('chat_username')) {
-            window.location.href = '/signup.html';
-        }
-
-        document.getElementById('displayUsername').textContent = username;
-        document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
+        let currentMode = currentStyle.type === 'gradient' ? 'gradient' : (currentStyle.neon ? 'neon' : 'solid');
 
         const messageFeed = document.getElementById('messageFeed');
         const chatForm = document.getElementById('chatForm');
@@ -216,6 +214,67 @@
         const actionMenu = document.getElementById('actionMenu');
         const colorModal = document.getElementById('colorModal');
         const usernamePreview = document.getElementById('usernamePreview');
+        const colorContainer = document.getElementById('colorContainer');
+
+        const solidColors = [
+            '#ffffff', '#f8fafc', '#94a3b8', '#475569', '#1e293b', 
+            '#f87171', '#ef4444', '#dc2626', '#b91c1c', '#991b1b',
+            '#fb923c', '#f97316', '#ea580c', '#c2410c', '#9a3412',
+            '#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e',
+            '#facc15', '#eab308', '#ca8a04', '#a16207', '#854d0e',
+            '#a3e635', '#84cc16', '#65a30d', '#4d7c0f', '#3f6212',
+            '#4ade80', '#22c55e', '#16a34a', '#15803d', '#166534',
+            '#34d399', '#10b981', '#059669', '#047857', '#065f46',
+            '#2dd4bf', '#14b8a6', '#0d9488', '#0f766e', '#115e59',
+            '#22d3ee', '#06b6d4', '#0891b2', '#0e7490', '#155e75',
+            '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#075985',
+            '#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af',
+            '#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#3730a3',
+            '#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6',
+            '#c084fc', '#a855f7', '#9333ea', '#7e22ce', '#6b21a8',
+            '#e879f9', '#d946ef', '#c026d3', '#a21caf', '#86198f',
+            '#f472b6', '#ec4899', '#db2777', '#be185d', '#9d174d',
+            '#fb7185', '#f43f5e', '#e11d48', '#be123c', '#9f1239'
+        ];
+
+        const gradients = [
+            'linear-gradient(to right, #f43f5e, #fb923c)',
+            'linear-gradient(to right, #fbbf24, #f472b6)',
+            'linear-gradient(to right, #6366f1, #a855f7)',
+            'linear-gradient(to right, #22c55e, #10b981)',
+            'linear-gradient(to right, #0ea5e9, #6366f1)',
+            'linear-gradient(to right, #f97316, #dc2626)',
+            'linear-gradient(to right, #d946ef, #fb7185)',
+            'linear-gradient(to right, #84cc16, #facc15)',
+            'linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)',
+            'linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)',
+            'linear-gradient(to top, #fad0c4 0%, #ffd1ff 100%)',
+            'linear-gradient(120deg, #f6d365 0%, #fda085 100%)',
+            'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(to right, #43e97b 0%, #38f9d7 100%)',
+            'linear-gradient(to right, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(to right, #6a11cb 0%, #2575fc 100%)',
+            'linear-gradient(to right, #ff0844 0%, #ffb199 100%)',
+            'linear-gradient(to right, #00cdac 0%, #8ddad5 100%)',
+            'linear-gradient(to right, #ee9ca7 0%, #ffdde1 100%)',
+            'linear-gradient(to right, #ff758c 0%, #ff7eb3 100%)',
+            'linear-gradient(to right, #868f96 0%, #596164 100%)',
+            'linear-gradient(to right, #09203f 0%, #537895 100%)',
+            'linear-gradient(to right, #f78ca0 0%, #f9748f 19%, #fd868c 60%, #fe9a8b 100%)',
+            'linear-gradient(to right, #48c6ef 0%, #6f86d6 100%)',
+            'linear-gradient(to right, #feada6 0%, #f5efef 100%)',
+            'linear-gradient(to right, #e6e9f0 0%, #eef1f5 100%)',
+            'linear-gradient(to right, #accbee 0%, #e7f0fd 100%)',
+            'linear-gradient(to top, #30cfd0 0%, #330867 100%)',
+            'linear-gradient(to right, #5f72bd 0%, #9b23ea 100%)',
+            'linear-gradient(to right, #00c6ff 0%, #0072ff 100%)',
+            'linear-gradient(to right, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(to right, #5ee7df 0%, #b490ca 100%)',
+            'linear-gradient(to right, #c31432, #240b36)',
+            'linear-gradient(to right, #f12711, #f5af19)',
+            'linear-gradient(to right, #654ea3, #eaafc8)',
+            'linear-gradient(to right, #00b09b, #96c93d)'
+        ];
 
         function toggleActionMenu() { actionMenu.classList.toggle('hidden'); }
 
@@ -223,34 +282,55 @@
             actionMenu.classList.add('hidden');
             colorModal.classList.remove('hidden');
             usernamePreview.textContent = username;
+            document.getElementById('fontSelect').value = currentStyle.font;
+            setMode(currentMode);
             applyStyleToElement(usernamePreview, currentStyle);
         }
 
         function closeColorModal() { colorModal.classList.add('hidden'); }
 
-        function toggleExtraColors() {
-            document.getElementById('extraColors').classList.toggle('hidden');
+        function setMode(mode) {
+            currentMode = mode;
+            // Update UI tabs
+            ['solid', 'neon', 'gradient'].forEach(m => {
+                const tab = document.getElementById(`tab-${m}`);
+                if (m === mode) {
+                    tab.classList.replace('text-slate-500', 'text-white');
+                    tab.classList.replace('border-transparent', 'border-yellow-500');
+                } else {
+                    tab.classList.replace('text-white', 'text-slate-500');
+                    tab.classList.replace('border-yellow-500', 'border-transparent');
+                }
+            });
+
+            // Populate color grid
+            colorContainer.innerHTML = '';
+            const items = (mode === 'gradient') ? gradients : solidColors;
+            
+            items.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full aspect-square rounded-lg border-2 border-transparent hover:border-white transition-all shadow-sm';
+                if (mode === 'gradient') {
+                    btn.style.background = c;
+                } else {
+                    btn.style.backgroundColor = c;
+                }
+                
+                btn.onclick = () => {
+                    if (mode === 'neon') {
+                        updateStyle({ color: c, neon: true, type: 'solid' });
+                    } else if (mode === 'gradient') {
+                        updateStyle({ color: c, type: 'gradient', neon: false });
+                    } else {
+                        updateStyle({ color: c, type: 'solid', neon: false });
+                    }
+                };
+                colorContainer.appendChild(btn);
+            });
         }
 
         function updateStyle(changes) {
-            if (changes.type === 'gradient') {
-                currentStyle.type = 'gradient';
-                currentStyle.color = changes.color;
-                currentStyle.neon = false;
-            } else if (changes.color) {
-                currentStyle.type = 'solid';
-                currentStyle.color = changes.color;
-            }
-            
-            if (changes.font) currentStyle.font = changes.font;
-            if (changes.neon !== undefined) {
-                currentStyle.neon = !currentStyle.neon;
-                if(currentStyle.neon) {
-                    currentStyle.type = 'solid';
-                    if(currentStyle.color === '#ffffff') currentStyle.color = '#f87171'; // Default neon color if white
-                }
-            }
-
+            Object.assign(currentStyle, changes);
             applyStyleToElement(usernamePreview, currentStyle);
         }
 
@@ -283,14 +363,13 @@
 
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
-            if (!actionMenu.contains(e.target) && (!btn || !btn.onclick || !btn.onclick.toString().includes('toggleActionMenu'))) {
+            if (colorModal.classList.contains('hidden') && !actionMenu.contains(e.target) && (!btn || !btn.onclick || !btn.onclick.toString().includes('toggleActionMenu'))) {
                 actionMenu.classList.add('hidden');
             }
         });
 
         function getRankClass(rank) {
-            const r = rank.toLowerCase().replace(/\s+/g, '-');
-            return `rank-${r}`;
+            return `rank-${rank.toLowerCase().replace(/\s+/g, '-')}`;
         }
 
         function renderPlayers(users = []) {
@@ -304,13 +383,12 @@
                         <div class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border border-slate-900 rounded-full"></div>
                     </div>
                     <div class="flex flex-col min-w-0">
-                        <span id="${styleId}" class="text-xs font-medium truncate">${user.name}</span>
+                        <span id="${styleId}" class="text-xs font-bold truncate">${user.name}</span>
                         <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">${user.rank || 'Member'}</span>
                     </div>
                 </div>
             `}).join('');
             
-            // Apply styles to online list
             list.forEach(user => {
                 const el = document.getElementById(`user-style-${user.name}`);
                 if (el && user.name === username) applyStyleToElement(el, currentStyle);
@@ -342,11 +420,8 @@
             `;
 
             messageFeed.appendChild(messageRow);
-            
-            // Apply style to message username
             const nameEl = document.getElementById(messageId);
             if (user === username) applyStyleToElement(nameEl, currentStyle);
-            
             messageFeed.scrollTop = messageFeed.scrollHeight;
         }
 
@@ -364,9 +439,13 @@
             window.location.href = '/signup.html';
         }
 
-        window.onload = () => {
-            renderPlayers();
-        };
+        if (!sessionStorage.getItem('chat_username')) {
+            window.location.href = '/signup.html';
+        } else {
+            document.getElementById('displayUsername').textContent = username;
+            document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
+            window.onload = () => renderPlayers();
+        }
     </script>
 </body>
 </html>
