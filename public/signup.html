@@ -3,240 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chat | Sign Up or Login</title>
+    <title>Simple Chat - Connect Instantly</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a;
-            background-image: radial-gradient(circle at 50% 0%, #1e293b, #0f172a);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
+
         .glass-card {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(16px);
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .tab-active {
-            border-bottom: 3px solid #eab308;
-            color: white;
+
+        .brand-yellow { color: #facc15; }
+        .bg-brand-yellow { background-color: #facc15; }
+        
+        .nav-link:hover {
+            color: #facc15;
         }
-        input:focus, select:focus {
-            box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
-            outline: none;
+
+        /* Smooth Transitions */
+        .modal-transition {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.2em 1.2em;
+        }
+
+        .input-glow:focus {
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.15);
+            border-color: #facc15;
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 text-slate-200">
-    <div class="max-w-md w-full">
-        <div class="text-center mb-6">
-            <img src="https://usagif.com/wp-content/uploads/gifs/banana-91.gif" alt="Logo" class="w-16 h-16 mx-auto mb-2 object-contain">
-            <h1 class="text-2xl font-black text-white uppercase tracking-wider">Simple Chat</h1>
-        </div>
+<body class="flex flex-col">
 
-        <div class="glass-card rounded-2xl shadow-2xl overflow-hidden">
-            <div class="flex border-b border-slate-700/50">
-                <button id="signupTab" class="flex-1 py-4 text-sm font-bold uppercase tracking-widest text-slate-400 transition-all tab-active">Sign Up</button>
-                <button id="loginTab" class="flex-1 py-4 text-sm font-bold uppercase tracking-widest text-slate-400 transition-all">Log In</button>
+    <!-- Navigation -->
+    <nav class="w-full py-4 px-6 flex justify-between items-center bg-slate-900/40 backdrop-blur-xl border-b border-slate-800/50 sticky top-0 z-50">
+        <div class="flex items-center space-x-3 group cursor-pointer">
+            <img src="https://usagif.com/wp-content/uploads/gifs/banana-91.gif" alt="Logo" class="w-10 h-10 object-contain transition-transform group-hover:scale-110">
+            <span class="text-2xl font-bold tracking-tight italic text-white">simple<span class="brand-yellow">chat</span></span>
+        </div>
+        <div class="hidden md:flex space-x-8 font-medium text-slate-400">
+            <a href="#" class="nav-link transition">Chat Now</a>
+            <a href="#" class="nav-link transition">Rooms</a>
+            <a href="#" class="nav-link transition">Community</a>
+        </div>
+        <div class="space-x-4">
+            <button onclick="openAuth('login')" class="text-slate-300 font-semibold hover:text-yellow-400 transition">Log In</button>
+            <button onclick="openAuth('signup')" class="bg-brand-yellow text-slate-900 px-6 py-2 rounded-full font-bold hover:bg-yellow-500 transition shadow-lg shadow-yellow-900/20 active:scale-95">Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="flex-grow flex flex-col items-center justify-center text-center px-4 py-20 relative overflow-hidden">
+        <!-- Background Glows -->
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-yellow-500/10 rounded-full blur-[120px] -z-10"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[150px] -z-10"></div>
+
+        <div class="mb-8 animate-bounce transition-all duration-1000">
+             <img src="https://usagif.com/wp-content/uploads/gifs/banana-91.gif" alt="Logo Large" class="w-28 h-28 mx-auto drop-shadow-[0_0_25px_rgba(250,204,21,0.3)]">
+        </div>
+        <h1 class="text-5xl md:text-8xl font-extrabold text-white mb-6 tracking-tighter leading-none">
+            Chatting Made <br><span class="brand-yellow">Simple.</span>
+        </h1>
+        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mb-12 leading-relaxed font-light">
+            No bloated features. No data harvesting. Just fast, encrypted, 
+            instant communication with a side of chaos.
+        </p>
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
+            <button onclick="openAuth('signup')" class="bg-white text-slate-900 px-12 py-5 rounded-2xl font-bold text-xl hover:bg-yellow-400 transition-all shadow-2xl hover:-translate-y-1 active:scale-95">
+                Start Chatting
+            </button>
+        </div>
+    </main>
+
+    <!-- Auth Modal Overlay -->
+    <div id="authModal" class="fixed inset-0 bg-slate-950/60 hidden flex items-center justify-center z-[100] p-4 backdrop-blur-md opacity-0 transition-opacity duration-300">
+        
+        <!-- Modal Container -->
+        <div class="glass-card w-full max-w-[440px] rounded-[2rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.6)] modal-transition translate-y-8 opacity-0 max-h-[90vh] flex flex-col relative" id="modalContent">
+            
+            <!-- Internal Close Button -->
+            <button onclick="closeAuth()" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors bg-slate-800/30 hover:bg-slate-800/80 p-2 rounded-full">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Modal Header with Logo -->
+            <div class="p-8 pb-4 flex flex-col items-center">
+                <div class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                    <img src="https://usagif.com/wp-content/uploads/gifs/banana-91.gif" alt="Auth Logo" class="w-10 h-10">
+                </div>
+                <h2 id="modalTitle" class="text-2xl font-bold text-white">Welcome Back</h2>
+                <p id="modalSubtitle" class="text-slate-400 text-sm mt-1 text-center">Enter your details to join the simple chaos.</p>
             </div>
 
-            <div class="p-8">
-                <!-- Signup Form -->
-                <form id="signupForm" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Age</label>
-                            <input type="number" id="regAge" min="13" max="1000" placeholder="13-1000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Gender</label>
-                            <select id="regGender" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-3 text-sm text-white appearance-none cursor-pointer">
-                                <option value="" disabled selected>Select</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
-                                <option value="furry">Furry</option>
-                                <option value="alien">Alien</option>
-                            </select>
-                        </div>
-                    </div>
+            <!-- Toggle Tabs -->
+            <div class="flex px-8 gap-2">
+                <button id="loginTab" onclick="showTab('login')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 bg-brand-yellow text-slate-900">Log In</button>
+                <button id="signupTab" onclick="showTab('signup')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-200 bg-slate-800/50">Sign Up</button>
+            </div>
 
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Username</label>
-                        <input type="text" id="regUsername" placeholder="Don't use your real name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white">
-                        <p class="text-[10px] text-slate-500 mt-1 italic">3-20 characters, alphanumeric only</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Email</label>
-                        <input type="email" id="regEmail" placeholder="you@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Password</label>
-                        <input type="password" id="regPassword" placeholder="Strong password required" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white">
-                    </div>
-
-                    <div class="pt-2">
-                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-4 rounded-lg transition-all shadow-lg text-sm uppercase tracking-widest">
-                            Sign Up
-                        </button>
-                    </div>
-                </form>
-
+            <div class="p-8 pt-6 overflow-y-auto">
                 <!-- Login Form -->
-                <form id="loginForm" class="space-y-4 hidden">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Username or Email</label>
-                        <input type="text" id="loginIdentifier" placeholder="Username" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white">
+                <form id="loginForm" class="space-y-5">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Identity</label>
+                        <input type="text" id="loginUsername" required class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-600 focus:outline-none input-glow transition-all" placeholder="Username">
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Password</label>
-                        <input type="password" id="loginPassword" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Access Key</label>
+                        <input type="password" id="loginPassword" required class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-600 focus:outline-none input-glow transition-all" placeholder="••••••••">
                     </div>
-
-                    <div class="pt-2">
-                        <button type="submit" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-black py-4 rounded-lg transition-all shadow-lg text-sm uppercase tracking-widest">
-                            Log In
-                        </button>
-                    </div>
+                    <button type="submit" class="w-full bg-brand-yellow text-slate-900 py-4 rounded-2xl font-extrabold hover:bg-yellow-500 transition shadow-xl shadow-yellow-900/10 active:scale-[0.98]">
+                        Enter Simple Chat
+                    </button>
                 </form>
 
-                <p class="text-[10px] text-center text-slate-500 mt-6 leading-relaxed">
-                    By clicking Sign Up, you are agreeing to the Terms of Use including the arbitration clause and you are acknowledging the Privacy Policy.
-                </p>
+                <!-- Signup Form -->
+                <form id="signupForm" class="space-y-5 hidden">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Cool Name</label>
+                        <input type="text" id="signupUsername" required class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-600 focus:outline-none input-glow transition-all" placeholder="banana_king">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Digital Mail</label>
+                        <input type="email" id="signupEmail" required class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-600 focus:outline-none input-glow transition-all" placeholder="hello@banana.com">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Safe Phrase</label>
+                        <input type="password" id="signupPassword" required class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-600 focus:outline-none input-glow transition-all" placeholder="••••••••">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Vibe Check (Gender)</label>
+                        <select id="signupGender" required class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white focus:outline-none input-glow transition-all cursor-pointer">
+                            <option value="" disabled selected>Who are you?</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="trans">Trans</option>
+                            <option value="furry">Furry 🐾</option>
+                            <option value="other">Other / Chaos</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Pizza Preference</label>
+                        <input type="text" id="signupPizza" class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-600 focus:outline-none input-glow transition-all" placeholder="Pineapple? No judgement.">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Manifesto</label>
+                        <textarea id="signupManifesto" class="w-full px-5 py-3.5 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-600 focus:outline-none input-glow transition-all h-24 resize-none" placeholder="What's your life motto?"></textarea>
+                    </div>
+
+                    <p class="text-[10px] text-slate-500 leading-tight text-center px-4">
+                        By clicking "Join the Chaos," you accept our Shenanigans Policy.
+                    </p>
+                    <button type="submit" class="w-full bg-brand-yellow text-slate-900 py-4 rounded-2xl font-extrabold hover:bg-yellow-500 transition shadow-xl shadow-yellow-900/10 active:scale-[0.98]">
+                        Join the Chaos
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full text-xs font-bold shadow-2xl opacity-0 transition-opacity pointer-events-none z-50">
-        An error occurred.
-    </div>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <script>
-        const signupTab = document.getElementById('signupTab');
-        const loginTab = document.getElementById('loginTab');
-        const signupForm = document.getElementById('signupForm');
+        const firebaseConfig = {
+            apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
+            authDomain: "chatlaxy-pro.firebaseapp.com",
+            projectId: "chatlaxy-pro",
+            storageBucket: "chatlaxy-pro.firebasestorage.app",
+            messagingSenderId: "807800533954",
+            appId: "1:807800533954:web:4165776ac52b93e9cb9c5b",
+            measurementId: "G-XJ174Y690H"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // UI Logic
+        const modal = document.getElementById('authModal');
+        const modalContent = document.getElementById('modalContent');
         const loginForm = document.getElementById('loginForm');
-        const toast = document.getElementById('toast');
+        const signupForm = document.getElementById('signupForm');
+        const loginTab = document.getElementById('loginTab');
+        const signupTab = document.getElementById('signupTab');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalSubtitle = document.getElementById('modalSubtitle');
 
-        // Helper to get users from "database"
-        const getStoredUsers = () => JSON.parse(localStorage.getItem('chat_accounts') || '[]');
-        const saveUser = (userObj) => {
-            const users = getStoredUsers();
-            users.push(userObj);
-            localStorage.setItem('chat_accounts', JSON.stringify(users));
+        window.openAuth = (mode) => {
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.add('opacity-100');
+            modalContent.classList.remove('translate-y-8', 'opacity-0');
+            showTab(mode);
         };
 
-        // UI Toggling
-        signupTab.addEventListener('click', () => {
-            signupTab.classList.add('tab-active');
-            loginTab.classList.remove('tab-active');
-            signupForm.classList.remove('hidden');
-            loginForm.classList.add('hidden');
-        });
-
-        loginTab.addEventListener('click', () => {
-            loginTab.classList.add('tab-active');
-            signupTab.classList.remove('tab-active');
-            loginForm.classList.remove('hidden');
-            signupForm.classList.add('hidden');
-        });
-
-        function showToast(message, type = 'error') {
-            toast.textContent = message;
-            toast.style.backgroundColor = type === 'error' ? '#ef4444' : '#10b981';
-            toast.classList.replace('opacity-0', 'opacity-100');
+        window.closeAuth = () => {
+            modalContent.classList.add('translate-y-8', 'opacity-0');
+            modal.classList.remove('opacity-100');
             setTimeout(() => {
-                toast.classList.replace('opacity-100', 'opacity-0');
-            }, 3000);
-        }
+                modal.classList.add('hidden');
+            }, 400);
+        };
 
-        // Handle Signup
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const age = parseInt(document.getElementById('regAge').value);
-            const gender = document.getElementById('regGender').value;
-            const user = document.getElementById('regUsername').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const pass = document.getElementById('regPassword').value;
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const userRegex = /^[a-zA-Z0-9_]{3,20}$/;
-
-            if (isNaN(age) || age < 13 || age > 1000) {
-                return showToast('Age must be between 13 and 1000.');
-            }
-            if (!gender) {
-                return showToast('Please select a gender.');
-            }
-            if (!userRegex.test(user)) {
-                return showToast('Username: 3-20 chars, no special symbols.');
-            }
-            if (!emailRegex.test(email)) {
-                return showToast('Please enter a valid email address.');
-            }
-            if (pass.length < 8) {
-                return showToast('Password must be at least 8 characters.');
-            }
-
-            const users = getStoredUsers();
-            if (users.find(u => u.username.toLowerCase() === user.toLowerCase())) {
-                return showToast('Username already exists.');
-            }
-            if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-                return showToast('Email already in use.');
-            }
-
-            // Create account
-            saveUser({ username: user, email: email, password: pass, age, gender });
-            
-            showToast('Account created! Logging in...', 'success');
-            
-            // Auto-login logic:
-            setTimeout(() => {
-                sessionStorage.setItem('chat_username', user);
-                sessionStorage.setItem('chat_age', age);
-                sessionStorage.setItem('chat_gender', gender);
-                window.location.href = '/index.html';
-            }, 1000);
-        });
-
-        // Handle Login
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const identifier = document.getElementById('loginIdentifier').value.trim();
-            const pass = document.getElementById('loginPassword').value;
-            
-            const users = getStoredUsers();
-            const foundUser = users.find(u => 
-                (u.username.toLowerCase() === identifier.toLowerCase() || u.email.toLowerCase() === identifier.toLowerCase()) && 
-                u.password === pass
-            );
-
-            if (foundUser) {
-                sessionStorage.setItem('chat_username', foundUser.username);
-                sessionStorage.setItem('chat_age', foundUser.age);
-                sessionStorage.setItem('chat_gender', foundUser.gender);
-                window.location.href = '/index.html';
+        window.showTab = (mode) => {
+            if (mode === 'login') {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                loginTab.className = "flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 bg-brand-yellow text-slate-900 shadow-lg shadow-yellow-900/10";
+                signupTab.className = "flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-200 bg-slate-800/30";
+                modalTitle.innerText = "Welcome Back";
+                modalSubtitle.innerText = "Enter your access key to enter the room.";
             } else {
-                showToast('Invalid username or password.');
+                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                signupTab.className = "flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 bg-brand-yellow text-slate-900 shadow-lg shadow-yellow-900/10";
+                loginTab.className = "flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-200 bg-slate-800/30";
+                modalTitle.innerText = "Create Identity";
+                modalSubtitle.innerText = "Tell us a bit about your chaos potential.";
+            }
+        };
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeAuth();
+        });
+
+        // Auth Logic - Signup
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const gender = document.getElementById('signupGender').value;
+            const pizza = document.getElementById('signupPizza').value;
+            const manifesto = document.getElementById('signupManifesto').value;
+
+            try {
+                // Check if user exists
+                const userSnap = await getDoc(doc(db, "users", username));
+                if (userSnap.exists()) {
+                    alert("This identity is already taken.");
+                    return;
+                }
+
+                await setDoc(doc(db, "users", username), {
+                    username, email, password, gender, pizza, manifesto,
+                    isVIP: true,
+                    createdAt: serverTimestamp()
+                });
+
+                localStorage.setItem('chat_username', username);
+                window.location.href = 'chat.html';
+            } catch (error) {
+                console.error(error);
+                alert("Failed to join the chaos.");
             }
         });
 
-        window.onload = () => {
-            if (sessionStorage.getItem('chat_username')) {
-                window.location.href = '/index.html';
+        // Auth Logic - Login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const userSnap = await getDoc(doc(db, "users", username));
+                if (userSnap.exists() && userSnap.data().password === password) {
+                    localStorage.setItem('chat_username', username);
+                    window.location.href = 'chat.html';
+                } else {
+                    alert("Invalid Identity or Access Key.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error connecting to the room.");
             }
-        };
+        });
     </script>
 </body>
 </html>
