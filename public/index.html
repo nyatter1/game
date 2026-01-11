@@ -57,7 +57,7 @@
                 <h2 class="text-xs font-black uppercase tracking-widest text-slate-500">Players Online</h2>
             </div>
             <div id="playerList" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                <!-- Players will be rendered here -->
+                <!-- Real-time players appear here -->
             </div>
         </aside>
 
@@ -65,7 +65,6 @@
         <section class="flex-1 flex flex-col bg-slate-900/10">
             <!-- Messages Feed -->
             <div id="messageFeed" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                <!-- Welcome Message -->
                 <div class="text-center py-10">
                     <p class="text-slate-500 text-sm">Welcome to the beginning of the chat.</p>
                 </div>
@@ -92,7 +91,6 @@
     </main>
 
     <script>
-        // Check Auth on Load
         const username = sessionStorage.getItem('chat_username');
         const age = sessionStorage.getItem('chat_age');
         const gender = sessionStorage.getItem('chat_gender');
@@ -101,8 +99,9 @@
             window.location.href = '/signup.html';
         }
 
-        // Initialize UI with User Info
+        // Initialize UI with User Info from Signup
         document.getElementById('displayUsername').textContent = username;
+        // Displaying Age and Gender as requested
         document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
 
         const messageFeed = document.getElementById('messageFeed');
@@ -110,21 +109,16 @@
         const messageInput = document.getElementById('messageInput');
         const playerList = document.getElementById('playerList');
 
-        // Mock Player List (For Phase 1 UI)
-        const onlineUsers = [
-            { name: username, status: 'online', isMe: true },
-            { name: 'BananaBot', status: 'online' },
-            { name: 'Zorg', status: 'away' }
-        ];
-
-        function renderPlayers() {
-            playerList.innerHTML = onlineUsers.map(user => `
+        // Logic to render online players (Self only for now until Socket.io is connected)
+        function renderPlayers(users = []) {
+            const list = users.length > 0 ? users : [{ name: username, status: 'online', isMe: true }];
+            playerList.innerHTML = list.map(user => `
                 <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group">
                     <div class="relative">
                         <img src="/default.png" class="w-8 h-8 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user.name}&background=334155&color=fff'">
-                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 ${user.status === 'online' ? 'bg-green-500' : 'bg-slate-500'} border-2 border-slate-900 rounded-full"></div>
+                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-900 rounded-full"></div>
                     </div>
-                    <span class="text-sm font-medium ${user.isMe ? 'text-yellow-500' : 'text-slate-300'}">${user.name}</span>
+                    <span class="text-sm font-medium ${user.isMe || user.name === username ? 'text-yellow-500' : 'text-slate-300'}">${user.name}</span>
                 </div>
             `).join('');
         }
@@ -141,7 +135,7 @@
                 <img src="/default.png" class="w-10 h-10 rounded-full shrink-0 border border-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user}&background=1e293b&color=fff'">
                 <div class="flex flex-col flex-1 min-w-0">
                     <div class="flex items-baseline justify-between gap-4">
-                        <span class="text-xs font-black uppercase tracking-widest ${isMe ? 'text-yellow-500' : 'text-slate-400'}">${user}</span>
+                        <span class="text-xs font-black uppercase tracking-widest ${isMe || user === username ? 'text-yellow-500' : 'text-slate-400'}">${user}</span>
                         <span class="text-[10px] text-slate-600 font-medium shrink-0">${timeStr}</span>
                     </div>
                     <div class="text-sm text-slate-200 leading-relaxed break-words mt-0.5">
@@ -160,11 +154,6 @@
             if (msg) {
                 addMessage(username, msg, true);
                 messageInput.value = '';
-                
-                // Mock reply
-                if (msg.toLowerCase().includes('hello')) {
-                    setTimeout(() => addMessage('BananaBot', 'Welcome to Simple Chat! 🍌', false), 1000);
-                }
             }
         });
 
@@ -175,10 +164,7 @@
 
         window.onload = () => {
             renderPlayers();
-            // Initial greeting
-            setTimeout(() => {
-                addMessage('System', `${username} joined the chat.`, false);
-            }, 500);
+            addMessage('System', `${username} joined the chat.`, false);
         };
     </script>
 </body>
