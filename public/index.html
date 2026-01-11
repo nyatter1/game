@@ -50,6 +50,7 @@
             background-color: rgba(15, 23, 42, 0.9);
         }
 
+        /* Fixed Height Grid with Scroll */
         .grid-container {
             scrollbar-width: thin;
             scrollbar-color: #475569 transparent;
@@ -75,8 +76,8 @@
                 <p id="displayUsername" class="text-xs font-bold text-white leading-none"></p>
                 <p id="displayDetails" class="text-[9px] text-slate-500 uppercase mt-1"></p>
             </div>
-            <img src="https://ui-avatars.com/api/?name=User&background=334155&color=fff" id="headerAvatar" alt="Profile" class="w-8 h-8 rounded-full border border-slate-700 object-cover">
-            <button id="logoutBtn" class="ml-1 p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400">
+            <img src="/default.png" alt="Profile" class="w-8 h-8 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=User&background=334155&color=fff'">
+            <button onclick="logout()" class="ml-1 p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
@@ -90,20 +91,20 @@
 
             <div class="p-3 border-t border-slate-800 bg-slate-900 relative">
                 <div id="actionMenu" class="hidden absolute bottom-16 left-4 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-52 overflow-hidden z-50">
-                    <button id="colorMenuBtn" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300 border-b border-slate-700/50">
+                    <button onclick="openColorModal()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300 border-b border-slate-700/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 112.828 2.828L11.828 15H10v-1.828z" clip-rule="evenodd" />
                         </svg>
                         Username Colour
                     </button>
-                    <button id="eightBallMenuBtn" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
+                    <button onclick="toggleActionMenu()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
                         <span class="text-lg">🎱</span>
                         8-Ball
                     </button>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button type="button" id="toggleMenuBtn" class="hover:bg-slate-800 text-slate-400 p-2 rounded-xl shrink-0">
+                    <button type="button" onclick="toggleActionMenu()" class="hover:bg-slate-800 text-slate-400 p-2 rounded-xl shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
@@ -128,34 +129,44 @@
         </aside>
     </main>
 
-    <!-- Modals -->
+    <!-- Compact Customization Modal -->
     <div id="colorModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
             <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
                 <h3 class="text-[10px] font-black uppercase tracking-widest text-white">Customise</h3>
-                <button id="closeColorModal" class="text-slate-500 hover:text-white transition-colors">
+                <button onclick="closeColorModal()" class="text-slate-500 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
+            
             <div class="p-4 space-y-4">
+                <!-- Preview Section (Smaller) -->
                 <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Preview</label>
                     <div class="bg-black/40 rounded-xl p-4 border border-slate-800 flex items-center justify-center min-h-[60px]">
                         <div id="usernamePreview" class="text-2xl font-black uppercase tracking-wider text-center">USER</div>
                     </div>
                 </div>
+
+                <!-- Tabbed Modes -->
                 <div class="space-y-2">
                     <div class="flex text-[9px] font-black uppercase tracking-wider border-b border-slate-800">
-                        <button id="tab-solid" class="flex-1 pb-2 border-b-2 border-yellow-500 text-white">Colour</button>
-                        <button id="tab-gradient" class="flex-1 pb-2 border-b-2 border-transparent text-slate-500">Gradient</button>
+                        <button onclick="setMode('solid')" id="tab-solid" class="flex-1 pb-2 border-b-2 border-yellow-500 text-white">Colour</button>
+                        <button onclick="setMode('gradient')" id="tab-gradient" class="flex-1 pb-2 border-b-2 border-transparent text-slate-500">Gradient</button>
                     </div>
-                    <div id="colorContainer" class="grid-container grid grid-cols-7 gap-1.5 h-32 overflow-y-auto pr-1"></div>
+
+                    <!-- Scrollable Color Grid -->
+                    <div id="colorContainer" class="grid-container grid grid-cols-7 gap-1.5 h-32 overflow-y-auto pr-1">
+                        <!-- Populated via JS -->
+                    </div>
                 </div>
+
+                <!-- Font Selection -->
                 <div class="space-y-1.5">
                     <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest block">Font Style</label>
-                    <select id="fontSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
+                    <select id="fontSelect" onchange="updateStyle({font: this.value})" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
                         <option value="'Inter', sans-serif">Inter (Standard)</option>
                         <option value="'Roboto Mono', monospace">Terminal (Mono)</option>
                         <option value="'Playfair Display', serif">Display (Serif)</option>
@@ -170,285 +181,269 @@
                         <option value="'Lobster', cursive">Lobster</option>
                     </select>
                 </div>
-                <button id="applyStyleBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
+
+                <button onclick="saveStyle()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
                     Apply Changes
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="eightBallModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
-            <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="text-[10px] font-black uppercase tracking-widest text-white">Ask 8ball</h3>
-                <button id="closeEightBallModal" class="text-slate-500 hover:text-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div class="flex justify-center text-4xl py-2">🎱</div>
-                <input type="text" id="eightBallInput" autocomplete="off" placeholder="ASK SOMETHING...." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 text-center uppercase font-bold tracking-wider">
-                <button id="submitEightBallBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
-                    Submit
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
-            authDomain: "chatlaxy-pro.firebaseapp.com",
-            projectId: "chatlaxy-pro",
-            storageBucket: "chatlaxy-pro.firebasestorage.app",
-            messagingSenderId: "807800533954",
-            appId: "1:807800533954:web:4165776ac52b93e9cb9c5b",
-            measurementId: "G-XJ174Y690H"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        // Session Retrieval with Fallback
-        const username = sessionStorage.getItem('chat_username');
-        const age = sessionStorage.getItem('chat_age') || '?';
-        const gender = sessionStorage.getItem('chat_gender') || '?';
+    <script>
+        const username = sessionStorage.getItem('chat_username') || 'Guest';
+        const age = sessionStorage.getItem('chat_age');
+        const gender = sessionStorage.getItem('chat_gender');
         const userRank = sessionStorage.getItem('chat_rank') || 'Member';
 
-        // Redirect if no session found
-        if (!username) {
-            window.location.href = 'signup.html';
-        }
-
-        // State Variables
         let currentStyle = JSON.parse(localStorage.getItem(`chat_style_${username}`)) || {
             color: '#ffffff',
             font: "'Inter', sans-serif",
             type: 'solid'
         };
+
         let currentMode = currentStyle.type === 'gradient' ? 'gradient' : 'solid';
 
-        // DOM Element Caching
         const messageFeed = document.getElementById('messageFeed');
         const chatForm = document.getElementById('chatForm');
         const messageInput = document.getElementById('messageInput');
         const playerList = document.getElementById('playerList');
         const actionMenu = document.getElementById('actionMenu');
         const colorModal = document.getElementById('colorModal');
-        const eightBallModal = document.getElementById('eightBallModal');
         const usernamePreview = document.getElementById('usernamePreview');
         const colorContainer = document.getElementById('colorContainer');
 
-        const solidColors = ['#ffffff', '#f8fafc', '#94a3b8', '#475569', '#1e293b', '#f87171', '#ef4444', '#dc2626', '#b91c1c', '#991b1b', '#fb923c', '#f97316', '#ea580c', '#c2410c', '#9a3412', '#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e', '#facc15', '#eab308', '#ca8a04', '#a16207', '#854d0e', '#a3e635', '#84cc16', '#65a30d', '#4d7c0f', '#3f6212', '#4ade80', '#22c55e', '#16a34a', '#15803d', '#166534', '#34d399', '#10b981', '#059669', '#047857', '#065f46', '#2dd4bf', '#14b8a6', '#0d9488', '#0f766e', '#115e59', '#22d3ee', '#06b6d4', '#0891b2', '#0e7490', '#155e75', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#075985', '#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#3730a3', '#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6', '#c084fc', '#a855f7', '#9333ea', '#7e22ce', '#6b21a8', '#e879f9', '#d946ef', '#c026d3', '#a21caf', '#86198f', '#f472b6', '#ec4899', '#db2777', '#be185d', '#9d174d', '#fb7185', '#f43f5e', '#e11d48', '#be123c', '#9f1239'];
-        const gradients = ['linear-gradient(to right, #f43f5e, #fb923c)', 'linear-gradient(to right, #fbbf24, #f472b6)', 'linear-gradient(to right, #6366f1, #a855f7)', 'linear-gradient(to right, #22c55e, #10b981)', 'linear-gradient(to right, #0ea5e9, #6366f1)', 'linear-gradient(to right, #f97316, #dc2626)', 'linear-gradient(to right, #d946ef, #fb7185)', 'linear-gradient(to right, #84cc16, #facc15)', 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(to right, #fa709a 0%, #fee140 100%)', 'linear-gradient(to right, #6a11cb 0%, #2575fc 100%)', 'linear-gradient(to right, #00cdac 0%, #8ddad5 100%)', 'linear-gradient(to right, #48c6ef 0%, #6f86d6 100%)', 'linear-gradient(to right, #5f72bd 0%, #9b23ea 100%)', 'linear-gradient(to right, #00c6ff 0%, #0072ff 100%)', 'linear-gradient(to right, #f093fb 0%, #f5576c 100%)', 'linear-gradient(to right, #c31432, #240b36)', 'linear-gradient(to right, #f12711, #f5af19)', 'linear-gradient(to right, #00b09b, #96c93d)'];
-        const eightBallResponses = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."];
+        const solidColors = [
+            '#ffffff', '#f8fafc', '#94a3b8', '#475569', '#1e293b', 
+            '#f87171', '#ef4444', '#dc2626', '#b91c1c', '#991b1b',
+            '#fb923c', '#f97316', '#ea580c', '#c2410c', '#9a3412',
+            '#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e',
+            '#facc15', '#eab308', '#ca8a04', '#a16207', '#854d0e',
+            '#a3e635', '#84cc16', '#65a30d', '#4d7c0f', '#3f6212',
+            '#4ade80', '#22c55e', '#16a34a', '#15803d', '#166534',
+            '#34d399', '#10b981', '#059669', '#047857', '#065f46',
+            '#2dd4bf', '#14b8a6', '#0d9488', '#0f766e', '#115e59',
+            '#22d3ee', '#06b6d4', '#0891b2', '#0e7490', '#155e75',
+            '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#075985',
+            '#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af',
+            '#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#3730a3',
+            '#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6',
+            '#c084fc', '#a855f7', '#9333ea', '#7e22ce', '#6b21a8',
+            '#e879f9', '#d946ef', '#c026d3', '#a21caf', '#86198f',
+            '#f472b6', '#ec4899', '#db2777', '#be185d', '#9d174d',
+            '#fb7185', '#f43f5e', '#e11d48', '#be123c', '#9f1239'
+        ];
 
-        // UI Helpers
-        const applyStyleToElement = (el, style) => {
-            if (!el || !style) return;
+        const gradients = [
+            'linear-gradient(to right, #f43f5e, #fb923c)',
+            'linear-gradient(to right, #fbbf24, #f472b6)',
+            'linear-gradient(to right, #6366f1, #a855f7)',
+            'linear-gradient(to right, #22c55e, #10b981)',
+            'linear-gradient(to right, #0ea5e9, #6366f1)',
+            'linear-gradient(to right, #f97316, #dc2626)',
+            'linear-gradient(to right, #d946ef, #fb7185)',
+            'linear-gradient(to right, #84cc16, #facc15)',
+            'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(to right, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(to right, #6a11cb 0%, #2575fc 100%)',
+            'linear-gradient(to right, #00cdac 0%, #8ddad5 100%)',
+            'linear-gradient(to right, #48c6ef 0%, #6f86d6 100%)',
+            'linear-gradient(to right, #5f72bd 0%, #9b23ea 100%)',
+            'linear-gradient(to right, #00c6ff 0%, #0072ff 100%)',
+            'linear-gradient(to right, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(to right, #c31432, #240b36)',
+            'linear-gradient(to right, #f12711, #f5af19)',
+            'linear-gradient(to right, #00b09b, #96c93d)'
+        ];
+
+        function toggleActionMenu() { actionMenu.classList.toggle('hidden'); }
+
+        function openColorModal() {
+            actionMenu.classList.add('hidden');
+            colorModal.classList.remove('hidden');
+            usernamePreview.textContent = username;
+            document.getElementById('fontSelect').value = currentStyle.font;
+            setMode(currentMode);
+            applyStyleToElement(usernamePreview, currentStyle);
+        }
+
+        function closeColorModal() { colorModal.classList.add('hidden'); }
+
+        function setMode(mode) {
+            currentMode = mode;
+            ['solid', 'gradient'].forEach(m => {
+                const tab = document.getElementById(`tab-${m}`);
+                if (tab) {
+                    if (m === mode) {
+                        tab.className = "flex-1 pb-2 border-b-2 border-yellow-500 text-white";
+                    } else {
+                        tab.className = "flex-1 pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-400";
+                    }
+                }
+            });
+
+            colorContainer.innerHTML = '';
+            const items = (mode === 'gradient') ? gradients : solidColors;
+            
+            items.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full aspect-square rounded-md border border-slate-700 hover:border-white transition-all';
+                if (mode === 'gradient') {
+                    btn.style.background = c;
+                } else {
+                    btn.style.backgroundColor = c;
+                }
+                
+                btn.onclick = () => {
+                    if (mode === 'gradient') {
+                        updateStyle({ color: c, type: 'gradient' });
+                    } else {
+                        updateStyle({ color: c, type: 'solid' });
+                    }
+                };
+                colorContainer.appendChild(btn);
+            });
+        }
+
+        function updateStyle(changes) {
+            Object.assign(currentStyle, changes);
+            applyStyleToElement(usernamePreview, currentStyle);
+        }
+
+        function applyStyleToElement(el, style) {
             el.style.fontFamily = style.font;
+            el.style.textShadow = 'none';
             el.style.background = 'none';
             el.style.webkitBackgroundClip = 'initial';
             el.style.webkitTextFillColor = 'initial';
-            el.style.color = style.color;
+
             if (style.type === 'gradient') {
                 el.style.background = style.color;
                 el.style.webkitBackgroundClip = 'text';
                 el.style.webkitTextFillColor = 'transparent';
                 el.style.color = 'transparent';
+            } else {
+                el.style.color = style.color;
             }
-        };
-
-        const renderColorContainer = (mode) => {
-            colorContainer.innerHTML = '';
-            const items = mode === 'gradient' ? gradients : solidColors;
-            items.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = 'w-full aspect-square rounded-md border border-slate-700 hover:border-white transition-all';
-                btn.style.background = c;
-                btn.onclick = () => {
-                    currentStyle.color = c;
-                    currentStyle.type = mode;
-                    applyStyleToElement(usernamePreview, currentStyle);
-                };
-                colorContainer.appendChild(btn);
-            });
-        };
-
-        // Event Listeners
-        document.getElementById('toggleMenuBtn').onclick = () => actionMenu.classList.toggle('hidden');
-        document.getElementById('logoutBtn').onclick = () => { signOut(auth); sessionStorage.clear(); window.location.href = 'signup.html'; };
-        
-        document.getElementById('colorMenuBtn').onclick = () => {
-            actionMenu.classList.add('hidden');
-            colorModal.classList.remove('hidden');
-            usernamePreview.textContent = username;
-            applyStyleToElement(usernamePreview, currentStyle);
-            renderColorContainer(currentMode);
-        };
-
-        document.getElementById('tab-solid').onclick = () => {
-            currentMode = 'solid';
-            document.getElementById('tab-solid').classList.add('border-yellow-500', 'text-white');
-            document.getElementById('tab-solid').classList.remove('border-transparent', 'text-slate-500');
-            document.getElementById('tab-gradient').classList.remove('border-yellow-500', 'text-white');
-            document.getElementById('tab-gradient').classList.add('border-transparent', 'text-slate-500');
-            renderColorContainer('solid');
-        };
-
-        document.getElementById('tab-gradient').onclick = () => {
-            currentMode = 'gradient';
-            document.getElementById('tab-gradient').classList.add('border-yellow-500', 'text-white');
-            document.getElementById('tab-gradient').classList.remove('border-transparent', 'text-slate-500');
-            document.getElementById('tab-solid').classList.remove('border-yellow-500', 'text-white');
-            document.getElementById('tab-solid').classList.add('border-transparent', 'text-slate-500');
-            renderColorContainer('gradient');
-        };
-
-        document.getElementById('fontSelect').onchange = (e) => {
-            currentStyle.font = e.target.value;
-            applyStyleToElement(usernamePreview, currentStyle);
-        };
-
-        document.getElementById('applyStyleBtn').onclick = async () => {
-            localStorage.setItem(`chat_style_${username}`, JSON.stringify(currentStyle));
-            if (auth.currentUser) {
-                const userDoc = doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid);
-                await updateDoc(userDoc, { style: currentStyle });
-            }
-            colorModal.classList.add('hidden');
-        };
-
-        document.getElementById('closeColorModal').onclick = () => colorModal.classList.add('hidden');
-        
-        document.getElementById('eightBallMenuBtn').onclick = () => {
-            actionMenu.classList.add('hidden');
-            eightBallModal.classList.remove('hidden');
-        };
-        
-        document.getElementById('closeEightBallModal').onclick = () => eightBallModal.classList.add('hidden');
-
-        document.getElementById('submitEightBallBtn').onclick = async () => {
-            const question = document.getElementById('eightBallInput').value.trim();
-            if (!question) return;
-            const answer = eightBallResponses[Math.floor(Math.random() * eightBallResponses.length)];
-            const text = `${username} asked: ${question} | 8ball: ${answer}`;
-            await sendMessage(text);
-            eightBallModal.classList.add('hidden');
-        };
-
-        async function sendMessage(text) {
-            if (!auth.currentUser) return;
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                    user: username,
-                    text: text,
-                    rank: userRank,
-                    style: currentStyle,
-                    timestamp: serverTimestamp()
-                });
-            } catch (e) { console.error("Send failed", e); }
         }
 
-        chatForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const val = messageInput.value.trim();
-            if (val) {
-                messageInput.value = '';
-                await sendMessage(val);
-            }
-        };
+        function saveStyle() {
+            localStorage.setItem(`chat_style_${username}`, JSON.stringify(currentStyle));
+            renderPlayers();
+            // Refresh feed to apply new style to existing messages by user
+            loadMessages();
+            closeColorModal();
+        }
 
-        // Initialize Firebase Data Sync
-        const initChat = async () => {
-            // Sign in
-            await signInAnonymously(auth);
+        function renderPlayers() {
+            const list = [{ name: username, rank: userRank }];
+            playerList.innerHTML = list.map(user => {
+                const styleId = `user-style-${user.name}`;
+                return `
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group">
+                    <div class="relative">
+                        <img src="/default.png" class="w-7 h-7 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user.name}&background=334155&color=fff'">
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <span id="${styleId}" class="text-xs font-bold truncate">${user.name}</span>
+                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">${user.rank}</span>
+                    </div>
+                </div>
+            `}).join('');
             
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) return;
-
-                // Set UI Details
-                document.getElementById('displayUsername').textContent = username;
-                document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
-                document.getElementById('headerAvatar').src = `https://ui-avatars.com/api/?name=${username}&background=334155&color=fff`;
-
-                // Update self in Users collection
-                const userDoc = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                await setDoc(userDoc, {
-                    name: username,
-                    rank: userRank,
-                    style: currentStyle,
-                    lastActive: serverTimestamp()
-                }, { merge: true });
-
-                // Sync Messages
-                const qMsg = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
-                onSnapshot(qMsg, (snapshot) => {
-                    const msgs = [];
-                    snapshot.forEach(d => msgs.push({ id: d.id, ...d.data() }));
-                    msgs.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
-                    
-                    messageFeed.innerHTML = '';
-                    msgs.forEach(msg => {
-                        const timeStr = msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "...";
-                        const div = document.createElement('div');
-                        div.className = 'flex items-start gap-3 py-1.5 px-2 rounded-lg message-row w-full';
-                        div.innerHTML = `
-                            <img src="https://ui-avatars.com/api/?name=${msg.user}&background=1e293b&color=fff" class="w-8 h-8 rounded-full border border-slate-800 object-cover">
-                            <div class="flex flex-col flex-1 min-w-0">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <span id="name-${msg.id}" class="text-[11px] font-black uppercase tracking-wider">${msg.user}</span>
-                                        <span class="rank-badge rank-${msg.rank.toLowerCase().replace(/\s+/g, '-')}">${msg.rank}</span>
-                                    </div>
-                                    <span class="text-[9px] text-slate-600">${timeStr}</span>
-                                </div>
-                                <div class="text-[13px] text-slate-200 mt-0.5">${msg.text}</div>
-                            </div>
-                        `;
-                        messageFeed.appendChild(div);
-                        applyStyleToElement(document.getElementById(`name-${msg.id}`), msg.style);
-                    });
-                    messageFeed.scrollTop = messageFeed.scrollHeight;
-                });
-
-                // Sync Online Players
-                const qUsers = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-                onSnapshot(qUsers, (snapshot) => {
-                    playerList.innerHTML = '';
-                    snapshot.forEach(d => {
-                        const userData = d.data();
-                        const div = document.createElement('div');
-                        div.className = 'flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group';
-                        div.innerHTML = `
-                            <img src="https://ui-avatars.com/api/?name=${userData.name}&background=334155&color=fff" class="w-7 h-7 rounded-full border border-slate-700 object-cover">
-                            <div class="flex flex-col min-w-0">
-                                <span id="list-name-${d.id}" class="text-xs font-bold truncate">${userData.name}</span>
-                                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">${userData.rank}</span>
-                            </div>
-                        `;
-                        playerList.appendChild(div);
-                        applyStyleToElement(document.getElementById(`list-name-${d.id}`), userData.style);
-                    });
-                });
+            list.forEach(user => {
+                const el = document.getElementById(`user-style-${user.name}`);
+                if (el && user.name === username) applyStyleToElement(el, currentStyle);
             });
-        };
+        }
 
-        // Start initialization
-        initChat().catch(console.error);
+        function addMessage(user, text, rank = 'Member', save = true) {
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const timestamp = Date.now();
+            const messageId = `msg-user-${timestamp}`;
+            
+            const messageRow = document.createElement('div');
+            messageRow.className = 'flex items-start gap-3 py-1.5 px-2 rounded-lg message-row transition-colors w-full';
+            
+            messageRow.innerHTML = `
+                <img src="/default.png" class="w-8 h-8 rounded-full border border-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user}&background=1e293b&color=fff'">
+                <div class="flex flex-col flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span id="${messageId}" class="text-[11px] font-black uppercase tracking-wider">${user}</span>
+                            <span class="rank-badge ${getRankClass(rank)}">${rank}</span>
+                        </div>
+                        <span class="text-[9px] text-slate-600">${timeStr}</span>
+                    </div>
+                    <div class="text-[13px] text-slate-200 mt-0.5">${text}</div>
+                </div>
+            `;
 
+            messageFeed.appendChild(messageRow);
+            
+            // Apply current style if it's the current user
+            if (user === username) {
+                applyStyleToElement(document.getElementById(messageId), currentStyle);
+            }
+
+            if (save) {
+                const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+                history.push({ user, text, rank, timeStr, timestamp, style: user === username ? currentStyle : null });
+                localStorage.setItem('chat_history', JSON.stringify(history.slice(-100))); // Keep last 100
+            }
+
+            messageFeed.scrollTop = messageFeed.scrollHeight;
+        }
+
+        function loadMessages() {
+            messageFeed.innerHTML = '';
+            const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+            history.forEach(msg => {
+                const messageId = `msg-hist-${msg.timestamp}`;
+                const messageRow = document.createElement('div');
+                messageRow.className = 'flex items-start gap-3 py-1.5 px-2 rounded-lg message-row transition-colors w-full';
+                messageRow.innerHTML = `
+                    <img src="/default.png" class="w-8 h-8 rounded-full border border-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${msg.user}&background=1e293b&color=fff'">
+                    <div class="flex flex-col flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span id="${messageId}" class="text-[11px] font-black uppercase tracking-wider">${msg.user}</span>
+                                <span class="rank-badge ${getRankClass(msg.rank)}">${msg.rank}</span>
+                            </div>
+                            <span class="text-[9px] text-slate-600">${msg.timeStr}</span>
+                        </div>
+                        <div class="text-[13px] text-slate-200 mt-0.5">${msg.text}</div>
+                    </div>
+                `;
+                messageFeed.appendChild(messageRow);
+                
+                // If it's the current user, use the latest style from localStorage
+                if (msg.user === username) {
+                    applyStyleToElement(document.getElementById(messageId), currentStyle);
+                } else if (msg.style) {
+                    applyStyleToElement(document.getElementById(messageId), msg.style);
+                }
+            });
+            messageFeed.scrollTop = messageFeed.scrollHeight;
+        }
+
+        function getRankClass(rank) { return `rank-${rank.toLowerCase().replace(/\s+/g, '-')}`; }
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (messageInput.value.trim()) {
+                addMessage(username, messageInput.value.trim(), userRank);
+                messageInput.value = '';
+            }
+        });
+
+        if (!sessionStorage.getItem('chat_username')) {
+            window.location.href = '/signup.html';
+        } else {
+            document.getElementById('displayUsername').textContent = username;
+            document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
+            renderPlayers();
+            loadMessages();
+        }
     </script>
 </body>
 </html>
