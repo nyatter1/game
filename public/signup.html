@@ -169,7 +169,6 @@
             const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPassword').value;
 
-            // Regex for real validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             const userRegex = /^[a-zA-Z0-9_]{3,20}$/;
 
@@ -200,8 +199,15 @@
             // Create account
             saveUser({ username: user, email: email, password: pass, age, gender });
             
-            showToast('Account created! Please log in.', 'success');
-            setTimeout(() => loginTab.click(), 1500);
+            showToast('Account created! Logging in...', 'success');
+            
+            // Auto-login logic:
+            setTimeout(() => {
+                sessionStorage.setItem('chat_username', user);
+                sessionStorage.setItem('chat_age', age);
+                sessionStorage.setItem('chat_gender', gender);
+                window.location.href = '/index.html';
+            }, 1000);
         });
 
         // Handle Login
@@ -218,7 +224,8 @@
 
             if (foundUser) {
                 sessionStorage.setItem('chat_username', foundUser.username);
-                // For Phase 1, we still redirect to index.html immediately upon success
+                sessionStorage.setItem('chat_age', foundUser.age);
+                sessionStorage.setItem('chat_gender', foundUser.gender);
                 window.location.href = '/index.html';
             } else {
                 showToast('Invalid username or password.');
