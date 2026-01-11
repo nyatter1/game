@@ -71,20 +71,29 @@
 
             <!-- Input Bar -->
             <div class="p-4 border-t border-slate-800 bg-slate-900/50">
-                <form id="chatForm" class="max-w-4xl mx-auto flex items-center gap-3">
-                    <input 
-                        type="text" 
-                        id="messageInput" 
-                        autocomplete="off"
-                        placeholder="Type a message..." 
-                        class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 transition-all"
-                    >
-                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-400 text-slate-900 p-3 rounded-xl transition-all shadow-lg shadow-yellow-900/20">
+                <div class="max-w-4xl mx-auto flex items-center gap-3">
+                    <!-- Action Plus Button -->
+                    <button type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-400 p-3 rounded-xl transition-all border border-slate-700">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                </form>
+
+                    <form id="chatForm" class="flex-1 flex items-center gap-3">
+                        <input 
+                            type="text" 
+                            id="messageInput" 
+                            autocomplete="off"
+                            placeholder="Type a message..." 
+                            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 transition-all"
+                        >
+                        <button type="submit" class="bg-yellow-500 hover:bg-yellow-400 text-slate-900 p-3 rounded-xl transition-all shadow-lg shadow-yellow-900/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
             </div>
         </section>
 
@@ -187,3 +196,4 @@
         };
     </script>
 </body>
+</html>
