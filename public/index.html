@@ -51,17 +51,7 @@
     </header>
 
     <main class="flex flex-1 overflow-hidden">
-        <!-- Sidebar: Players Online -->
-        <aside class="w-64 border-r border-slate-800 bg-slate-900/30 hidden md:flex flex-col">
-            <div class="p-4 border-b border-slate-800">
-                <h2 class="text-xs font-black uppercase tracking-widest text-slate-500">Players Online</h2>
-            </div>
-            <div id="playerList" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                <!-- Real-time players appear here -->
-            </div>
-        </aside>
-
-        <!-- Chat Area -->
+        <!-- Chat Area (Left Side) -->
         <section class="flex-1 flex flex-col bg-slate-900/10">
             <!-- Messages Feed -->
             <div id="messageFeed" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
@@ -88,6 +78,16 @@
                 </form>
             </div>
         </section>
+
+        <!-- Sidebar: Players Online (Now on the Right and Smaller) -->
+        <aside class="w-48 border-l border-slate-800 bg-slate-900/30 hidden md:flex flex-col">
+            <div class="p-4 border-b border-slate-800">
+                <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-500">Players Online</h2>
+            </div>
+            <div id="playerList" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                <!-- Real-time players appear here -->
+            </div>
+        </aside>
     </main>
 
     <script>
@@ -113,12 +113,12 @@
         function renderPlayers(users = []) {
             const list = users.length > 0 ? users : [{ name: username, status: 'online', isMe: true }];
             playerList.innerHTML = list.map(user => `
-                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group">
+                <div class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group">
                     <div class="relative">
-                        <img src="/default.png" class="w-8 h-8 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user.name}&background=334155&color=fff'">
-                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-900 rounded-full"></div>
+                        <img src="/default.png" class="w-6 h-6 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user.name}&background=334155&color=fff'">
+                        <div class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border border-slate-900 rounded-full"></div>
                     </div>
-                    <span class="text-sm font-medium ${user.isMe || user.name === username ? 'text-yellow-500' : 'text-slate-300'}">${user.name}</span>
+                    <span class="text-xs font-medium text-white truncate">${user.name}</span>
                 </div>
             `).join('');
         }
@@ -130,12 +130,12 @@
             const messageRow = document.createElement('div');
             messageRow.className = 'flex items-start gap-4 py-2 px-2 rounded-lg message-row transition-colors w-full';
             
-            // Layout: [PFP] MESSAGE [TIME]
+            // Layout: [PFP] MESSAGE [TIME] with White Usernames
             messageRow.innerHTML = `
                 <img src="/default.png" class="w-10 h-10 rounded-full shrink-0 border border-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user}&background=1e293b&color=fff'">
                 <div class="flex flex-col flex-1 min-w-0">
                     <div class="flex items-baseline justify-between gap-4">
-                        <span class="text-xs font-black uppercase tracking-widest ${isMe || user === username ? 'text-yellow-500' : 'text-slate-400'}">${user}</span>
+                        <span class="text-xs font-black uppercase tracking-widest text-white">${user}</span>
                         <span class="text-[10px] text-slate-600 font-medium shrink-0">${timeStr}</span>
                     </div>
                     <div class="text-sm text-slate-200 leading-relaxed break-words mt-0.5">
