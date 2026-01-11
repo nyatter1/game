@@ -26,6 +26,17 @@
         .message-row:hover {
             background-color: rgba(255, 255, 255, 0.03);
         }
+        .rank-badge {
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-left: 6px;
+        }
+        .rank-member { background: #64748b; color: white; }
+        .rank-vip { background: #a855f7; color: white; }
+        .rank-super-vip { background: #f59e0b; color: white; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-200">
@@ -55,9 +66,7 @@
         <section class="flex-1 flex flex-col bg-slate-900/10">
             <!-- Messages Feed -->
             <div id="messageFeed" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                <div class="text-center py-10">
-                    <p class="text-slate-500 text-sm">Welcome to the beginning of the chat.</p>
-                </div>
+                <!-- Empty state as requested -->
             </div>
 
             <!-- Input Bar -->
@@ -94,6 +103,8 @@
         const username = sessionStorage.getItem('chat_username');
         const age = sessionStorage.getItem('chat_age');
         const gender = sessionStorage.getItem('chat_gender');
+        // Default rank to Member
+        const userRank = sessionStorage.getItem('chat_rank') || 'Member';
 
         if (!username) {
             window.location.href = '/signup.html';
@@ -101,7 +112,6 @@
 
         // Initialize UI with User Info from Signup
         document.getElementById('displayUsername').textContent = username;
-        // Displaying Age and Gender as requested
         document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
 
         const messageFeed = document.getElementById('messageFeed');
@@ -109,33 +119,42 @@
         const messageInput = document.getElementById('messageInput');
         const playerList = document.getElementById('playerList');
 
-        // Logic to render online players (Self only for now until Socket.io is connected)
+        function getRankClass(rank) {
+            const r = rank.toLowerCase().replace(/\s+/g, '-');
+            return `rank-${r}`;
+        }
+
         function renderPlayers(users = []) {
-            const list = users.length > 0 ? users : [{ name: username, status: 'online', isMe: true }];
+            const list = users.length > 0 ? users : [{ name: username, rank: userRank, isMe: true }];
             playerList.innerHTML = list.map(user => `
                 <div class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group">
                     <div class="relative">
                         <img src="/default.png" class="w-6 h-6 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user.name}&background=334155&color=fff'">
                         <div class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border border-slate-900 rounded-full"></div>
                     </div>
-                    <span class="text-xs font-medium text-white truncate">${user.name}</span>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-xs font-medium text-white truncate">${user.name}</span>
+                        <span class="text-[8px] font-bold text-slate-500 uppercase">${user.rank || 'Member'}</span>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function addMessage(user, text, isMe) {
+        function addMessage(user, text, isMe, rank = 'Member') {
             const now = new Date();
             const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
             const messageRow = document.createElement('div');
             messageRow.className = 'flex items-start gap-4 py-2 px-2 rounded-lg message-row transition-colors w-full';
             
-            // Layout: [PFP] MESSAGE [TIME] with White Usernames
             messageRow.innerHTML = `
                 <img src="/default.png" class="w-10 h-10 rounded-full shrink-0 border border-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${user}&background=1e293b&color=fff'">
                 <div class="flex flex-col flex-1 min-w-0">
-                    <div class="flex items-baseline justify-between gap-4">
-                        <span class="text-xs font-black uppercase tracking-widest text-white">${user}</span>
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center">
+                            <span class="text-xs font-black uppercase tracking-widest text-white">${user}</span>
+                            <span class="rank-badge ${getRankClass(rank)}">${rank}</span>
+                        </div>
                         <span class="text-[10px] text-slate-600 font-medium shrink-0">${timeStr}</span>
                     </div>
                     <div class="text-sm text-slate-200 leading-relaxed break-words mt-0.5">
@@ -152,7 +171,7 @@
             e.preventDefault();
             const msg = messageInput.value.trim();
             if (msg) {
-                addMessage(username, msg, true);
+                addMessage(username, msg, true, userRank);
                 messageInput.value = '';
             }
         });
@@ -164,8 +183,7 @@
 
         window.onload = () => {
             renderPlayers();
-            addMessage('System', `${username} joined the chat.`, false);
+            // Removed system messages and join notifications per request
         };
     </script>
 </body>
-</html>
