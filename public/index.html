@@ -26,7 +26,6 @@
         .grid-container::-webkit-scrollbar { width: 4px; }
         .grid-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         
-        /* 8-Ball Shake Animation */
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -60,7 +59,6 @@
         <section class="flex-1 flex flex-col bg-slate-900/10 max-w-3xl mx-auto w-full border-x border-slate-800/30">
             <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar"></div>
             <div class="p-3 border-t border-slate-800 bg-slate-900 relative">
-                <!-- Action Menu -->
                 <div id="actionMenu" class="hidden absolute bottom-16 left-4 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-52 overflow-hidden z-50">
                     <button onclick="openColorModal()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300 border-b border-slate-700/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
@@ -170,14 +168,13 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Firebase Setup
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Global environment variables provided by platform
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "fallback" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'chat-messenger-v1';
 
-        // User Setup
         const username = sessionStorage.getItem('chat_username') || 'Guest_' + Math.floor(Math.random() * 999);
         const age = sessionStorage.getItem('chat_age') || '??';
         const gender = sessionStorage.getItem('chat_gender') || 'U';
@@ -241,12 +238,15 @@
             "Outlook not so good", "Very doubtful"
         ];
 
-        // Auth
         const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth failed:", err);
             }
         };
 
@@ -260,15 +260,14 @@
         initAuth();
 
         function setupRealtime() {
-            // Messages
+            if (!user) return;
             const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), orderBy('createdAt', 'desc'), limit(50));
             onSnapshot(q, (snap) => {
                 const list = [];
                 snap.forEach(d => list.push({ id: d.id, ...d.data() }));
                 renderMessages(list.reverse());
-            });
+            }, (err) => console.error("Snapshot error:", err));
 
-            // Presence
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'presence'), (snap) => {
                 const online = [];
                 const cutoff = Date.now() - 60000;
@@ -277,17 +276,19 @@
                     if (data.lastSeen > cutoff) online.push(data);
                 });
                 renderOnline(online);
-            });
+            }, (err) => console.error("Presence error:", err));
         }
 
         async function updatePresence() {
             if (!user) return;
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid), {
-                name: username,
-                rank: userRank,
-                style: currentStyle,
-                lastSeen: Date.now()
-            }, { merge: true });
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid), {
+                    name: username,
+                    rank: userRank,
+                    style: currentStyle,
+                    lastSeen: Date.now()
+                }, { merge: true });
+            } catch (e) {}
             setTimeout(updatePresence, 30000);
         }
 
@@ -358,7 +359,6 @@
             }
         }
 
-        // Global functions
         window.toggleActionMenu = () => document.getElementById('actionMenu').classList.toggle('hidden');
         window.openColorModal = () => {
             document.getElementById('actionMenu').classList.add('hidden');
@@ -398,12 +398,13 @@
         window.saveStyle = async () => {
             localStorage.setItem(`chat_style_${username}`, JSON.stringify(currentStyle));
             if (user) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid), { style: currentStyle }, { merge: true });
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid), { style: currentStyle }, { merge: true });
+                } catch (e) {}
             }
             closeColorModal();
         };
 
-        // 8-Ball
         window.openEightBall = () => {
             document.getElementById('actionMenu').classList.add('hidden');
             document.getElementById('eightBallModal').classList.remove('hidden');
@@ -421,31 +422,32 @@
             }, 600);
         };
 
-        // Chat
         document.getElementById('chatForm').onsubmit = async (e) => {
             e.preventDefault();
             const input = document.getElementById('messageInput');
             if (input.value.trim() && user) {
                 const text = input.value;
                 input.value = '';
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                    user: username,
-                    text: text,
-                    rank: userRank,
-                    style: currentStyle,
-                    createdAt: serverTimestamp()
-                });
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                        user: username,
+                        text: text,
+                        rank: userRank,
+                        style: currentStyle,
+                        createdAt: serverTimestamp()
+                    });
+                } catch (e) {
+                    console.error("Post failed:", e);
+                }
             }
         };
 
-        // User profile display
         document.getElementById('displayUsername').textContent = username;
         document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
         document.getElementById('logoutBtn').onclick = () => {
             sessionStorage.clear();
             window.location.reload();
         };
-
     </script>
 </body>
 </html>
