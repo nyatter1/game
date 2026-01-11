@@ -75,8 +75,8 @@
                 <p id="displayUsername" class="text-xs font-bold text-white leading-none"></p>
                 <p id="displayDetails" class="text-[9px] text-slate-500 uppercase mt-1"></p>
             </div>
-            <img src="/default.png" alt="Profile" class="w-8 h-8 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=User&background=334155&color=fff'">
-            <button onclick="logout()" class="ml-1 p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400">
+            <img src="https://ui-avatars.com/api/?name=User&background=334155&color=fff" id="headerAvatar" alt="Profile" class="w-8 h-8 rounded-full border border-slate-700 object-cover">
+            <button id="logoutBtn" class="ml-1 p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
@@ -90,20 +90,20 @@
 
             <div class="p-3 border-t border-slate-800 bg-slate-900 relative">
                 <div id="actionMenu" class="hidden absolute bottom-16 left-4 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-52 overflow-hidden z-50">
-                    <button onclick="openColorModal()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300 border-b border-slate-700/50">
+                    <button id="colorMenuBtn" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300 border-b border-slate-700/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 112.828 2.828L11.828 15H10v-1.828z" clip-rule="evenodd" />
                         </svg>
                         Username Colour
                     </button>
-                    <button onclick="openEightBallModal()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
+                    <button id="eightBallMenuBtn" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 text-sm text-slate-300">
                         <span class="text-lg">🎱</span>
                         8-Ball
                     </button>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button type="button" onclick="toggleActionMenu()" class="hover:bg-slate-800 text-slate-400 p-2 rounded-xl shrink-0">
+                    <button type="button" id="toggleMenuBtn" class="hover:bg-slate-800 text-slate-400 p-2 rounded-xl shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
@@ -128,11 +128,12 @@
         </aside>
     </main>
 
+    <!-- Modals -->
     <div id="colorModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
             <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
                 <h3 class="text-[10px] font-black uppercase tracking-widest text-white">Customise</h3>
-                <button onclick="closeColorModal()" class="text-slate-500 hover:text-white transition-colors">
+                <button id="closeColorModal" class="text-slate-500 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -147,14 +148,14 @@
                 </div>
                 <div class="space-y-2">
                     <div class="flex text-[9px] font-black uppercase tracking-wider border-b border-slate-800">
-                        <button onclick="setMode('solid')" id="tab-solid" class="flex-1 pb-2 border-b-2 border-yellow-500 text-white">Colour</button>
-                        <button onclick="setMode('gradient')" id="tab-gradient" class="flex-1 pb-2 border-b-2 border-transparent text-slate-500">Gradient</button>
+                        <button id="tab-solid" class="flex-1 pb-2 border-b-2 border-yellow-500 text-white">Colour</button>
+                        <button id="tab-gradient" class="flex-1 pb-2 border-b-2 border-transparent text-slate-500">Gradient</button>
                     </div>
                     <div id="colorContainer" class="grid-container grid grid-cols-7 gap-1.5 h-32 overflow-y-auto pr-1"></div>
                 </div>
                 <div class="space-y-1.5">
                     <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest block">Font Style</label>
-                    <select id="fontSelect" onchange="updateStyle({font: this.value})" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
+                    <select id="fontSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
                         <option value="'Inter', sans-serif">Inter (Standard)</option>
                         <option value="'Roboto Mono', monospace">Terminal (Mono)</option>
                         <option value="'Playfair Display', serif">Display (Serif)</option>
@@ -169,7 +170,7 @@
                         <option value="'Lobster', cursive">Lobster</option>
                     </select>
                 </div>
-                <button onclick="saveStyle()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
+                <button id="applyStyleBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
                     Apply Changes
                 </button>
             </div>
@@ -180,7 +181,7 @@
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
             <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
                 <h3 class="text-[10px] font-black uppercase tracking-widest text-white">Ask 8ball</h3>
-                <button onclick="closeEightBallModal()" class="text-slate-500 hover:text-white transition-colors">
+                <button id="closeEightBallModal" class="text-slate-500 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -189,7 +190,7 @@
             <div class="p-6 space-y-4">
                 <div class="flex justify-center text-4xl py-2">🎱</div>
                 <input type="text" id="eightBallInput" autocomplete="off" placeholder="ASK SOMETHING...." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 text-center uppercase font-bold tracking-wider">
-                <button onclick="submitEightBall()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
+                <button id="submitEightBallBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-xs font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg">
                     Submit
                 </button>
             </div>
@@ -199,7 +200,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Your web app's Firebase configuration
@@ -220,12 +221,18 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // Local State
-        const username = sessionStorage.getItem('chat_username') || 'Guest';
+        // Session Retrieval with Fallback
+        const username = sessionStorage.getItem('chat_username');
         const age = sessionStorage.getItem('chat_age') || '?';
         const gender = sessionStorage.getItem('chat_gender') || '?';
         const userRank = sessionStorage.getItem('chat_rank') || 'Member';
 
+        // Redirect if no session found
+        if (!username) {
+            window.location.href = 'signup.html';
+        }
+
+        // State Variables
         let currentStyle = JSON.parse(localStorage.getItem(`chat_style_${username}`)) || {
             color: '#ffffff',
             font: "'Inter', sans-serif",
@@ -233,7 +240,7 @@
         };
         let currentMode = currentStyle.type === 'gradient' ? 'gradient' : 'solid';
 
-        // DOM Elements
+        // DOM Element Caching
         const messageFeed = document.getElementById('messageFeed');
         const chatForm = document.getElementById('chatForm');
         const messageInput = document.getElementById('messageInput');
@@ -248,114 +255,136 @@
         const gradients = ['linear-gradient(to right, #f43f5e, #fb923c)', 'linear-gradient(to right, #fbbf24, #f472b6)', 'linear-gradient(to right, #6366f1, #a855f7)', 'linear-gradient(to right, #22c55e, #10b981)', 'linear-gradient(to right, #0ea5e9, #6366f1)', 'linear-gradient(to right, #f97316, #dc2626)', 'linear-gradient(to right, #d946ef, #fb7185)', 'linear-gradient(to right, #84cc16, #facc15)', 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(to right, #fa709a 0%, #fee140 100%)', 'linear-gradient(to right, #6a11cb 0%, #2575fc 100%)', 'linear-gradient(to right, #00cdac 0%, #8ddad5 100%)', 'linear-gradient(to right, #48c6ef 0%, #6f86d6 100%)', 'linear-gradient(to right, #5f72bd 0%, #9b23ea 100%)', 'linear-gradient(to right, #00c6ff 0%, #0072ff 100%)', 'linear-gradient(to right, #f093fb 0%, #f5576c 100%)', 'linear-gradient(to right, #c31432, #240b36)', 'linear-gradient(to right, #f12711, #f5af19)', 'linear-gradient(to right, #00b09b, #96c93d)'];
         const eightBallResponses = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."];
 
-        // Functions exposed to window
-        window.toggleActionMenu = () => { actionMenu.classList.toggle('hidden'); };
-        window.openColorModal = () => {
-            actionMenu.classList.add('hidden');
-            colorModal.classList.remove('hidden');
-            usernamePreview.textContent = username;
-            document.getElementById('fontSelect').value = currentStyle.font;
-            window.setMode(currentMode);
-            applyStyleToElement(usernamePreview, currentStyle);
-        };
-        window.closeColorModal = () => { colorModal.classList.add('hidden'); };
-        window.openEightBallModal = () => {
-            actionMenu.classList.add('hidden');
-            eightBallModal.classList.remove('hidden');
-            document.getElementById('eightBallInput').value = '';
-            document.getElementById('eightBallInput').focus();
-        };
-        window.closeEightBallModal = () => { eightBallModal.classList.add('hidden'); };
-        
-        window.submitEightBall = async () => {
-            const question = document.getElementById('eightBallInput').value.trim();
-            if (!question) return;
-            const answer = eightBallResponses[Math.floor(Math.random() * eightBallResponses.length)];
-            const text = `${username} asked: ${question}<br>8ball answer: ${answer}`;
-            await sendMessage(text);
-            window.closeEightBallModal();
-        };
-
-        window.setMode = (mode) => {
-            currentMode = mode;
-            ['solid', 'gradient'].forEach(m => {
-                const tab = document.getElementById(`tab-${m}`);
-                if (tab) tab.className = m === mode ? "flex-1 pb-2 border-b-2 border-yellow-500 text-white" : "flex-1 pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-400";
-            });
-            colorContainer.innerHTML = '';
-            const items = (mode === 'gradient') ? gradients : solidColors;
-            items.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = 'w-full aspect-square rounded-md border border-slate-700 hover:border-white transition-all';
-                mode === 'gradient' ? btn.style.background = c : btn.style.backgroundColor = c;
-                btn.onclick = () => window.updateStyle({ color: c, type: mode });
-                colorContainer.appendChild(btn);
-            });
-        };
-
-        window.updateStyle = (changes) => {
-            Object.assign(currentStyle, changes);
-            applyStyleToElement(usernamePreview, currentStyle);
-        };
-
-        window.saveStyle = async () => {
-            localStorage.setItem(`chat_style_${username}`, JSON.stringify(currentStyle));
-            if (auth.currentUser) {
-                const userDoc = doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid);
-                await updateDoc(userDoc, { style: currentStyle });
-            }
-            window.closeColorModal();
-        };
-
-        function applyStyleToElement(el, style) {
+        // UI Helpers
+        const applyStyleToElement = (el, style) => {
             if (!el || !style) return;
             el.style.fontFamily = style.font;
-            el.style.textShadow = 'none';
             el.style.background = 'none';
             el.style.webkitBackgroundClip = 'initial';
             el.style.webkitTextFillColor = 'initial';
+            el.style.color = style.color;
             if (style.type === 'gradient') {
                 el.style.background = style.color;
                 el.style.webkitBackgroundClip = 'text';
                 el.style.webkitTextFillColor = 'transparent';
                 el.style.color = 'transparent';
-            } else {
-                el.style.color = style.color;
             }
-        }
+        };
+
+        const renderColorContainer = (mode) => {
+            colorContainer.innerHTML = '';
+            const items = mode === 'gradient' ? gradients : solidColors;
+            items.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full aspect-square rounded-md border border-slate-700 hover:border-white transition-all';
+                btn.style.background = c;
+                btn.onclick = () => {
+                    currentStyle.color = c;
+                    currentStyle.type = mode;
+                    applyStyleToElement(usernamePreview, currentStyle);
+                };
+                colorContainer.appendChild(btn);
+            });
+        };
+
+        // Event Listeners
+        document.getElementById('toggleMenuBtn').onclick = () => actionMenu.classList.toggle('hidden');
+        document.getElementById('logoutBtn').onclick = () => { signOut(auth); sessionStorage.clear(); window.location.href = 'signup.html'; };
+        
+        document.getElementById('colorMenuBtn').onclick = () => {
+            actionMenu.classList.add('hidden');
+            colorModal.classList.remove('hidden');
+            usernamePreview.textContent = username;
+            applyStyleToElement(usernamePreview, currentStyle);
+            renderColorContainer(currentMode);
+        };
+
+        document.getElementById('tab-solid').onclick = () => {
+            currentMode = 'solid';
+            document.getElementById('tab-solid').classList.add('border-yellow-500', 'text-white');
+            document.getElementById('tab-solid').classList.remove('border-transparent', 'text-slate-500');
+            document.getElementById('tab-gradient').classList.remove('border-yellow-500', 'text-white');
+            document.getElementById('tab-gradient').classList.add('border-transparent', 'text-slate-500');
+            renderColorContainer('solid');
+        };
+
+        document.getElementById('tab-gradient').onclick = () => {
+            currentMode = 'gradient';
+            document.getElementById('tab-gradient').classList.add('border-yellow-500', 'text-white');
+            document.getElementById('tab-gradient').classList.remove('border-transparent', 'text-slate-500');
+            document.getElementById('tab-solid').classList.remove('border-yellow-500', 'text-white');
+            document.getElementById('tab-solid').classList.add('border-transparent', 'text-slate-500');
+            renderColorContainer('gradient');
+        };
+
+        document.getElementById('fontSelect').onchange = (e) => {
+            currentStyle.font = e.target.value;
+            applyStyleToElement(usernamePreview, currentStyle);
+        };
+
+        document.getElementById('applyStyleBtn').onclick = async () => {
+            localStorage.setItem(`chat_style_${username}`, JSON.stringify(currentStyle));
+            if (auth.currentUser) {
+                const userDoc = doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid);
+                await updateDoc(userDoc, { style: currentStyle });
+            }
+            colorModal.classList.add('hidden');
+        };
+
+        document.getElementById('closeColorModal').onclick = () => colorModal.classList.add('hidden');
+        
+        document.getElementById('eightBallMenuBtn').onclick = () => {
+            actionMenu.classList.add('hidden');
+            eightBallModal.classList.remove('hidden');
+        };
+        
+        document.getElementById('closeEightBallModal').onclick = () => eightBallModal.classList.add('hidden');
+
+        document.getElementById('submitEightBallBtn').onclick = async () => {
+            const question = document.getElementById('eightBallInput').value.trim();
+            if (!question) return;
+            const answer = eightBallResponses[Math.floor(Math.random() * eightBallResponses.length)];
+            const text = `${username} asked: ${question} | 8ball: ${answer}`;
+            await sendMessage(text);
+            eightBallModal.classList.add('hidden');
+        };
 
         async function sendMessage(text) {
             if (!auth.currentUser) return;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                user: username,
-                text: text,
-                rank: userRank,
-                style: currentStyle,
-                timestamp: serverTimestamp()
-            });
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                    user: username,
+                    text: text,
+                    rank: userRank,
+                    style: currentStyle,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) { console.error("Send failed", e); }
         }
 
-        chatForm.addEventListener('submit', async (e) => {
+        chatForm.onsubmit = async (e) => {
             e.preventDefault();
             const val = messageInput.value.trim();
             if (val) {
-                await sendMessage(val);
                 messageInput.value = '';
+                await sendMessage(val);
             }
-        });
+        };
 
-        // Initialize App
-        const init = async () => {
+        // Initialize Firebase Data Sync
+        const initChat = async () => {
+            // Sign in
             await signInAnonymously(auth);
             
             onAuthStateChanged(auth, async (user) => {
                 if (!user) return;
 
-                // Set User Info in Header
+                // Set UI Details
                 document.getElementById('displayUsername').textContent = username;
                 document.getElementById('displayDetails').textContent = `${age} • ${gender}`;
+                document.getElementById('headerAvatar').src = `https://ui-avatars.com/api/?name=${username}&background=334155&color=fff`;
 
-                // Mark self as online/active
+                // Update self in Users collection
                 const userDoc = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
                 await setDoc(userDoc, {
                     name: username,
@@ -369,16 +398,15 @@
                 onSnapshot(qMsg, (snapshot) => {
                     const msgs = [];
                     snapshot.forEach(d => msgs.push({ id: d.id, ...d.data() }));
-                    // Sort locally since we can't use orderBy
                     msgs.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
                     
                     messageFeed.innerHTML = '';
                     msgs.forEach(msg => {
                         const timeStr = msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "...";
                         const div = document.createElement('div');
-                        div.className = 'flex items-start gap-3 py-1.5 px-2 rounded-lg message-row transition-colors w-full';
+                        div.className = 'flex items-start gap-3 py-1.5 px-2 rounded-lg message-row w-full';
                         div.innerHTML = `
-                            <img src="/default.png" class="w-8 h-8 rounded-full border border-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${msg.user}&background=1e293b&color=fff'">
+                            <img src="https://ui-avatars.com/api/?name=${msg.user}&background=1e293b&color=fff" class="w-8 h-8 rounded-full border border-slate-800 object-cover">
                             <div class="flex flex-col flex-1 min-w-0">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
@@ -394,7 +422,7 @@
                         applyStyleToElement(document.getElementById(`name-${msg.id}`), msg.style);
                     });
                     messageFeed.scrollTop = messageFeed.scrollHeight;
-                }, (err) => console.error(err));
+                });
 
                 // Sync Online Players
                 const qUsers = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
@@ -405,7 +433,7 @@
                         const div = document.createElement('div');
                         div.className = 'flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group';
                         div.innerHTML = `
-                            <div class="relative"><img src="/default.png" class="w-7 h-7 rounded-full border border-slate-700 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${userData.name}&background=334155&color=fff'"></div>
+                            <img src="https://ui-avatars.com/api/?name=${userData.name}&background=334155&color=fff" class="w-7 h-7 rounded-full border border-slate-700 object-cover">
                             <div class="flex flex-col min-w-0">
                                 <span id="list-name-${d.id}" class="text-xs font-bold truncate">${userData.name}</span>
                                 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">${userData.rank}</span>
@@ -418,11 +446,9 @@
             });
         };
 
-        if (!sessionStorage.getItem('chat_username')) {
-            window.location.href = '/signup.html';
-        } else {
-            init();
-        }
+        // Start initialization
+        initChat().catch(console.error);
+
     </script>
 </body>
 </html>
