@@ -4,8 +4,8 @@
   "description": "Fast, encrypted, instant communication with a side of chaos.",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve .",
-    "dev": "npx serve ."
+    "start": "serve .",
+    "dev": "serve ."
   },
   "keywords": [
     "chat",
