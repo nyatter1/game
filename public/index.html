@@ -3,512 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chat Pro | Messenger</title>
+    <title>Simple Chat - The Room</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Roboto+Mono:wght@700&family=Playfair+Display:wght@700&family=Bangers&family=Permanent+Marker&family=Orbitron:wght@700&family=Creepster&family=Monoton&family=Pacifico&family=Press+Start+2P&family=Righteous&family=Lobster&family=Abril+Fatface&family=Comfortaa:wght@700&family=Fascinate&family=Fredoka+One&family=Gloria+Hallelujah&family=Luckiest+Guy&family=Modak&family=Notable&family=Piedra&family=Racing+Sans+One&family=Slackey&family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .message-row:hover { background-color: rgba(255, 255, 255, 0.03); }
-        .rank-badge { font-size: 8px; padding: 1px 5px; border-radius: 4px; font-weight: 900; text-transform: uppercase; margin-left: 6px; vertical-align: middle; }
-        .rank-member { background: #475569; color: #f1f5f9; }
-        .rank-vip { background: linear-gradient(45deg, #a855f7, #ec4899); color: white; }
-        .rank-8ball { background: #000; color: #fff; border: 1px solid #334155; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        #actionMenu { animation: slideUp 0.15s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .modal-overlay { backdrop-filter: blur(12px); background-color: rgba(2, 6, 23, 0.85); }
-        
-        .color-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .color-swatch { width: 100%; aspect-ratio: 1; border-radius: 6px; border: 2px solid transparent; transition: all 0.1s; }
-        .color-swatch:hover { transform: scale(1.1); border-color: white; z-index: 10; }
-        .color-swatch.active { border-color: #eab308; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
-
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        .eightball-container {
-            perspective: 1000px;
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
         }
-        .eightball-sphere {
-            background: radial-gradient(circle at 30% 30%, #444, #000);
-            box-shadow: inset -10px -10px 50px rgba(0,0,0,1), 10px 10px 30px rgba(0,0,0,0.5);
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        .message-row {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: background 0.2s;
+        }
+
+        .message-row:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .vip-badge {
+            color: #facc15;
+            font-size: 0.7rem;
+            font-weight: 800;
+            background: rgba(250, 204, 21, 0.1);
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+            border: 1px solid rgba(250, 204, 21, 0.2);
+        }
+
+        .input-area {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
-    <header class="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950 shrink-0 z-20">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center font-black text-slate-900 italic">SC</div>
-            <h1 class="text-sm font-black text-white uppercase tracking-widest">Simple Chat <span class="text-yellow-500">Pro</span></h1>
+<body class="flex flex-col h-screen">
+
+    <!-- Header -->
+    <header class="w-full py-3 px-6 flex justify-between items-center bg-slate-900 border-b border-slate-800 z-10">
+        <div class="flex items-center space-x-3">
+            <img src="https://usagif.com/wp-content/uploads/gifs/banana-91.gif" alt="Logo" class="w-8 h-8 object-contain">
+            <span class="text-xl font-bold italic">simple<span class="text-yellow-400">chat</span></span>
         </div>
-        <div id="userInfo" class="flex items-center gap-4">
-            <div class="text-right hidden sm:block">
-                <p id="displayUsername" class="text-xs font-black text-white uppercase tracking-tighter"></p>
-                <p id="displayRank" class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest"></p>
+        <div class="flex items-center space-x-4">
+            <div class="text-right">
+                <p id="userDisplay" class="text-sm font-bold text-white">Guest</p>
+                <p class="text-[10px] text-green-400 flex items-center justify-end">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
+                    <span id="onlineCount">1</span> Online
+                </p>
             </div>
-            <img id="headerAvatar" src="https://ui-avatars.com/api/?name=User&background=0f172a&color=fff" class="w-9 h-9 rounded-xl border border-slate-800 object-cover">
-            <button id="logoutBtn" class="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg>
+            <button onclick="logout()" class="text-slate-500 hover:text-red-400 transition-colors">
+                <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
     </header>
 
-    <main class="flex flex-1 overflow-hidden bg-slate-950">
-        <!-- Chat Feed -->
-        <section class="flex-1 flex flex-col relative">
-            <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"></div>
-            
-            <div class="p-4 bg-slate-900/50 border-t border-slate-800 relative z-30">
-                <!-- Action Popover -->
-                <div id="actionMenu" class="hidden absolute bottom-20 left-4 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-60 overflow-hidden">
-                    <button onclick="openColorModal()" class="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-800 text-sm font-bold text-slate-300 border-b border-slate-800/50 transition-colors">
-                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-pink-500 via-yellow-500 to-cyan-500 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 112.828 2.828L11.828 15H10v-1.828z"/></svg>
-                        </div>
-                        Customise Profile
-                    </button>
-                    <button onclick="openEightBall()" class="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-800 text-sm font-bold text-slate-300 transition-colors">
-                        <div class="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-lg">🎱</div>
-                        Ask 8-Ball
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-3 max-w-4xl mx-auto">
-                    <button onclick="toggleActionMenu()" class="w-12 h-12 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-2xl transition-all">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    </button>
-                    <form id="chatForm" class="flex-1 flex gap-2">
-                        <input type="text" id="messageInput" autocomplete="off" placeholder="Say something to the world..." class="flex-1 bg-slate-800 border-2 border-slate-700 rounded-2xl px-5 py-3 text-sm font-medium focus:outline-none focus:border-yellow-500 transition-all text-white">
-                        <button type="submit" class="bg-yellow-500 hover:bg-yellow-400 text-slate-900 px-6 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-yellow-500/20">
-                            Send
-                        </button>
-                    </form>
-                </div>
+    <!-- Main Chat Area -->
+    <div class="flex flex-grow overflow-hidden">
+        <!-- Sidebar (Online Users) -->
+        <aside class="hidden md:flex flex-col w-64 bg-slate-900/50 border-r border-slate-800">
+            <div class="p-4 border-b border-slate-800">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Chaos</h3>
             </div>
-        </section>
-
-        <!-- Sidebar -->
-        <aside class="w-72 border-l border-slate-800 bg-slate-950 hidden xl:flex flex-col">
-            <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/30">
-                <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Live Members</h2>
-                <span id="onlineCount" class="bg-green-500/10 text-green-400 px-2.5 py-1 rounded-full text-[10px] font-black tabular-nums">0</span>
+            <div id="onlineUsersList" class="overflow-y-auto p-4 space-y-3">
+                <!-- Online users injected here -->
             </div>
-            <div id="playerList" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar"></div>
         </aside>
-    </main>
 
-    <!-- Customization Modal -->
-    <div id="colorModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-                <div>
-                    <h3 class="text-lg font-black text-white uppercase italic">Style Lab</h3>
-                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Personalize your chat presence</p>
+        <!-- Messages Area -->
+        <main class="flex-grow flex flex-col bg-slate-950">
+            <div id="chatMessages" class="chat-container p-6 space-y-1">
+                <!-- Messages injected here -->
+                <div class="text-center py-10 text-slate-600 text-sm">
+                    <p>Welcome to the room. Stay simple.</p>
                 </div>
-                <button onclick="closeColorModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-red-500/20 hover:text-red-500 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
             </div>
-            
-            <div class="p-6 overflow-y-auto custom-scrollbar space-y-6">
-                <!-- Preview Section -->
-                <div class="bg-slate-950 rounded-2xl p-8 border border-slate-800 flex flex-col items-center justify-center gap-3 relative overflow-hidden">
-                    <div class="absolute inset-0 opacity-10 pointer-events-none" id="previewBg"></div>
-                    <div id="usernamePreview" class="text-4xl font-black uppercase tracking-wider relative z-10">USER</div>
-                    <div class="px-3 py-1 bg-slate-800 rounded-lg text-[10px] font-black text-slate-500 uppercase tracking-widest z-10">Chat Preview</div>
-                </div>
 
-                <!-- Tabs -->
-                <div class="flex bg-slate-800 p-1 rounded-xl gap-1">
-                    <button onclick="setMode('solid')" id="tab-solid" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all bg-yellow-500 text-slate-900">Solid (90+)</button>
-                    <button onclick="setMode('gradient')" id="tab-gradient" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all text-slate-400">Gradients (45+)</button>
-                </div>
-
-                <!-- Color Grid -->
-                <div id="colorContainer" class="color-grid h-48 overflow-y-auto pr-2 custom-scrollbar"></div>
-
-                <!-- Font Selection -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Font Family</label>
-                        <select id="fontSelect" onchange="updateStyle({font: this.value})" class="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-yellow-500">
-                            <option value="'Inter', sans-serif">Inter</option>
-                            <option value="'Bangers', cursive">Hero</option>
-                            <option value="'Orbitron', sans-serif">Sci-Fi</option>
-                            <option value="'Permanent Marker', cursive">Marker</option>
-                            <option value="'Press Start 2P', cursive">8-Bit</option>
-                            <option value="'Monoton', cursive">Retro</option>
-                            <option value="'Pacifico', cursive">Script</option>
-                            <option value="'Creepster', system-ui">Horror</option>
-                            <option value="'Notable', sans-serif">Block</option>
-                            <option value="'Luckiest Guy', cursive">Fun</option>
-                            <option value="'Racing Sans One', sans-serif">Speed</option>
-                            <option value="'Lobster', cursive">Lobster</option>
-                            <option value="'Abril Fatface', serif">Classic</option>
-                            <option value="'Comfortaa', cursive">Round</option>
-                            <option value="'Fascinate', cursive">Cinema</option>
-                            <option value="'Gloria Hallelujah', cursive">Hand</option>
-                            <option value="'Modak', cursive">Bubble</option>
-                        </select>
+            <!-- Input Form -->
+            <div class="input-area p-4 md:p-6">
+                <form id="messageForm" class="max-w-4xl mx-auto flex space-x-4">
+                    <div class="flex-grow relative">
+                        <input type="text" id="messageInput" autocomplete="off" 
+                            class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-5 py-3.5 focus:outline-none focus:border-yellow-400/50 transition-all placeholder-slate-600"
+                            placeholder="Type a message...">
                     </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Text Transformation</label>
-                        <select id="caseSelect" onchange="updateStyle({textTransform: this.value})" class="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-yellow-500">
-                            <option value="uppercase">UPPERCASE</option>
-                            <option value="lowercase">lowercase</option>
-                            <option value="capitalize">Capitalize</option>
-                            <option value="none">Normal</option>
-                        </select>
-                    </div>
-                </div>
+                    <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-slate-950 px-6 py-3.5 rounded-xl font-bold transition-transform active:scale-95 shadow-lg shadow-yellow-900/10">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
             </div>
-
-            <div class="p-6 bg-slate-900/50 border-t border-slate-800">
-                <button id="saveStyleBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-sm font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-xl shadow-yellow-500/10 transition-all active:scale-95">
-                    Update My Identity
-                </button>
-            </div>
-        </div>
+        </main>
     </div>
 
-    <!-- 8-Ball Modal -->
-    <div id="eightBallModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm shadow-2xl p-8 flex flex-col items-center text-center eightball-container">
-            <div id="eightBallSphere" class="w-48 h-48 rounded-full eightball-sphere flex items-center justify-center mb-8 border-4 border-slate-800 relative transition-transform duration-500">
-                <div class="w-28 h-28 bg-white/5 rounded-full flex items-center justify-center p-4">
-                    <div id="eightBallDisplay" class="text-white text-[10px] font-black uppercase leading-tight tracking-widest">???</div>
-                </div>
-            </div>
-            
-            <div class="w-full space-y-4">
-                <input type="text" id="eightBallInput" placeholder="Ask your question..." class="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-indigo-500">
-                <div class="flex gap-2">
-                    <button onclick="handleEightBallShake()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20">Shake & Post</button>
-                    <button onclick="closeEightBall()" class="px-6 bg-slate-800 hover:bg-slate-700 py-4 rounded-xl text-xs font-black uppercase tracking-widest">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Data & UI Logic
-        const username = sessionStorage.getItem('chat_username') || 'Guest_' + Math.floor(Math.random() * 9999);
-        const userRank = sessionStorage.getItem('chat_rank') || 'Member';
-        let currentStyle = JSON.parse(localStorage.getItem(`chat_style_${username}`)) || { 
-            color: '#ffffff', 
-            font: "'Inter', sans-serif", 
-            type: 'solid',
-            textTransform: 'uppercase'
-        };
-
-        // Populate massive color list
-        const solidColors = [
-            '#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155', '#1e293b',
-            '#fca5a5', '#f87171', '#ef4444', '#dc2626', '#b91c1c', '#991b1b', '#7f1d1d', '#450a0a', '#fee2e2', '#fecaca',
-            '#fdba74', '#fb923c', '#f97316', '#ea580c', '#c2410c', '#9a3412', '#7c2d12', '#431407', '#ffedd5', '#fed7aa',
-            '#fcd34d', '#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e', '#78350f', '#451a03', '#fef3c7', '#fde68a',
-            '#fef08a', '#fde047', '#facc15', '#eab308', '#ca8a04', '#a16207', '#854d0e', '#713f12', '#422006', '#fef9c3',
-            '#bef264', '#a3e635', '#84cc16', '#65a30d', '#4d7c0f', '#3f6212', '#365314', '#1a2e05', '#ecfccb', '#d9f99d',
-            '#86efac', '#4ade80', '#22c55e', '#16a34a', '#15803d', '#166534', '#14532d', '#064e3b', '#d1fae5', '#a7f3d0',
-            '#6ee7b7', '#34d399', '#10b981', '#059669', '#047857', '#065f46', '#064e3b', '#022c22', '#dcfce7', '#bbf7d0',
-            '#5eead4', '#2dd4bf', '#14b8a6', '#0d9488', '#0f766e', '#115e59', '#134e4a', '#042f2e', '#f0fdfa', '#ccfbf1',
-            '#67e8f9', '#22d3ee', '#06b6d4', '#0891b2', '#0e7490', '#155e75', '#164e63', '#083344', '#ecfeff', '#cffafe'
-        ];
-
-        const gradients = [
-            'linear-gradient(45deg, #f43f5e, #fb923c)', 'linear-gradient(45deg, #fbbf24, #f472b6)', 
-            'linear-gradient(45deg, #6366f1, #a855f7)', 'linear-gradient(45deg, #22c55e, #10b981)',
-            'linear-gradient(45deg, #0ea5e9, #6366f1)', 'linear-gradient(45deg, #f97316, #dc2626)',
-            'linear-gradient(45deg, #84cc16, #facc15)', 'linear-gradient(45deg, #d946ef, #fb7185)',
-            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(to right, #ff8177 0%, #ff867a 0%, #ff8c7f 21%, #f99185 52%, #cf556c 78%, #b12a5b 100%)',
-            'linear-gradient(to right, #ee9ca7, #ffdde1)', 'linear-gradient(to top, #09203f 0%, #537895 100%)',
-            'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(to right, #43e97b 0%, #38f9d7 100%)',
-            'linear-gradient(to right, #fa709a 0%, #fee140 100%)', 'linear-gradient(to top, #30cfd0 0%, #330867 100%)',
-            'linear-gradient(to right, #6a11cb 0%, #2575fc 100%)', 'linear-gradient(to right, #f83600 0%, #f9d423 100%)',
-            'linear-gradient(to top, #00c6fb 0%, #005bea 100%)', 'linear-gradient(to top, #9708ad 0%, #2c0e40 100%)',
-            'linear-gradient(to right, #f78ca0 0%, #f9748f 19%, #fd868c 60%, #fe9a8b 100%)', 'linear-gradient(to top, #e61d8c 0%, #c7eafd 100%)',
-            'linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
-            'linear-gradient(120deg, #fccb90 0%, #d57eeb 100%)', 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)',
-            'linear-gradient(to top, #f093fb 0%, #f5576c 100%)', 'linear-gradient(to top, #5ee7df 0%, #b490d1 100%)',
-            'linear-gradient(to top, #c471f5 0%, #fa71cd 100%)', 'linear-gradient(to top, #48c6ef 0%, #6f86d6 100%)',
-            'linear-gradient(to top, #feada6 0%, #f5efef 100%)', 'linear-gradient(to top, #00cdac 0%, #8ddad5 100%)',
-            'linear-gradient(to top, #9be15d 0%, #00e3ae 100%)', 'linear-gradient(to top, #3f5efb 0%, #fc466b 100%)',
-            'linear-gradient(to right, #ff416c, #ff4b2b)', 'linear-gradient(to right, #1d2b64, #f8cdda)',
-            'linear-gradient(to right, #00b09b, #96c93d)', 'linear-gradient(to right, #ec008c, #fc6767)',
-            'linear-gradient(to right, #56ab2f, #a8e063)', 'linear-gradient(to right, #4568dc, #b06ab3)',
-            'linear-gradient(to right, #0575e6, #021b79)', 'linear-gradient(to right, #f12711, #f5af19)',
-            'linear-gradient(to right, #799f0c, #acbb78)', 'linear-gradient(to right, #333333, #dd1818)',
-            'linear-gradient(to right, #8e2de2, #4a00e0)'
-        ];
-
-        window.toggleActionMenu = () => document.getElementById('actionMenu').classList.toggle('hidden');
-        window.openColorModal = () => {
-            document.getElementById('actionMenu').classList.add('hidden');
-            document.getElementById('colorModal').classList.remove('hidden');
-            const preview = document.getElementById('usernamePreview');
-            preview.textContent = username;
-            document.getElementById('fontSelect').value = currentStyle.font;
-            document.getElementById('caseSelect').value = currentStyle.textTransform || 'uppercase';
-            setMode(currentStyle.type || 'solid');
-            applyStyleToElement(preview, currentStyle);
-        };
-        window.closeColorModal = () => document.getElementById('colorModal').classList.add('hidden');
-
-        window.setMode = (mode) => {
-            const container = document.getElementById('colorContainer');
-            container.innerHTML = '';
-            const items = mode === 'gradient' ? gradients : solidColors;
-            items.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = 'color-swatch' + (currentStyle.color === c ? ' active' : '');
-                btn.style.background = c;
-                btn.onclick = () => {
-                    currentStyle.color = c;
-                    currentStyle.type = mode;
-                    applyStyleToElement(document.getElementById('usernamePreview'), currentStyle);
-                    // Update active state in grid
-                    Array.from(container.children).forEach(child => child.classList.remove('active'));
-                    btn.classList.add('active');
-                };
-                container.appendChild(btn);
-            });
-            
-            const btnSolid = document.getElementById('tab-solid');
-            const btnGradient = document.getElementById('tab-gradient');
-            if(mode === 'solid') {
-                btnSolid.className = "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg bg-yellow-500 text-slate-900";
-                btnGradient.className = "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg text-slate-400";
-            } else {
-                btnSolid.className = "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg text-slate-400";
-                btnGradient.className = "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg bg-yellow-500 text-slate-900";
-            }
-        };
-
-        window.updateStyle = (changes) => {
-            Object.assign(currentStyle, changes);
-            applyStyleToElement(document.getElementById('usernamePreview'), currentStyle);
-        };
-
-        window.applyStyleToElement = (el, style) => {
-            if (!el || !style) return;
-            el.style.fontFamily = style.font || "'Inter', sans-serif";
-            el.style.textTransform = style.textTransform || 'uppercase';
-            el.style.background = 'none';
-            el.style.webkitBackgroundClip = 'initial';
-            el.style.webkitTextFillColor = 'initial';
-            if (style.type === 'gradient') {
-                el.style.background = style.color;
-                el.style.webkitBackgroundClip = 'text';
-                el.style.webkitTextFillColor = 'transparent';
-                el.style.color = 'transparent';
-            } else {
-                el.style.color = style.color || '#ffffff';
-            }
-        };
-
-        window.openEightBall = () => {
-            document.getElementById('actionMenu').classList.add('hidden');
-            document.getElementById('eightBallModal').classList.remove('hidden');
-            document.getElementById('eightBallDisplay').textContent = "Shake Me!";
-        };
-        window.closeEightBall = () => document.getElementById('eightBallModal').classList.add('hidden');
-
-        document.getElementById('displayUsername').textContent = username;
-        document.getElementById('displayRank').textContent = userRank;
-    </script>
-
+    <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, limit, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase Initialization
-        let firebaseConfig = {};
-        try { firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {}; } catch (e) {}
-        
-        if (firebaseConfig.projectId) {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-v1';
+        const firebaseConfig = {
+            apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
+            authDomain: "chatlaxy-pro.firebaseapp.com",
+            projectId: "chatlaxy-pro",
+            storageBucket: "chatlaxy-pro.firebasestorage.app",
+            messagingSenderId: "807800533954",
+            appId: "1:807800533954:web:4165776ac52b93e9cb9c5b",
+            measurementId: "G-XJ174Y690H"
+        };
 
-            let user = null;
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            const initAuth = async () => {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            };
+        // User Setup (Simple persistence using localStorage)
+        let username = localStorage.getItem('chat_username') || "Guest" + Math.floor(Math.random() * 1000);
+        document.getElementById('userDisplay').innerText = username;
 
-            onAuthStateChanged(auth, (u) => {
-                user = u;
-                if (u) {
-                    setupRealtime();
-                    updatePresence();
-                }
+        // Presence Logic (Simulated for this simple version using a 'presence' collection)
+        const presenceId = Math.random().toString(36).substring(7);
+        const userPresenceRef = doc(db, 'online_users', presenceId);
+
+        const updatePresence = async () => {
+            await setDoc(userPresenceRef, {
+                username: username,
+                lastActive: serverTimestamp()
             });
-            initAuth();
+        };
 
-            function setupRealtime() {
-                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), orderBy('createdAt', 'desc'), limit(50));
-                onSnapshot(q, (snap) => {
-                    const list = [];
-                    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-                    renderMessages(list.reverse());
+        // UI Helpers
+        const formatTime = (date) => {
+            return new Intl.DateTimeFormat('default', {
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+            }).format(date);
+        };
+
+        const addMessageToUI = (data) => {
+            const container = document.getElementById('chatMessages');
+            const time = data.timestamp ? formatTime(data.timestamp.toDate()) : formatTime(new Date());
+            
+            const messageRow = document.createElement('div');
+            messageRow.className = 'message-row py-2 px-1 flex flex-col';
+            
+            messageRow.innerHTML = `
+                <div class="flex items-center space-x-1 mb-0.5">
+                    <span class="text-sm font-bold text-slate-200">${data.username}</span>
+                    <span class="vip-badge uppercase">VIP</span>
+                </div>
+                <div class="flex justify-between items-end">
+                    <p class="text-[15px] text-slate-300 break-words leading-relaxed">${data.text}</p>
+                    <span class="text-[10px] text-slate-600 ml-4 mb-0.5 whitespace-nowrap">${time}</span>
+                </div>
+            `;
+            
+            container.appendChild(messageRow);
+            container.scrollTop = container.scrollHeight;
+        };
+
+        // Listen for Messages
+        const q = query(collection(db, "messages"), orderBy("timestamp", "asc"), limit(50));
+        onSnapshot(q, (snapshot) => {
+            document.getElementById('chatMessages').innerHTML = ''; // Clear for simple re-render
+            snapshot.forEach((doc) => {
+                addMessageToUI(doc.data());
+            });
+        });
+
+        // Listen for Online Users
+        onSnapshot(collection(db, "online_users"), (snapshot) => {
+            const list = document.getElementById('onlineUsersList');
+            const count = document.getElementById('onlineCount');
+            list.innerHTML = '';
+            count.innerText = snapshot.size;
+
+            snapshot.forEach((doc) => {
+                const user = doc.data();
+                const userItem = document.createElement('div');
+                userItem.className = 'flex items-center space-x-2 text-sm text-slate-400';
+                userItem.innerHTML = `
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span class="font-medium">${user.username}</span>
+                    <span class="text-[9px] text-yellow-500/50 font-bold">VIP</span>
+                `;
+                list.appendChild(userItem);
+            });
+        });
+
+        // Send Message
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (text) {
+                input.value = '';
+                await addDoc(collection(db, "messages"), {
+                    username: username,
+                    text: text,
+                    timestamp: serverTimestamp()
                 });
-
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'presence'), (snap) => {
-                    const online = [];
-                    const cutoff = Date.now() - 60000;
-                    snap.forEach(d => {
-                        const data = d.data();
-                        if (data.lastSeen > cutoff) online.push(data);
-                    });
-                    renderOnline(online);
-                });
+                updatePresence(); // Keep presence alive when talking
             }
+        });
 
-            async function updatePresence() {
-                if (!user) return;
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid), {
-                    name: username,
-                    rank: userRank,
-                    style: currentStyle,
-                    lastSeen: Date.now()
-                }, { merge: true });
-                setTimeout(updatePresence, 30000);
-            }
+        // Initial presence and cleanup
+        updatePresence();
+        window.addEventListener('beforeunload', () => {
+            deleteDoc(userPresenceRef);
+        });
 
-            function renderMessages(messages) {
-                const feed = document.getElementById('messageFeed');
-                feed.innerHTML = '';
-                messages.forEach(msg => {
-                    const is8Ball = msg.rank === '8-BALL';
-                    const row = document.createElement('div');
-                    row.className = `flex items-start gap-3 py-2 px-3 rounded-2xl message-row transition-all ${is8Ball ? 'bg-indigo-500/5 border border-indigo-500/10' : ''}`;
-                    const time = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                    
-                    row.innerHTML = `
-                        <div class="shrink-0 pt-1">
-                            ${is8Ball ? '<div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-lg shadow-lg">🎱</div>' : `<img src="https://ui-avatars.com/api/?name=${msg.user}&background=1e293b&color=fff" class="w-9 h-9 rounded-xl border border-slate-800 object-cover shadow-sm">`}
-                        </div>
-                        <div class="flex flex-col flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-0.5">
-                                <div class="flex items-center">
-                                    <span class="user-name-span text-xs font-black tracking-wider uppercase">${msg.user}</span>
-                                    <span class="rank-badge rank-${(msg.rank || 'Member').toLowerCase().replace(/\s+/g, '-')}">${msg.rank || 'Member'}</span>
-                                </div>
-                                <span class="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">${time}</span>
-                            </div>
-                            <div class="text-sm text-slate-200 leading-relaxed ${is8Ball ? 'font-bold italic text-indigo-200' : ''}">${msg.text}</div>
-                        </div>
-                    `;
-                    
-                    const span = row.querySelector('.user-name-span');
-                    if (msg.style) applyStyleToElement(span, msg.style);
-                    feed.appendChild(row);
-                });
-                feed.scrollTop = feed.scrollHeight;
-            }
+        // Global logout
+        window.logout = () => {
+            localStorage.removeItem('chat_username');
+            window.location.href = 'index.html';
+        };
 
-            function renderOnline(users) {
-                document.getElementById('onlineCount').textContent = users.length;
-                const list = document.getElementById('playerList');
-                list.innerHTML = '';
-                users.forEach(u => {
-                    const item = document.createElement('div');
-                    item.className = 'flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-900 transition-all border border-transparent hover:border-slate-800';
-                    item.innerHTML = `
-                        <div class="relative">
-                            <img src="https://ui-avatars.com/api/?name=${u.name}&background=1e293b&color=fff" class="w-8 h-8 rounded-xl border border-slate-700 object-cover">
-                            <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-950"></div>
-                        </div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="online-name-span text-xs font-black truncate">${u.name}</span>
-                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">${u.rank}</span>
-                        </div>
-                    `;
-                    const span = item.querySelector('.online-name-span');
-                    if (u.style) applyStyleToElement(span, u.style);
-                    list.appendChild(item);
-                });
-            }
-
-            document.getElementById('chatForm').onsubmit = async (e) => {
-                e.preventDefault();
-                const input = document.getElementById('messageInput');
-                if (input.value.trim() && user) {
-                    const text = input.value;
-                    input.value = '';
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                        user: username,
-                        text: text,
-                        rank: userRank,
-                        style: currentStyle,
-                        createdAt: serverTimestamp()
-                    });
-                }
-            };
-
-            document.getElementById('saveStyleBtn').onclick = async () => {
-                localStorage.setItem(`chat_style_${username}`, JSON.stringify(currentStyle));
-                if (user) {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid), { style: currentStyle }, { merge: true });
-                }
-                closeColorModal();
-            };
-
-            window.handleEightBallShake = async () => {
-                const input = document.getElementById('eightBallInput');
-                const question = input.value.trim();
-                if (!question) return;
-
-                const ball = document.getElementById('eightBallSphere');
-                const display = document.getElementById('eightBallDisplay');
-                
-                display.textContent = "...";
-                ball.classList.add('shake');
-                
-                setTimeout(async () => {
-                    ball.classList.remove('shake');
-                    const answers = [
-                        "It is certain", "Without a doubt", "You may rely on it", "Yes definitely",
-                        "As I see it, yes", "Most likely", "Yes", "Signs point to yes",
-                        "Reply hazy, try again", "Ask again later", "Better not tell you now", "Cannot predict now",
-                        "Concentrate and ask again", "Don't count on it", "My reply is no", "My sources say no",
-                        "Outlook not so good", "Very doubtful"
-                    ];
-                    const answer = answers[Math.floor(Math.random() * answers.length)];
-                    display.textContent = answer;
-
-                    // Post to Chat
-                    if (user) {
-                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                            user: "Magic 8-Ball",
-                            text: `${username} asked: "${question}" \n8-Ball says: ${answer}`,
-                            rank: "8-BALL",
-                            style: { color: "#818cf8", font: "'Orbitron', sans-serif", type: "solid", textTransform: "none" },
-                            createdAt: serverTimestamp()
-                        });
-                    }
-                    input.value = '';
-                    setTimeout(closeEightBall, 1500);
-                }, 800);
-            };
-        }
     </script>
 </body>
 </html>
