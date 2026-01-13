@@ -189,8 +189,6 @@
         const db = getFirestore(app);
 
         let isSignUp = false;
-        let currentCoins = 0;
-        let currentRubies = 0;
         let currentUserProfile = null;
 
         const el = (id) => document.getElementById(id);
@@ -248,16 +246,16 @@
             onSnapshot(userRef, (doc) => {
                 if (doc.exists()) {
                     currentUserProfile = doc.data();
-                    currentCoins = currentUserProfile.coins;
-                    currentRubies = currentUserProfile.rubies;
-                    el('coin-balance').textContent = currentUserProfile.coins.toLocaleString();
-                    el('ruby-balance').textContent = currentUserProfile.rubies.toLocaleString();
+                    el('coin-balance').textContent = (currentUserProfile.coins || 0).toLocaleString();
+                    el('ruby-balance').textContent = (currentUserProfile.rubies || 0).toLocaleString();
                     el('wallet-display').classList.remove('hidden');
                 }
             });
         }
 
         async function handleAllIn(type) {
+            if (!currentUserProfile) return;
+
             const isRuby = (type === 'r' || type === 'ruby');
             const isGold = (type === 'g' || type === 'gold');
             
@@ -266,9 +264,9 @@
                 return;
             }
 
-            const amount = isRuby ? currentRubies : currentCoins;
+            const amount = isRuby ? (currentUserProfile.rubies || 0) : (currentUserProfile.coins || 0);
             const field = isRuby ? 'rubies' : 'coins';
-            const username = currentUserProfile?.username || 'Guest';
+            const username = currentUserProfile.username || 'Guest';
 
             if (amount <= 0) {
                 showNotification("Empty Wallet", `You have no ${field} to bet!`, "error");
@@ -431,7 +429,7 @@
                             <div class="text-sm font-medium text-slate-300 mb-1 italic">Did Allin</div>
                             <div class="text-3xl font-black ${colorClass} mb-1">${data.result}</div>
                             <div class="text-lg font-bold ${isWin ? 'text-white' : 'text-slate-500'}">
-                                ${isWin ? '+' : '-'}${data.amount.toLocaleString()} ${data.field}
+                                ${isWin ? '+' : '-'}${(data.amount || 0).toLocaleString()} ${data.field}
                                 ${isWin ? `<span class="block text-xs mt-1 text-slate-400">Multiplier: x${data.multiplier}</span>` : ''}
                             </div>
                         `;
