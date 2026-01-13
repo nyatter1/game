@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatlaxy Pro | Next-Gen Communication</title>
+    <title>Chatlaxy Pro</title>
+    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -13,17 +15,10 @@
             font-family: 'Inter', sans-serif;
             background-color: #0f172a;
             color: #f8fafc;
-            overflow: hidden;
-        }
-
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -35,112 +30,111 @@
             border-radius: 10px;
         }
 
-        .msg-bubble-own {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            border-radius: 18px 18px 2px 18px;
-        }
-
-        .msg-bubble-other {
-            background: #1e293b;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 18px 18px 18px 2px;
+        .galaxy-bg {
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
         }
 
         .hidden { display: none !important; }
 
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .online-indicator {
-            animation: pulse-green 2s infinite;
+        .animate-msg {
+            animation: fadeIn 0.3s ease forwards;
         }
     </style>
 </head>
-<body class="h-screen flex items-center justify-center">
+<body class="h-screen overflow-hidden">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 bg-[#0f172a] flex items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
 
     <!-- Auth View -->
-    <div id="auth-view" class="w-full max-w-md p-4 animate-in fade-in zoom-in duration-300">
-        <div class="glass-panel p-8 rounded-3xl shadow-2xl">
-            <div class="flex flex-col items-center mb-8">
-                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4">
-                    <i class="fas fa-shield-halved text-3xl text-white"></i>
+    <div id="auth-view" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden">
+            <div class="p-8">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-500/20">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+                    </div>
                 </div>
-                <h1 class="text-3xl font-bold text-white tracking-tight" id="auth-title">Welcome Back</h1>
-                <p class="text-slate-400 text-sm mt-2" id="auth-subtitle">Access the galaxy of Pro chatters</p>
-            </div>
+                <h2 id="auth-title" class="text-3xl font-bold text-center text-white mb-2">Welcome Back</h2>
+                <p id="auth-subtitle" class="text-center text-slate-400 mb-8">Enter your details to access Chatlaxy Pro</p>
 
-            <form id="auth-form" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 ml-1">Email Address</label>
-                    <input type="email" id="email" required placeholder="name@company.com" 
-                        class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+                <form id="auth-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Email Address</label>
+                        <input type="email" id="email" required placeholder="name@example.com"
+                            class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Password</label>
+                        <input type="password" id="password" required placeholder="••••••••"
+                            class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white">
+                    </div>
+
+                    <div id="auth-error" class="hidden text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20"></div>
+
+                    <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-6 flex flex-col gap-3">
+                    <button id="toggle-view" class="text-sm text-slate-400 hover:text-white transition-colors text-center">
+                        Don't have an account? Sign Up
+                    </button>
+                    <div class="relative my-2">
+                        <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-700"></span></div>
+                        <div class="relative flex justify-center text-xs uppercase"><span class="bg-[#1e293b] px-2 text-slate-500">Or continue with</span></div>
+                    </div>
+                    <button id="guest-access" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg transition-all">
+                        Guest Access
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 ml-1">Password</label>
-                    <input type="password" id="password" required placeholder="••••••••" 
-                        class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
-                </div>
-
-                <div id="auth-error" class="hidden text-red-400 text-xs bg-red-400/10 p-3 rounded-xl border border-red-400/20"></div>
-
-                <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]">
-                    Sign In
-                </button>
-            </form>
-
-            <div class="mt-6 flex flex-col gap-4">
-                <button id="toggle-auth" class="text-sm text-slate-400 hover:text-white transition-colors text-center font-medium">
-                    Don't have an account? Create one
-                </button>
-                <div class="relative py-2">
-                    <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-800"></span></div>
-                    <div class="relative flex justify-center text-[10px] uppercase font-bold tracking-widest"><span class="bg-[#1e293b] px-3 text-slate-500">Or Access via</span></div>
-                </div>
-                <button id="guest-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl transition-all font-semibold text-sm">
-                    <i class="fas fa-user-secret mr-2"></i> Guest Mode
-                </button>
             </div>
         </div>
     </div>
 
     <!-- Main Chat View -->
-    <div id="chat-view" class="hidden h-screen w-full flex flex-col md:flex-row overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
+    <div id="chat-view" class="hidden h-screen flex flex-col md:flex-row overflow-hidden galaxy-bg">
         
         <!-- Sidebar -->
-        <aside class="hidden md:flex flex-col w-80 glass-panel border-r border-white/5">
-            <div class="p-6 flex items-center gap-3 border-b border-white/5">
+        <aside class="hidden md:flex flex-col w-72 bg-[#1e293b] border-r border-slate-700/50">
+            <div class="p-6 flex items-center gap-3 border-b border-slate-700/50">
                 <div class="bg-blue-600 p-2 rounded-lg">
-                    <i class="fas fa-shield-halved text-white"></i>
+                    <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
                 </div>
-                <h2 class="text-xl font-bold text-white tracking-tight">Chatlaxy Pro</h2>
+                <h1 class="text-xl font-bold text-white tracking-tight">Chatlaxy Pro</h1>
             </div>
             
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-4">
-                <div class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 px-2">
-                    <i class="fas fa-users"></i>
-                    <span>Synchronized Users</span>
+            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    <span id="online-count-label">Online Players (0)</span>
                 </div>
-                <div id="user-list" class="space-y-2">
-                    <!-- Users injected here -->
+                <div id="user-list" class="space-y-1">
+                    <!-- Users dynamically populated -->
                 </div>
             </div>
 
-            <div class="p-6 border-t border-white/5 bg-slate-900/40">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <i class="fas fa-user text-white"></i>
+            <div class="p-4 border-t border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-3 mb-4 px-2">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                        <i data-lucide="user" class="w-5 h-5 text-white"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p id="current-user-email" class="text-sm font-bold text-white truncate">User</p>
-                        <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Pro Member</p>
+                        <p id="user-display-email" class="text-sm font-bold text-white truncate">Anonymous</p>
+                        <p class="text-xs text-slate-500">Pro Member</p>
                     </div>
                 </div>
-                <button id="logout-btn" class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold transition-all">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout Session
+                <button id="logout-btn" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition-all font-medium">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Logout
                 </button>
             </div>
         </aside>
@@ -148,34 +142,30 @@
         <!-- Chat Area -->
         <main class="flex-1 flex flex-col relative">
             <!-- Mobile Header -->
-            <header class="md:hidden p-4 glass-panel border-b border-white/5 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-shield-halved text-blue-500"></i>
-                    <h1 class="font-bold text-white">Chatlaxy Pro</h1>
-                </div>
-                <button id="mobile-logout" class="text-red-400"><i class="fas fa-sign-out-alt text-lg"></i></button>
+            <header class="md:hidden p-4 bg-[#1e293b] border-b border-slate-700 flex justify-between items-center">
+                <h1 class="text-lg font-bold text-white">Chatlaxy Pro</h1>
+                <button id="mobile-logout"><i data-lucide="log-out" class="w-5 h-5 text-red-400"></i></button>
             </header>
 
-            <!-- Message Feed -->
-            <div id="message-feed" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar">
-                <!-- Messages injected here -->
+            <!-- Messages List -->
+            <div id="messages-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
+                <!-- Messages dynamically populated -->
             </div>
 
             <!-- Input Bar -->
-            <div class="p-4 md:p-8 bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent">
-                <form id="message-form" class="max-w-4xl mx-auto relative flex items-center">
+            <div class="p-4 md:p-6 bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent">
+                <form id="message-form" class="max-w-4xl mx-auto flex items-center gap-3 bg-[#1e293b] p-2 rounded-2xl border border-slate-700 shadow-xl">
                     <input type="text" id="message-input" autocomplete="off"
-                        class="w-full bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-200 placeholder-slate-500 shadow-2xl"
-                        placeholder="Broadcast to the galaxy...">
-                    <button type="submit" class="absolute right-2 bg-blue-600 hover:bg-blue-500 p-3 rounded-xl transition-all active:scale-90 shadow-lg shadow-blue-600/30">
-                        <i class="fas fa-paper-plane text-white"></i>
+                        class="flex-1 bg-transparent border-none focus:ring-0 text-slate-200 px-4 py-2 outline-none"
+                        placeholder="Type a message to the galaxy...">
+                    <button type="submit" id="send-btn" disabled
+                        class="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed p-3 rounded-xl transition-all active:scale-95">
+                        <i data-lucide="send" class="w-5 h-5 text-white"></i>
                     </button>
                 </form>
-                <div class="flex justify-center mt-4">
-                   <span class="text-[9px] text-slate-600 font-bold uppercase tracking-[0.3em]">
-                        <i class="fas fa-lock mr-1"></i> End-to-End Encrypted Tunnel Active
-                   </span>
-                </div>
+                <p class="text-[10px] text-center text-slate-600 mt-3 uppercase tracking-widest">
+                    Chatlaxy Pro Encrypted Connection
+                </p>
             </div>
         </main>
     </div>
@@ -184,12 +174,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { 
             getAuth, 
-            signInWithCustomToken, 
             signInAnonymously, 
+            signInWithCustomToken, 
             onAuthStateChanged, 
-            signOut,
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword
+            signOut, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword 
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { 
             getFirestore, 
@@ -197,53 +187,83 @@
             addDoc, 
             query, 
             onSnapshot, 
-            serverTimestamp,
-            doc,
-            setDoc
+            serverTimestamp, 
+            doc, 
+            setDoc 
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // --- Firebase Config & Init ---
+        // --- Firebase Config & Setup ---
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v2';
 
-        // --- DOM Elements ---
+        // --- State Management ---
+        let currentUser = null;
+        let currentView = 'login'; // login, signup, chat
+
+        // --- DOM Selectors ---
+        const loadingOverlay = document.getElementById('loading-overlay');
         const authView = document.getElementById('auth-view');
         const chatView = document.getElementById('chat-view');
         const authForm = document.getElementById('auth-form');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const authError = document.getElementById('auth-error');
         const authTitle = document.getElementById('auth-title');
         const authSubtitle = document.getElementById('auth-subtitle');
-        const submitBtn = document.getElementById('submit-btn');
-        const toggleAuth = document.getElementById('toggle-auth');
-        const guestBtn = document.getElementById('guest-btn');
-        const messageFeed = document.getElementById('message-feed');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const toggleViewBtn = document.getElementById('toggle-view');
+        const authError = document.getElementById('auth-error');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const messagesContainer = document.getElementById('messages-container');
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
-        const userList = document.getElementById('user-list');
-        const currentUserEmail = document.getElementById('current-user-email');
-        const logoutBtn = document.getElementById('logout-btn');
-        const mobileLogout = document.getElementById('mobile-logout');
+        const userListContainer = document.getElementById('user-list');
+        const onlineCountLabel = document.getElementById('online-count-label');
+        const userDisplayEmail = document.getElementById('user-display-email');
+        const sendBtn = document.getElementById('send-btn');
 
-        let isLogin = true;
+        // Initialize Lucide Icons
+        const renderIcons = () => lucide.createIcons();
 
-        // --- Auth Logic ---
+        // --- Auth Initialization ---
         const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) {}
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                }
+            } catch (err) {
+                console.error("Auth init error:", err);
+            } finally {
+                loadingOverlay.classList.add('hidden');
+                renderIcons();
             }
         };
 
-        toggleAuth.addEventListener('click', () => {
-            isLogin = !isLogin;
-            authTitle.innerText = isLogin ? 'Welcome Back' : 'Join the Galaxy';
-            authSubtitle.innerText = isLogin ? 'Access the galaxy of Pro chatters' : 'Create your secure account in seconds';
-            submitBtn.innerText = isLogin ? 'Sign In' : 'Create Account';
-            toggleAuth.innerText = isLogin ? "Don't have an account? Create one" : "Already a member? Sign In";
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                authView.classList.add('hidden');
+                chatView.classList.remove('hidden');
+                userDisplayEmail.textContent = user.email || 'Anonymous';
+                updatePresence(user);
+                startSubscriptions(user);
+            } else {
+                authView.classList.remove('hidden');
+                chatView.classList.add('hidden');
+                emailInput.value = '';
+                passwordInput.value = '';
+            }
+            renderIcons();
+        });
+
+        // --- View Logic ---
+        toggleViewBtn.addEventListener('click', () => {
+            currentView = currentView === 'login' ? 'signup' : 'login';
+            authTitle.textContent = currentView === 'login' ? 'Welcome Back' : 'Create Account';
+            authSubtitle.textContent = currentView === 'login' ? 'Enter your details to access Chatlaxy Pro' : 'Join the elite galaxy of chatters today';
+            authSubmitBtn.textContent = currentView === 'login' ? 'Sign In' : 'Create Pro Account';
+            toggleViewBtn.textContent = currentView === 'login' ? "Don't have an account? Sign Up" : "Already a member? Login";
             authError.classList.add('hidden');
         });
 
@@ -254,126 +274,136 @@
             const password = passwordInput.value;
 
             try {
-                if (isLogin) {
+                if (currentView === 'login') {
                     await signInWithEmailAndPassword(auth, email, password);
                 } else {
                     await createUserWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                authError.innerText = err.message.replace('Firebase: ', '');
+                authError.textContent = err.message.replace('Firebase:', '').trim();
                 authError.classList.remove('hidden');
             }
         });
 
-        guestBtn.addEventListener('click', () => signInAnonymously(auth));
-        const handleLogout = () => signOut(auth);
-        logoutBtn.addEventListener('click', handleLogout);
-        mobileLogout.addEventListener('click', handleLogout);
+        document.getElementById('guest-access').addEventListener('click', () => signInAnonymously(auth));
+        
+        const logoutAction = () => signOut(auth);
+        document.getElementById('logout-btn').addEventListener('click', logoutAction);
+        document.getElementById('mobile-logout').addEventListener('click', logoutAction);
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                authView.classList.add('hidden');
-                chatView.classList.remove('hidden');
-                currentUserEmail.innerText = user.email || 'Guest User';
-                updatePresence(user);
-                startListeners(user);
-            } else {
-                authView.classList.remove('hidden');
-                chatView.classList.add('hidden');
-            }
-        });
-
-        // --- Firestore Logic ---
-        async function updatePresence(user) {
+        // --- Firestore Operations ---
+        const updatePresence = async (user) => {
             const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
             await setDoc(userRef, {
                 uid: user.uid,
-                email: user.email || `Guest-${user.uid.slice(0,4)}`,
+                email: user.email || 'Anonymous',
                 lastSeen: serverTimestamp(),
                 online: true
             }, { merge: true });
-        }
+        };
 
-        function startListeners(currentUser) {
-            // Messages Listener
-            const msgQ = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
-            onSnapshot(msgQ, (snapshot) => {
-                const msgs = snapshot.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
+        const startSubscriptions = (user) => {
+            // Subscribe to Messages
+            const messagesQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
+            onSnapshot(messagesQuery, (snapshot) => {
+                const messages = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
                     .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-                
-                renderMessages(msgs, currentUser);
-            }, (err) => console.error("Msg Error:", err));
+                renderMessages(messages, user);
+            }, (err) => console.error("Message subscription error:", err));
 
-            // Users Listener
-            const userQ = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-            onSnapshot(userQ, (snapshot) => {
-                const users = snapshot.docs.map(d => d.data());
+            // Subscribe to Users
+            const usersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+            onSnapshot(usersQuery, (snapshot) => {
+                const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderUsers(users);
-            }, (err) => console.error("User Error:", err));
-        }
+            }, (err) => console.error("User subscription error:", err));
+        };
 
-        function renderMessages(msgs, currentUser) {
-            messageFeed.innerHTML = msgs.length === 0 
-                ? `<div class="h-full flex flex-col items-center justify-center text-slate-600 opacity-40">
-                    <i class="fas fa-comment-dots text-5xl mb-4"></i>
-                    <p class="font-bold tracking-widest uppercase text-xs">Awaiting first broadcast...</p>
-                   </div>`
-                : msgs.map(msg => {
-                    const isOwn = msg.uid === currentUser.uid;
-                    const time = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                    return `
-                        <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div class="max-w-[85%] md:max-w-[70%] group">
-                                <div class="flex items-center gap-2 mb-1 px-2 ${isOwn ? 'flex-row-reverse' : ''}">
-                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">${msg.email ? msg.email.split('@')[0] : 'Guest'}</span>
-                                    <span class="text-[9px] text-slate-700 font-bold opacity-0 group-hover:opacity-100 transition-opacity">${time}</span>
-                                </div>
-                                <div class="px-5 py-3 shadow-xl ${isOwn ? 'msg-bubble-own text-white' : 'msg-bubble-other text-slate-200'}">
-                                    <p class="text-sm leading-relaxed">${msg.text}</p>
-                                </div>
+        // --- Rendering Logic ---
+        const renderMessages = (messages, user) => {
+            if (messages.length === 0) {
+                messagesContainer.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
+                        <i data-lucide="message-square" class="w-12 h-12 opacity-20"></i>
+                        <p class="text-sm">No messages yet. Start the conversation!</p>
+                    </div>
+                `;
+                renderIcons();
+                return;
+            }
+
+            messagesContainer.innerHTML = messages.map(msg => {
+                const isOwn = msg.uid === user.uid;
+                const time = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                const emailLabel = msg.email ? msg.email.split('@')[0] : 'Anonymous';
+
+                return `
+                    <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} animate-msg">
+                        <div class="max-w-[85%] md:max-w-[70%] group">
+                            <div class="flex items-center gap-2 mb-1 px-1 ${isOwn ? 'flex-row-reverse' : ''}">
+                                <span class="text-xs font-semibold text-slate-500">${emailLabel}</span>
+                                <span class="text-[10px] text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">${time}</span>
+                            </div>
+                            <div class="px-4 py-2 rounded-2xl shadow-sm text-sm ${isOwn ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[#1e293b] text-slate-200 border border-slate-700 rounded-tl-none'}">
+                                ${msg.text}
                             </div>
                         </div>
-                    `;
-                }).join('');
-            messageFeed.scrollTop = messageFeed.scrollHeight;
-        }
+                    </div>
+                `;
+            }).join('');
 
-        function renderUsers(users) {
-            userList.innerHTML = users.map(u => `
-                <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 transition-all group cursor-default">
-                    <div class="relative">
-                        <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400">
-                            ${(u.email || 'G')[0].toUpperCase()}
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        const renderUsers = (users) => {
+            onlineCountLabel.textContent = `Online Players (${users.length})`;
+            userListContainer.innerHTML = users.map(u => {
+                const initial = (u.email || 'A')[0].toUpperCase();
+                const displayName = u.email.split('@')[0];
+
+                return `
+                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/50 transition-colors group">
+                        <div class="relative">
+                            <div class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold uppercase">
+                                ${initial}
+                            </div>
+                            <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#1e293b] rounded-full"></div>
                         </div>
-                        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-4 border-[#1e293b] rounded-full online-indicator"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-slate-300 truncate">${displayName}</p>
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-slate-300 truncate">${u.email ? u.email.split('@')[0] : 'Guest'}</p>
-                        <p class="text-[10px] text-slate-500 font-medium">Active Now</p>
-                    </div>
-                </div>
-            `).join('');
-        }
+                `;
+            }).join('');
+        };
+
+        // --- Interaction ---
+        messageInput.addEventListener('input', () => {
+            sendBtn.disabled = !messageInput.value.trim();
+        });
 
         messageForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = messageInput.value.trim();
-            if (!text || !auth.currentUser) return;
+            if (!text || !currentUser) return;
 
             messageInput.value = '';
+            sendBtn.disabled = true;
+
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                     text,
-                    uid: auth.currentUser.uid,
-                    email: auth.currentUser.email || `Guest-${auth.currentUser.uid.slice(0,4)}`,
+                    uid: currentUser.uid,
+                    email: currentUser.email,
                     timestamp: serverTimestamp()
                 });
             } catch (err) {
-                console.error("Send error:", err);
+                console.error("Failed to send message:", err);
             }
         });
 
+        // Start Auth process
         initAuth();
     </script>
 </body>
