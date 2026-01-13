@@ -107,11 +107,21 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Environment Setup
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "demo" };
+        // Firebase Configuration using your provided API Key
+        const firebaseConfig = {
+            apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
+            authDomain: "simple-chat-app.firebaseapp.com", // Fallback domain
+            projectId: "simple-chat-app", // Fallback ID
+            storageBucket: "simple-chat-app.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
         
-        const app = initializeApp(firebaseConfig);
+        // Environment override if available
+        const actualConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-app';
+
+        const app = initializeApp(actualConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
@@ -155,7 +165,6 @@
 
         // 2. Chat Logic (Subscription)
         function subscribeToMessages() {
-            // RULE 1 & 2: Use strict paths and simple queries
             const q = query(
                 collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
                 orderBy('timestamp', 'asc'),
@@ -174,7 +183,7 @@
                     
                     messageEl.innerHTML = `
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] font-bold text-gray-400">${isMe ? 'You' : data.email.split('@')[0]}</span>
+                            <span class="text-[10px] font-bold text-gray-400">${isMe ? 'You' : (data.email ? data.email.split('@')[0] : 'Guest')}</span>
                         </div>
                         <div class="max-w-[75%] p-3 rounded-2xl text-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border rounded-tl-none text-gray-800'} shadow-sm">
                             ${data.text}
