@@ -59,30 +59,21 @@
         }
 
         /* --- Advanced Backgrounds --- */
-        .bg-nebula {
-            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #020617 100%);
-        }
-        .bg-matrix {
-            background: linear-gradient(180deg, #020617 0%, #064e3b 100%);
-        }
-        .bg-blood {
-            background: radial-gradient(circle at top, #450a0a 0%, #020617 100%);
-        }
+        .bg-nebula { background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #020617 100%); }
+        .bg-matrix { background: linear-gradient(180deg, #020617 0%, #064e3b 100%); }
+        .bg-blood { background: radial-gradient(circle at top, #450a0a 0%, #020617 100%); }
 
-        /* --- Scrollbars --- */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        /* --- Message Animations --- */
         @keyframes msg-slide {
             from { opacity: 0; transform: translateY(20px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .msg-anim { animation: msg-slide 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
-        /* --- User Visual FX --- */
         .fx-glitch { animation: glitch 1s linear infinite; }
         @keyframes glitch {
             2%, 64% { transform: translate(2px,0) skew(0deg); }
@@ -101,7 +92,6 @@
 
         .fx-neon { text-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent); }
 
-        /* Fonts */
         .font-orbitron { font-family: 'Orbitron', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .font-grotesk { font-family: 'Space Grotesk', sans-serif; }
@@ -122,12 +112,12 @@
             </div>
         </div>
         <p class="mt-8 font-orbitron text-[10px] tracking-[0.5em] text-blue-500 animate-pulse">HANDSHAKING PROTOCOLS...</p>
+        <p id="loader-error" class="mt-4 text-red-500 font-mono text-[9px] hidden"></p>
     </div>
 
     <!-- Auth View -->
     <div id="auth-view" class="hidden min-h-screen flex items-center justify-center p-4 relative">
         <div class="w-full max-w-4xl glass-panel relative z-10 grid md:grid-cols-2 overflow-hidden border-t-4 border-blue-600">
-            <!-- Form Side -->
             <div class="p-10 space-y-8">
                 <div>
                     <h1 class="font-orbitron text-4xl font-black text-white italic tracking-tighter">CHATLAXY<span class="text-blue-500">PRO</span></h1>
@@ -174,11 +164,10 @@
                 </button>
             </div>
 
-            <!-- Customization Side (Preview) -->
+            <!-- Customization Side -->
             <div class="bg-black/60 p-10 hidden md:flex flex-col justify-between border-l border-slate-800">
                 <div class="space-y-8">
                     <p class="text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">Identity Config</p>
-                    
                     <div class="flex flex-col items-center gap-4">
                         <div class="relative group">
                             <div id="preview-pfp-container" class="w-24 h-24 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden bg-slate-900">
@@ -188,34 +177,11 @@
                         </div>
                         <div class="text-center">
                             <span id="preview-name" class="font-orbitron text-xl font-bold uppercase tracking-tight text-white">OPERATOR_X</span>
-                            <div class="flex items-center justify-center gap-2 mt-1">
-                                <span class="px-2 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-bold border border-blue-500/20 uppercase">Level 1</span>
-                                <span class="px-2 py-0.5 bg-slate-800 text-slate-400 text-[8px] font-bold uppercase">Recruit</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[8px] font-bold text-slate-500 uppercase">Aura Color</label>
-                            <input type="color" id="cfg-color" value="#3b82f6" class="w-full h-8 bg-transparent border-none cursor-pointer">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[8px] font-bold text-slate-500 uppercase">Visual Mod</label>
-                            <select id="cfg-fx" class="w-full bg-slate-900 border border-slate-800 text-[9px] p-2 text-slate-300">
-                                <option value="none">Standard</option>
-                                <option value="fx-glitch">Glitch</option>
-                                <option value="fx-rainbow">Spectrum</option>
-                                <option value="fx-neon">Neon Glow</option>
-                            </select>
                         </div>
                     </div>
                 </div>
-
                 <div class="bg-blue-600/5 p-4 border border-blue-500/10 rounded">
-                    <p class="text-[9px] text-blue-400/60 leading-relaxed font-mono">
-                        "The interface is not just a tool; it's an extension of your digital consciousness. Choose your parameters wisely."
-                    </p>
+                    <p class="text-[9px] text-blue-400/60 leading-relaxed font-mono italic">"The interface is an extension of your digital consciousness."</p>
                 </div>
             </div>
         </div>
@@ -223,42 +189,21 @@
 
     <!-- Main App View -->
     <div id="main-view" class="hidden h-screen flex flex-col md:flex-row overflow-hidden relative">
-        <!-- Sidebar -->
         <aside class="w-full md:w-80 glass-panel border-r border-slate-800/50 flex flex-col relative z-20">
             <div class="p-6 border-b border-slate-800/50 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
                     <span class="font-orbitron text-xs font-bold tracking-[0.2em] text-white">TERMINAL_NODES</span>
                 </div>
-                <button id="settings-toggle" class="p-2 hover:bg-slate-800 rounded transition-colors">
-                    <i data-lucide="settings-2" class="w-4 h-4 text-slate-500"></i>
-                </button>
             </div>
 
-            <!-- Stats/XP Bar -->
-            <div class="px-6 py-4 bg-black/20 border-b border-slate-800/30">
-                <div class="flex justify-between text-[8px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-                    <span>Experience / Rank</span>
-                    <span id="rank-display">Lvl 1</span>
-                </div>
-                <div class="h-1 bg-slate-800 w-full overflow-hidden">
-                    <div id="xp-progress" class="h-full bg-blue-500" style="width: 30%"></div>
-                </div>
-            </div>
-
-            <!-- User Lists -->
             <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
                 <div class="mb-6">
                     <h3 class="text-[8px] font-black text-blue-500 uppercase tracking-[0.3em] px-2 mb-3">Online Operatives</h3>
                     <div id="user-list-online" class="space-y-1"></div>
                 </div>
-                <div>
-                    <h3 class="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] px-2 mb-3">Disconnected</h3>
-                    <div id="user-list-offline" class="space-y-1 opacity-50"></div>
-                </div>
             </div>
 
-            <!-- Current User Profile -->
             <div class="p-4 bg-black/40 border-t border-slate-800/50">
                 <div class="flex items-center gap-3">
                     <div id="me-avatar" class="w-10 h-10 rounded-full border-2 border-slate-800 overflow-hidden bg-slate-900"></div>
@@ -273,52 +218,25 @@
             </div>
         </aside>
 
-        <!-- Chat Container -->
         <main class="flex-1 flex flex-col relative z-10">
-            <!-- Header -->
             <header class="h-16 glass-panel border-b border-slate-800/50 flex items-center justify-between px-6">
                 <div class="flex flex-col">
                     <span class="text-[10px] font-bold text-blue-500 tracking-[0.2em] uppercase">Global Channel</span>
-                    <span class="text-[8px] font-mono text-slate-500">SECURE_TUNNEL_ESTABLISHED: AES-256</span>
-                </div>
-                <div class="flex gap-2">
-                    <button id="theme-nebula" class="w-4 h-4 rounded-full bg-indigo-900 border border-slate-700"></button>
-                    <button id="theme-matrix" class="w-4 h-4 rounded-full bg-emerald-900 border border-slate-700"></button>
-                    <button id="theme-blood" class="w-4 h-4 rounded-full bg-rose-950 border border-slate-700"></button>
                 </div>
             </header>
 
-            <!-- Messages Area -->
-            <div id="message-container" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                <!-- Messages render here -->
-            </div>
+            <div id="message-container" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"></div>
 
-            <!-- Input Area -->
             <div class="p-6 relative">
                 <div class="max-w-4xl mx-auto glass-panel p-1 border border-slate-700/50 rounded-lg group focus-within:border-blue-500/50 transition-all">
                     <form id="chat-form" class="flex items-center gap-2">
-                        <button type="button" id="emoji-trigger" class="p-3 text-slate-500 hover:text-blue-500">
-                            <i data-lucide="smile" class="w-5 h-5"></i>
-                        </button>
                         <input type="text" id="chat-input" placeholder="Transmit data string..." autocomplete="off"
-                            class="flex-1 bg-transparent border-none outline-none py-3 px-2 text-sm text-white font-grotesk placeholder:text-slate-600">
+                            class="flex-1 bg-transparent border-none outline-none py-3 px-2 text-sm text-white font-grotesk">
                         <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-md btn-cyber flex items-center gap-2">
                             <span class="text-[10px]">SEND</span>
                             <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                         </button>
                     </form>
-                </div>
-                
-                <!-- Emoji Panel (Hidden) -->
-                <div id="emoji-panel" class="hidden absolute bottom-24 left-6 p-4 glass-panel border border-slate-700 w-64 grid grid-cols-4 gap-2">
-                    <button class="emoji-btn hover:scale-125 transition-transform">🔥</button>
-                    <button class="emoji-btn hover:scale-125 transition-transform">🚀</button>
-                    <button class="emoji-btn hover:scale-125 transition-transform">💎</button>
-                    <button class="emoji-btn hover:scale-125 transition-transform">💀</button>
-                    <button class="emoji-btn hover:scale-125 transition-transform">🌌</button>
-                    <button class="emoji-btn hover:scale-125 transition-transform">👾</button>
-                    <button class="emoji-btn hover:scale-125 transition-transform">🔋</button>
-                    <button class="emoji-btn hover:scale-125 transition-transform">🦾</button>
                 </div>
             </div>
         </main>
@@ -326,67 +244,73 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, getDoc, getDocs, where, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, getDoc, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Global State
+        // Environment Safety Checks
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v4';
-        const firebaseConfig = JSON.parse(__firebase_config);
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "fake-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project", storageBucket: "demo.appspot.com", messagingSenderId: "123", appId: "123" };
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let userState = {
-            profile: null,
-            auth: null,
-            mode: 'login',
-            theme: 'bg-nebula'
-        };
+        let userState = { profile: null, auth: null };
 
         const el = (id) => document.getElementById(id);
         const refreshIcons = () => lucide.createIcons();
 
-        // --- Audio System ---
-        const playSfx = (type) => {
-            const sounds = {
-                'click': 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
-                'msg': 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
-                'login': 'https://assets.mixkit.co/active_storage/sfx/136/136-preview.mp3'
-            };
-            const audio = new Audio(sounds[type]);
-            audio.volume = 0.2;
-            audio.play().catch(() => {});
+        // 1. Authentication Handshake (RULE 3)
+        const initHandshake = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // Fallback will be handled by UI (Auth View) if anonymous isn't immediate
+                    console.log("Waiting for user authentication...");
+                }
+            } catch (err) {
+                console.error("Handshake failed:", err);
+                el('loader-error').textContent = "PROTOCOLS REJECTED: " + err.message;
+                el('loader-error').classList.remove('hidden');
+            }
         };
 
-        // --- Auth & Data Listeners ---
+        // 2. Auth State Listener
         onAuthStateChanged(auth, async (user) => {
             userState.auth = user;
             if (user) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                const snap = await getDoc(docRef);
+                // RULE 1: Strict Paths
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
+                let snap;
+                try {
+                    snap = await getDoc(userDocRef);
+                } catch(e) {
+                    console.error("Doc fetch failed", e);
+                }
                 
-                if (snap.exists()) {
+                if (snap && snap.exists()) {
                     userState.profile = snap.data();
                 } else {
-                    // Fallback for guest or new auth
                     userState.profile = {
-                        username: user.displayName || `OPERATOR_${Math.floor(Math.random()*9000 + 1000)}`,
+                        uid: user.uid,
+                        username: user.displayName || `OPERATOR_${user.uid.slice(0, 4)}`,
                         color: '#3b82f6',
                         fx: 'none',
                         xp: 0,
-                        pfp: null
+                        online: true
                     };
-                    await setDoc(docRef, { ...userState.profile, online: true }, { merge: true });
+                    await setDoc(userDocRef, userState.profile, { merge: true });
                 }
 
-                await updateDoc(docRef, { online: true, lastSeen: serverTimestamp() });
+                await updateDoc(userDocRef, { online: true, lastSeen: serverTimestamp() });
                 
                 el('loader').classList.add('hidden');
                 el('auth-view').classList.add('hidden');
                 el('main-view').classList.remove('hidden');
+                
                 initAppUI();
                 startDataSubscriptions();
-                playSfx('login');
             } else {
                 el('loader').classList.add('hidden');
                 el('auth-view').classList.remove('hidden');
@@ -395,120 +319,64 @@
             refreshIcons();
         });
 
-        // --- UI Initialization ---
         function initAppUI() {
             const p = userState.profile;
             el('me-name').textContent = p.username;
-            el('me-name').style.color = p.color;
-            el('me-avatar').innerHTML = p.pfp ? `<img src="${p.pfp}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-500 font-bold">${p.username[0]}</div>`;
-            el('me-avatar').style.borderColor = p.color;
-            
-            // Stats
-            const level = Math.floor(Math.sqrt(p.xp / 100)) + 1;
-            el('rank-display').textContent = `Lvl ${level}`;
-            el('xp-progress').style.width = `${(p.xp % 100)}%`;
+            el('me-avatar').innerHTML = `<div class="w-full h-full flex items-center justify-center text-slate-500 font-bold">${p.username[0]}</div>`;
         }
 
         function startDataSubscriptions() {
-            // Messages
+            if (!userState.auth) return;
+
+            // RULE 2: No complex queries
             const msgQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), limit(50));
             onSnapshot(msgQuery, (snap) => {
                 const messages = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
                 renderMessages(messages);
-            }, (err) => console.error(err));
+            }, (err) => console.error("Msg Stream Error:", err));
 
-            // Users
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 const users = snap.docs.map(d => d.data());
                 renderUserList(users);
-            });
+            }, (err) => console.error("User Stream Error:", err));
         }
 
-        // --- Rendering ---
         function renderMessages(messages) {
             const container = el('message-container');
-            container.innerHTML = messages.map((m, i) => {
-                const isMe = m.uid === userState.auth.uid;
-                const time = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...';
-                
-                return `
-                <div class="flex ${isMe ? 'justify-end' : 'justify-start'} msg-anim" style="animation-delay: ${i * 0.05}s">
-                    <div class="flex gap-4 max-w-[80%] ${isMe ? 'flex-row-reverse' : ''}">
-                        <div class="w-10 h-10 rounded-full flex-shrink-0 border-2 bg-slate-900 overflow-hidden ${m.fx || ''}" style="border-color: ${m.color || '#334155'}">
-                            ${m.pfp ? `<img src="${m.pfp}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[10px] text-slate-500 font-bold">${m.username[0]}</div>`}
-                        </div>
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[9px] font-black uppercase tracking-widest ${m.fx || ''}" style="color: ${m.color || '#64748b'}">${m.username}</span>
-                                <span class="text-[8px] text-slate-600 font-mono">${time}</span>
-                            </div>
-                            <div class="px-5 py-3 rounded-2xl glass-panel text-sm font-grotesk leading-relaxed ${isMe ? 'rounded-tr-none' : 'rounded-tl-none'} border border-slate-700/50" 
-                                 style="border-left: 4px solid ${m.color || '#3b82f6'};">
-                                ${m.text}
-                            </div>
-                        </div>
+            container.innerHTML = messages.map(m => `
+                <div class="flex ${m.uid === userState.auth.uid ? 'justify-end' : 'justify-start'} msg-anim">
+                    <div class="max-w-[80%] glass-panel p-3 rounded-xl border-l-4" style="border-color: ${m.color || '#3b82f6'}">
+                        <p class="text-[9px] font-bold uppercase mb-1" style="color: ${m.color}">${m.username}</p>
+                        <p class="text-sm">${m.text}</p>
                     </div>
-                </div>`;
-            }).join('');
+                </div>
+            `).join('');
             container.scrollTop = container.scrollHeight;
-            if(messages.length > 0) playSfx('msg');
         }
 
         function renderUserList(users) {
-            const online = users.filter(u => u.online);
-            const offline = users.filter(u => !u.online);
-
-            const tpl = (u) => `
-                <div class="flex items-center gap-3 p-2 hover:bg-white/5 transition-all rounded-lg group cursor-pointer">
-                    <div class="w-8 h-8 rounded-full border-2 bg-slate-900 overflow-hidden ${u.fx || ''}" style="border-color: ${u.color || '#1e293b'}">
-                        ${u.pfp ? `<img src="${u.pfp}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[8px] text-slate-500">${u.username[0]}</div>`}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-[10px] font-bold uppercase truncate tracking-tighter ${u.fx || ''}" style="color: ${u.color || '#64748b'}">${u.username}</p>
-                        <p class="text-[8px] text-slate-500 font-mono">ID: ${u.uid.slice(0,6)}</p>
-                    </div>
-                    ${u.online ? '<div class="w-1 h-1 rounded-full bg-blue-500 shadow-[0_0_5px_#3b82f6]"></div>' : ''}
-                </div>`;
-
-            el('user-list-online').innerHTML = online.map(tpl).join('');
-            el('user-list-offline').innerHTML = offline.map(tpl).join('');
+            el('user-list-online').innerHTML = users.filter(u => u.online).map(u => `
+                <div class="flex items-center gap-2 p-2">
+                    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <span class="text-[10px] uppercase font-bold text-slate-300">${u.username}</span>
+                </div>
+            `).join('');
         }
 
-        // --- Interaction Handlers ---
-        el('auth-tabs').addEventListener('click', (e) => {
-            const isSignup = e.target.id === 'btn-tab-signup';
-            userState.mode = isSignup ? 'signup' : 'login';
-            
-            el('signup-extra').classList.toggle('hidden', !isSignup);
-            el('btn-tab-signup').classList.toggle('text-blue-500', isSignup);
-            el('btn-tab-signup').classList.toggle('border-blue-500', isSignup);
-            el('btn-tab-login').classList.toggle('text-blue-500', !isSignup);
-            el('btn-tab-login').classList.toggle('border-blue-500', !isSignup);
-            el('btn-tab-login').classList.toggle('text-slate-500', isSignup);
-            el('btn-tab-signup').classList.toggle('text-slate-500', !isSignup);
-            playSfx('click');
-        });
-
+        // Form Events
         el('auth-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = el('auth-email').value;
             const pass = el('auth-pass').value;
-            el('auth-error').classList.add('hidden');
-
             try {
                 if (userState.mode === 'signup') {
                     const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                    const profile = {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), {
                         uid: cred.user.uid,
                         username: el('reg-username').value || 'OPERATOR_X',
-                        color: el('cfg-color').value,
-                        fx: el('cfg-fx').value,
-                        xp: 10,
-                        pfp: userState.profile?.pfp || null,
-                        online: true,
-                        lastSeen: serverTimestamp()
-                    };
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), profile);
+                        color: '#3b82f6',
+                        online: true
+                    });
                 } else {
                     await signInWithEmailAndPassword(auth, email, pass);
                 }
@@ -522,71 +390,21 @@
             e.preventDefault();
             const text = el('chat-input').value.trim();
             if(!text || !userState.auth) return;
-            
             el('chat-input').value = '';
-            
-            const msg = {
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                 text,
                 uid: userState.auth.uid,
                 username: userState.profile.username,
                 color: userState.profile.color,
-                fx: userState.profile.fx,
-                pfp: userState.profile.pfp,
                 timestamp: serverTimestamp()
-            };
-
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), msg);
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userState.auth.uid), { xp: increment(2) });
-        });
-
-        // Preview Logic
-        el('reg-username').addEventListener('input', (e) => el('preview-name').textContent = e.target.value || 'OPERATOR_X');
-        el('cfg-color').addEventListener('input', (e) => {
-            el('preview-name').style.color = e.target.value;
-            document.documentElement.style.setProperty('--accent', e.target.value);
-        });
-        el('cfg-fx').addEventListener('change', (e) => el('preview-name').className = `font-orbitron text-xl font-bold uppercase tracking-tight text-white ${e.target.value}`);
-
-        el('pfp-upload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const data = ev.target.result;
-                    if(!userState.profile) userState.profile = {};
-                    userState.profile.pfp = data;
-                    el('preview-pfp-container').innerHTML = `<img src="${data}" class="w-full h-full object-cover">`;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Themes
-        ['nebula', 'matrix', 'blood'].forEach(t => {
-            el(`theme-${t}`).addEventListener('click', () => {
-                const root = el('app-root');
-                root.classList.remove('bg-nebula', 'bg-matrix', 'bg-blood');
-                root.classList.add(`bg-${t}`);
-                playSfx('click');
             });
         });
 
         el('guest-btn').addEventListener('click', () => signInAnonymously(auth));
-        el('logout-btn').addEventListener('click', () => {
-            if(userState.auth) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userState.auth.uid), { online: false });
-            signOut(auth);
-        });
-        
-        el('emoji-trigger').addEventListener('click', () => el('emoji-panel').classList.toggle('hidden'));
-        document.querySelectorAll('.emoji-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                el('chat-input').value += btn.textContent;
-                el('emoji-panel').classList.add('hidden');
-                el('chat-input').focus();
-            });
-        });
+        el('logout-btn').addEventListener('click', () => signOut(auth));
 
-        refreshIcons();
+        // Start Handshake
+        initHandshake();
     </script>
 </body>
 </html>
