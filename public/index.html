@@ -11,17 +11,16 @@
             animation: fadeIn 0.15s ease-out;
         }
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         body { background-color: #0f172a; color: #f1f5f9; }
 
-        /* Command Notification Style */
         #cmd-notify {
-            transition: opacity 0.5s ease-in-out, transform 0.3s ease-out;
+            transition: opacity 0.3s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             pointer-events: none;
         }
         .notify-show {
@@ -37,9 +36,9 @@
 <body class="h-screen flex items-center justify-center font-sans overflow-hidden">
 
     <!-- Command Notification Overlay -->
-    <div id="cmd-notify" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-slate-900/90 border border-slate-700 backdrop-blur-xl px-8 py-4 rounded-2xl shadow-2xl opacity-0 scale-90 flex flex-col items-center gap-2">
+    <div id="cmd-notify" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-slate-900/95 border border-slate-700 backdrop-blur-xl px-10 py-6 rounded-3xl shadow-2xl opacity-0 scale-90 flex flex-col items-center gap-3 min-w-[300px]">
         <div id="notify-icon" class="text-indigo-500"></div>
-        <div id="notify-text" class="text-xl font-bold text-white text-center"></div>
+        <div id="notify-text" class="text-2xl font-black text-white text-center"></div>
         <div id="notify-subtext" class="text-sm text-slate-400 text-center"></div>
     </div>
 
@@ -56,11 +55,11 @@
         <form id="auth-form" class="space-y-4" onsubmit="return false;">
             <div>
                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
-                <input type="email" id="email" required class="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                <input type="email" id="email" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Password</label>
-                <input type="password" id="password" required class="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                <input type="password" id="password" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
             </div>
             
             <div id="auth-error" class="hidden text-red-400 text-xs p-3 bg-red-950/30 border border-red-900/50 rounded-lg"></div>
@@ -70,7 +69,7 @@
             </button>
         </form>
 
-        <div class="mt-6 flex flex-col gap-3">
+        <div class="mt-6 flex flex-col gap-3 text-center">
             <button id="toggle-auth" type="button" class="text-sm text-indigo-400 font-medium hover:text-indigo-300">
                 Need an account? Sign up
             </button>
@@ -86,7 +85,6 @@
 
     <!-- Chat App (Hidden by default) -->
     <div id="chat-screen" class="hidden fixed inset-0 flex flex-col bg-slate-950">
-        <!-- Header -->
         <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
             <div class="flex items-center gap-4">
                 <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
@@ -102,16 +100,15 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Wallet Button -->
                 <div id="wallet-display" class="hidden md:flex items-center gap-3 bg-slate-800/50 border border-slate-700 px-4 py-1.5 rounded-full text-sm font-medium">
                     <div class="flex items-center gap-1.5 text-amber-400">
                         <i data-lucide="coins" class="w-4 h-4"></i>
-                        <span id="coin-balance">1,000</span>
+                        <span id="coin-balance">...</span>
                     </div>
                     <div class="w-px h-4 bg-slate-700"></div>
                     <div class="flex items-center gap-1.5 text-rose-400">
                         <i data-lucide="gem" class="w-4 h-4"></i>
-                        <span id="ruby-balance">10</span>
+                        <span id="ruby-balance">...</span>
                     </div>
                 </div>
 
@@ -122,33 +119,27 @@
         </header>
 
         <div class="flex flex-1 overflow-hidden">
-            <!-- Sidebar -->
             <aside class="w-64 border-r border-slate-800 bg-slate-900/30 hidden lg:flex flex-col">
-                <div class="p-4 border-b border-slate-800">
+                <div class="p-4 flex-1 overflow-hidden flex flex-col">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Players Online</h3>
-                    <div id="players-list" class="space-y-2 overflow-y-auto custom-scrollbar pr-2">
-                        <!-- Players show here -->
-                    </div>
+                    <div id="players-list" class="space-y-2 overflow-y-auto custom-scrollbar pr-2 flex-1"></div>
                 </div>
-                <div class="mt-auto p-4 border-t border-slate-800 text-[10px] text-slate-600 text-center uppercase tracking-widest">
-                    SimpleChat v1.4
+                <div class="p-4 border-t border-slate-800 text-[10px] text-slate-600 text-center uppercase tracking-widest">
+                    SimpleChat v1.5 • <span id="my-uid-display"></span>
                 </div>
             </aside>
 
-            <!-- Chat Main Area -->
-            <main class="flex-1 flex flex-col min-w-0">
-                <!-- Messages Area -->
-                <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                    <!-- Messages appear as a text log here -->
+            <main class="flex-1 flex flex-col min-w-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 to-slate-950">
+                <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-2 custom-scrollbar flex flex-col">
+                    <!-- Messages appear here -->
                 </div>
 
-                <!-- Input Area -->
-                <div class="p-4 border-t border-slate-800 bg-slate-900">
+                <div class="p-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-sm">
                     <form id="chat-form" class="max-w-5xl mx-auto flex gap-3" onsubmit="return false;">
-                        <input type="text" id="chat-input" placeholder="Message Global Chat (Try /allin gold)..." autocomplete="off"
-                            class="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-500">
-                        <button type="submit" id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-xl transition-all flex items-center justify-center font-bold">
-                            <i data-lucide="send" class="w-5 h-5 mr-2"></i> Send
+                        <input type="text" id="chat-input" placeholder="Type /allin gold or /allin ruby..." autocomplete="off"
+                            class="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-500 shadow-inner">
+                        <button type="submit" id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 rounded-xl transition-all flex items-center justify-center font-bold shadow-lg active:scale-95">
+                            <i data-lucide="send" class="w-5 h-5"></i>
                         </button>
                     </form>
                 </div>
@@ -158,43 +149,26 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit, doc, setDoc, getDoc, deleteDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit, doc, setDoc, getDoc, updateDoc, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
-            authDomain: "simple-chat-app-dnc.firebaseapp.com",
-            projectId: "simple-chat-app-dnc",
-            storageBucket: "simple-chat-app-dnc.appspot.com",
-            messagingSenderId: "10987654321",
-            appId: "1:10987654321:web:9876543210abcdef"
-        };
-        
-        const envConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-        let actualConfig = firebaseConfig;
-        
-        if (envConfigStr) {
-            try {
-                const parsed = JSON.parse(envConfigStr);
-                if (parsed && parsed.apiKey && parsed.apiKey !== 'demo') {
-                    actualConfig = parsed;
-                }
-            } catch (e) {}
-        }
-            
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-app';
+        // Fallback config for development, though environment usually provides one
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{"apiKey":"demo","projectId":"demo"}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-v1';
 
-        const app = initializeApp(actualConfig);
+        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         let isSignUp = false;
         let currentUserProfile = null;
+        let unsubPresence = null;
+        let unsubMessages = null;
 
         const el = (id) => document.getElementById(id);
         const refreshIcons = () => lucide.createIcons();
 
-        // Notification Helper (Personal)
+        // Notification System
         function showNotification(text, subtext = '', type = 'default') {
             const notify = el('cmd-notify');
             const icon = el('notify-icon');
@@ -205,296 +179,266 @@
             secondaryText.textContent = subtext;
 
             if (type === 'error') {
-                icon.innerHTML = '<i data-lucide="x-circle" class="w-8 h-8 text-red-500"></i>';
-                mainText.className = "text-xl font-bold text-red-500 text-center";
+                icon.innerHTML = '<i data-lucide="x-circle" class="w-12 h-12 text-red-500"></i>';
+                mainText.className = "text-2xl font-black text-red-500 text-center uppercase";
             } else if (type === 'success') {
-                icon.innerHTML = '<i data-lucide="sparkles" class="w-8 h-8 text-amber-400"></i>';
-                mainText.className = "text-xl font-bold text-amber-400 text-center";
+                icon.innerHTML = '<i data-lucide="sparkles" class="w-12 h-12 text-amber-400"></i>';
+                mainText.className = "text-2xl font-black text-amber-400 text-center uppercase";
             } else if (type === 'jackpot') {
-                icon.innerHTML = '<i data-lucide="crown" class="w-12 h-12 text-yellow-400 animate-bounce"></i>';
-                mainText.className = "text-3xl font-black text-yellow-400 text-center uppercase italic";
+                icon.innerHTML = '<i data-lucide="crown" class="w-16 h-16 text-yellow-400 animate-bounce"></i>';
+                mainText.className = "text-4xl font-black text-yellow-400 text-center uppercase italic tracking-tighter";
             } else {
-                icon.innerHTML = '<i data-lucide="alert-triangle" class="w-8 h-8 text-indigo-400"></i>';
-                mainText.className = "text-xl font-bold text-white text-center";
+                icon.innerHTML = '<i data-lucide="info" class="w-12 h-12 text-indigo-400"></i>';
+                mainText.className = "text-2xl font-black text-white text-center";
             }
 
             refreshIcons();
-            notify.classList.add('notify-show');
             notify.classList.remove('notify-hide');
+            notify.classList.add('notify-show');
 
             setTimeout(() => {
                 notify.classList.remove('notify-show');
                 notify.classList.add('notify-hide');
-            }, 2500);
+            }, 3500);
         }
 
-        async function initUserData(user) {
-            const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-            const snap = await getDoc(userRef);
+        // Wallet and Profile Management
+        async function syncProfile(user) {
+            const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
             
+            // Check if profile exists, if not create default
+            const snap = await getDoc(profileRef);
             if (!snap.exists()) {
-                await setDoc(userRef, {
+                const defaultUsername = user.isAnonymous ? `Guest_${user.uid.slice(0, 4)}` : (user.email ? user.email.split('@')[0] : 'Chatter');
+                await setDoc(profileRef, {
+                    username: defaultUsername,
                     coins: 1000,
                     rubies: 10,
-                    username: user.isAnonymous ? 'Guest' : (user.email ? user.email.split('@')[0] : 'User'),
-                    lastLogin: serverTimestamp()
+                    uid: user.uid,
+                    joinedAt: serverTimestamp()
                 });
-            } else {
-                await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
             }
 
-            onSnapshot(userRef, (doc) => {
+            // Real-time wallet updates
+            onSnapshot(profileRef, (doc) => {
                 if (doc.exists()) {
                     currentUserProfile = doc.data();
-                    el('coin-balance').textContent = (currentUserProfile.coins || 0).toLocaleString();
-                    el('ruby-balance').textContent = (currentUserProfile.rubies || 0).toLocaleString();
+                    el('coin-balance').textContent = Math.floor(currentUserProfile.coins || 0).toLocaleString();
+                    el('ruby-balance').textContent = Math.floor(currentUserProfile.rubies || 0).toLocaleString();
                     el('wallet-display').classList.remove('hidden');
                 }
-            });
+            }, (err) => console.error("Profile sync error:", err));
         }
 
-        async function handleAllIn(type) {
-            if (!currentUserProfile) return;
+        // Gambling Logic
+        async function handleAllIn(currency) {
+            if (!currentUserProfile || !auth.currentUser) return;
 
-            const isRuby = (type === 'r' || type === 'ruby');
-            const isGold = (type === 'g' || type === 'gold');
+            const isRuby = currency === 'ruby' || currency === 'r';
+            const isGold = currency === 'gold' || currency === 'g';
             
             if (!isRuby && !isGold) {
-                showNotification("Invalid Command", "Use /allin ruby or /allin gold", "error");
+                showNotification("Unknown currency", "Try /allin gold or /allin ruby", "error");
                 return;
             }
 
-            const amount = isRuby ? (currentUserProfile.rubies || 0) : (currentUserProfile.coins || 0);
             const field = isRuby ? 'rubies' : 'coins';
-            const username = currentUserProfile.username || 'Guest';
+            const amount = currentUserProfile[field] || 0;
 
             if (amount <= 0) {
-                showNotification("Empty Wallet", `You have no ${field} to bet!`, "error");
+                showNotification("No Funds", `You have 0 ${field} to bet.`, "error");
                 return;
             }
 
-            const userRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
+            // Calculations
+            const winChance = 0.22; // 22% chance to win
+            const isWin = Math.random() < winChance;
+            const profileRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
             
-            // LUCK CALCULATION: Rigged for "developer"
-            const isDeveloper = username.toLowerCase() === 'developer';
-            const winChance = isDeveloper ? 1.0 : 0.20;
-            const win = Math.random() < winChance;
-            
-            let resultText = "";
-            let resultAmount = 0;
+            let finalAmount = 0;
             let multiplier = 0;
 
-            if (win) {
-                multiplier = Math.floor(Math.random() * 49) + 2;
-                resultAmount = amount * multiplier;
-                resultText = "WON";
+            if (isWin) {
+                multiplier = Math.floor(Math.random() * 5) + 2; // Default 2x-6x
+                // 5% chance for a massive jackpot
+                if (Math.random() < 0.05) multiplier = Math.floor(Math.random() * 50) + 10;
                 
-                await updateDoc(userRef, { [field]: resultAmount });
+                finalAmount = amount * multiplier;
+                await updateDoc(profileRef, { [field]: finalAmount });
                 
-                if (multiplier >= 40) {
-                    showNotification("JACKPOT!", `X${multiplier}!! You won ${resultAmount.toLocaleString()} ${field}!`, "jackpot");
+                if (multiplier >= 10) {
+                    showNotification("JACKPOT!!", `X${multiplier} MULTIPLIER! You won ${finalAmount.toLocaleString()} ${field}!`, "jackpot");
                 } else {
-                    showNotification("BIG WIN!", `X${multiplier}! You won ${resultAmount.toLocaleString()} ${field}!`, "success");
+                    showNotification("WINNER!", `You won ${finalAmount.toLocaleString()} ${field}!`, "success");
                 }
             } else {
-                resultAmount = amount;
-                resultText = "LOST";
-                await updateDoc(userRef, { [field]: 0 });
-                showNotification("You Lost...", `Better luck next time! All ${field} gone.`, "error");
+                await updateDoc(profileRef, { [field]: 0 });
+                showNotification("BUSTED", `Lost everything. Ouch.`, "error");
             }
 
-            // Broadcast to chat
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                    type: 'allin_result',
-                    username: username,
-                    result: resultText,
-                    amount: resultAmount,
-                    field: field,
-                    multiplier: multiplier,
-                    uid: auth.currentUser.uid,
-                    timestamp: serverTimestamp()
-                });
-            } catch (err) {
-                console.error("Broadcast failed:", err);
-            }
-        }
-
-        function setupPresence(user) {
-            const username = user.isAnonymous ? 'Guest' : (user.email ? user.email.split('@')[0] : 'User');
-            const presenceRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid);
-            
-            setDoc(presenceRef, { 
-                uid: user.uid, 
-                username: username,
-                lastSeen: serverTimestamp() 
-            }, { merge: true });
-            
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'presence'));
-            const unsubPresence = onSnapshot(q, (snapshot) => {
-                const playersList = el('players-list');
-                const onlineCount = el('online-count');
-                
-                if (onlineCount) onlineCount.textContent = `${snapshot.size} Players Online`;
-                if (playersList) {
-                    playersList.innerHTML = '';
-                    snapshot.docs.forEach(doc => {
-                        const data = doc.data();
-                        const item = document.createElement('div');
-                        item.className = "flex items-center gap-3 py-1.5 px-2 hover:bg-slate-800/50 rounded-lg transition-all group";
-                        item.innerHTML = `
-                            <div class="relative">
-                                <div class="w-8 h-8 bg-indigo-900/50 border border-indigo-500/30 rounded-full flex items-center justify-center text-xs font-bold text-indigo-300">
-                                    ${(data.username || 'G').charAt(0).toUpperCase()}
-                                </div>
-                                <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-900 rounded-full"></div>
-                            </div>
-                            <span class="text-xs font-medium text-slate-300 group-hover:text-white truncate">${data.username || 'Guest'}</span>
-                        `;
-                        playersList.appendChild(item);
-                    });
-                }
+            // Log activity to global chat
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                type: 'gamble',
+                username: currentUserProfile.username,
+                result: isWin ? 'WON' : 'LOST',
+                amount: isWin ? finalAmount : amount,
+                currency: field,
+                multiplier: multiplier,
+                timestamp: serverTimestamp()
             });
-
-            window.addEventListener('beforeunload', () => deleteDoc(presenceRef));
-            return unsubPresence;
         }
 
-        el('toggle-auth').addEventListener('click', () => {
-            isSignUp = !isSignUp;
-            el('auth-title').textContent = isSignUp ? 'Create Account' : 'Welcome Back';
-            el('auth-subtitle').textContent = isSignUp ? 'Join the community today' : 'Login to start chatting';
-            el('submit-btn').textContent = isSignUp ? 'Create Account' : 'Sign In';
-            el('toggle-auth').textContent = isSignUp ? 'Have an account? Login' : 'Need an account? Sign up';
-        });
+        // Presence System
+        function managePresence(user) {
+            const presenceRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid);
+            const username = currentUserProfile?.username || (user.isAnonymous ? 'Guest' : user.email?.split('@')[0]);
 
-        el('auth-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = el('email').value;
-            const password = el('password').value;
-            const errorDiv = el('auth-error');
-            errorDiv.classList.add('hidden');
-            
-            try {
-                if (isSignUp) {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                }
-            } catch (err) {
-                errorDiv.textContent = err.code ? `Error: ${err.code}` : err.message;
-                errorDiv.classList.remove('hidden');
-            }
-        });
+            setDoc(presenceRef, {
+                uid: user.uid,
+                username: username,
+                lastActive: serverTimestamp()
+            }, { merge: true });
 
-        el('guest-btn').addEventListener('click', async () => {
-            try {
-                await signInAnonymously(auth);
-            } catch (err) {
-                el('auth-error').textContent = "Guest login failed.";
-                el('auth-error').classList.remove('hidden');
-            }
-        });
-        
-        el('logout-btn').addEventListener('click', () => signOut(auth));
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'presence'));
+            return onSnapshot(q, (snapshot) => {
+                const list = el('players-list');
+                const count = el('online-count');
+                count.textContent = `${snapshot.size} Players Online`;
+                list.innerHTML = '';
+                
+                snapshot.docs.forEach(d => {
+                    const data = d.data();
+                    const player = document.createElement('div');
+                    player.className = "flex items-center gap-3 py-2 px-3 hover:bg-slate-800/40 rounded-xl transition-all group border border-transparent hover:border-slate-700";
+                    player.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold border border-slate-700 text-indigo-400">
+                            ${(data.username || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <span class="text-sm font-medium text-slate-300 group-hover:text-white truncate">${data.username || 'Unknown'}</span>
+                    `;
+                    list.appendChild(player);
+                });
+            }, (err) => console.error("Presence error:", err));
+        }
 
-        let unsubMessages = null;
-        function subscribeToMessages() {
+        // Message Listener
+        function initChat() {
             if (unsubMessages) unsubMessages();
             const q = query(
                 collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
                 orderBy('timestamp', 'asc'),
-                limit(100)
+                limit(50)
             );
 
             unsubMessages = onSnapshot(q, (snapshot) => {
                 const list = el('messages-list');
-                list.innerHTML = '';
-                snapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    const messageEl = document.createElement('div');
-                    
-                    if (data.type === 'allin_result') {
-                        // SPECIAL ALLIN MESSAGE UI
-                        const isWin = data.result === 'WON';
-                        const colorClass = isWin ? (data.multiplier >= 40 ? 'text-yellow-400' : 'text-green-400') : 'text-red-500';
-                        const borderClass = isWin ? (data.multiplier >= 40 ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-green-500/30 bg-green-500/5') : 'border-red-500/20 bg-red-500/5';
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        const msg = document.createElement('div');
                         
-                        messageEl.className = `flex flex-col items-center justify-center p-6 my-4 border ${borderClass} rounded-2xl message-in w-full max-w-md mx-auto text-center`;
-                        messageEl.innerHTML = `
-                            <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">${data.username}</div>
-                            <div class="w-16 h-16 bg-slate-800 border-2 ${isWin ? 'border-indigo-500' : 'border-slate-700'} rounded-full flex items-center justify-center text-2xl font-bold mb-3 shadow-xl">
-                                ${data.username.charAt(0).toUpperCase()}
-                            </div>
-                            <div class="text-sm font-medium text-slate-300 mb-1 italic">Did Allin</div>
-                            <div class="text-3xl font-black ${colorClass} mb-1">${data.result}</div>
-                            <div class="text-lg font-bold ${isWin ? 'text-white' : 'text-slate-500'}">
-                                ${isWin ? '+' : '-'}${(data.amount || 0).toLocaleString()} ${data.field}
-                                ${isWin ? `<span class="block text-xs mt-1 text-slate-400">Multiplier: x${data.multiplier}</span>` : ''}
-                            </div>
-                        `;
-                    } else {
-                        // NORMAL MESSAGE UI
-                        const username = data.username || 'Guest';
-                        messageEl.className = "flex gap-2 py-0.5 text-sm message-in";
-                        messageEl.innerHTML = `<span class="font-bold text-indigo-400 whitespace-nowrap">${username}:</span><span class="text-slate-300 break-words">${data.text}</span>`;
+                        if (data.type === 'gamble') {
+                            const isWin = data.result === 'WON';
+                            msg.className = `flex flex-col p-4 my-2 rounded-2xl border text-center max-w-sm mx-auto message-in shadow-xl ${isWin ? 'bg-amber-500/10 border-amber-500/30' : 'bg-red-500/5 border-red-500/20'}`;
+                            msg.innerHTML = `
+                                <span class="text-[10px] font-black uppercase text-slate-500 mb-2">${data.username} went all in</span>
+                                <span class="text-2xl font-black ${isWin ? 'text-amber-400' : 'text-red-500'}">${data.result}</span>
+                                <span class="text-sm font-bold text-slate-300">${isWin ? '+' : '-'}${data.amount.toLocaleString()} ${data.currency}</span>
+                                ${isWin ? `<span class="text-[10px] text-amber-500 font-bold mt-1">Multiplier: ${data.multiplier}x</span>` : ''}
+                            `;
+                        } else {
+                            msg.className = "flex gap-2 py-0.5 text-sm message-in group";
+                            msg.innerHTML = `
+                                <span class="font-bold text-indigo-400 whitespace-nowrap">${data.username}:</span>
+                                <span class="text-slate-300 break-words">${data.text || ''}</span>
+                            `;
+                        }
+                        list.appendChild(msg);
                     }
-                    list.appendChild(messageEl);
                 });
                 list.scrollTop = list.scrollHeight;
-            });
+            }, (err) => console.error("Chat sync error:", err));
         }
 
-        el('chat-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = el('chat-input');
-            const text = input.value.trim();
-            if (!text || !auth.currentUser) return;
+        // Event Listeners
+        el('auth-form').addEventListener('submit', async (e) => {
+            const email = el('email').value;
+            const password = el('password').value;
+            const error = el('auth-error');
+            error.classList.add('hidden');
+            
+            try {
+                if (isSignUp) await createUserWithEmailAndPassword(auth, email, password);
+                else await signInWithEmailAndPassword(auth, email, password);
+            } catch (err) {
+                error.textContent = err.message;
+                error.classList.remove('hidden');
+            }
+        });
 
+        el('guest-btn').addEventListener('click', () => signInAnonymously(auth));
+        el('logout-btn').addEventListener('click', () => signOut(auth));
+        el('toggle-auth').addEventListener('click', () => {
+            isSignUp = !isSignUp;
+            el('auth-title').textContent = isSignUp ? 'Create Account' : 'Welcome Back';
+            el('submit-btn').textContent = isSignUp ? 'Create Account' : 'Sign In';
+            el('toggle-auth').textContent = isSignUp ? 'Have an account? Login' : 'Need an account? Sign up';
+        });
+
+        el('chat-form').addEventListener('submit', async (e) => {
+            const input = el('chat-input');
+            const val = input.value.trim();
+            if (!val) return;
             input.value = '';
 
-            // Command Interception
-            if (text.startsWith('/')) {
-                const parts = text.split(' ');
+            if (val.startsWith('/')) {
+                const parts = val.split(' ');
                 const cmd = parts[0].toLowerCase();
-
                 if (cmd === '/allin') {
                     handleAllIn(parts[1]?.toLowerCase());
                 } else {
-                    showNotification("Invalid Command", `Command ${cmd} not found`, "error");
+                    showNotification("Error", "Command not found", "error");
                 }
-                return; // Don't send in chat as text
+                return;
             }
 
-            try {
-                const username = currentUserProfile?.username || 'Guest';
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                    text,
-                    uid: auth.currentUser.uid,
-                    username: username,
-                    timestamp: serverTimestamp()
-                });
-            } catch (err) {}
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                text: val,
+                username: currentUserProfile?.username || 'Guest',
+                uid: auth.currentUser.uid,
+                timestamp: serverTimestamp()
+            });
         });
 
-        onAuthStateChanged(auth, (user) => {
+        // Global Auth State
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
+                el('my-uid-display').textContent = user.uid.slice(0, 8);
                 el('auth-screen').classList.add('hidden');
                 el('chat-screen').classList.remove('hidden');
-                initUserData(user);
-                setupPresence(user);
-                subscribeToMessages();
+                await syncProfile(user);
+                unsubPresence = managePresence(user);
+                initChat();
             } else {
                 el('auth-screen').classList.remove('hidden');
                 el('chat-screen').classList.add('hidden');
-                el('wallet-display').classList.add('hidden');
-                currentUserProfile = null;
+                if (unsubPresence) unsubPresence();
                 if (unsubMessages) unsubMessages();
             }
             refreshIcons();
         });
 
+        // Initialize UI
         refreshIcons();
+        
+        // Initial Login check
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            }
+        };
+        initAuth();
+
     </script>
 </body>
 </html>
