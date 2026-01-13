@@ -32,7 +32,7 @@
             <p id="auth-subtitle" class="text-slate-400 text-sm mt-1">Login to start chatting</p>
         </div>
 
-        <form id="auth-form" class="space-y-4">
+        <form id="auth-form" class="space-y-4" onsubmit="return false;">
             <div>
                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
                 <input type="email" id="email" required class="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
@@ -50,14 +50,14 @@
         </form>
 
         <div class="mt-6 flex flex-col gap-3">
-            <button id="toggle-auth" class="text-sm text-indigo-400 font-medium hover:text-indigo-300">
+            <button id="toggle-auth" type="button" class="text-sm text-indigo-400 font-medium hover:text-indigo-300">
                 Need an account? Sign up
             </button>
             <div class="relative py-2">
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
                 <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-900 px-2 text-slate-500">Or</span></div>
             </div>
-            <button id="guest-btn" class="w-full py-3 bg-slate-800 border border-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-750 transition-all">
+            <button id="guest-btn" type="button" class="w-full py-3 bg-slate-800 border border-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-750 transition-all">
                 Enter as Guest
             </button>
         </div>
@@ -91,10 +91,10 @@
 
         <!-- Input Area -->
         <div class="p-4 border-t border-slate-800 bg-slate-900">
-            <form id="chat-form" class="max-w-5xl mx-auto flex gap-3">
+            <form id="chat-form" class="max-w-5xl mx-auto flex gap-3" onsubmit="return false;">
                 <input type="text" id="chat-input" placeholder="Message Global Chat..." autocomplete="off"
                     class="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-500">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-xl transition-all flex items-center justify-center font-bold">
+                <button type="submit" id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-xl transition-all flex items-center justify-center font-bold">
                     <i data-lucide="send" class="w-5 h-5 mr-2"></i> Send
                 </button>
             </form>
@@ -106,7 +106,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit, doc, setDoc, deleteDoc, onDisconnect } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Updated configuration with your API key and matching project parameters
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
             authDomain: "simple-chat-app-dnc.firebaseapp.com",
@@ -116,7 +115,6 @@
             appId: "1:10987654321:web:9876543210abcdef"
         };
         
-        // Environment override logic
         const envConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
         let actualConfig = firebaseConfig;
         
@@ -126,9 +124,7 @@
                 if (parsed && parsed.apiKey && parsed.apiKey !== 'demo') {
                     actualConfig = parsed;
                 }
-            } catch (e) {
-                console.warn("Could not parse environment config, using manual config.");
-            }
+            } catch (e) {}
         }
             
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-app';
@@ -141,24 +137,21 @@
         const el = (id) => document.getElementById(id);
         const refreshIcons = () => lucide.createIcons();
 
-        // 1. Online Tracking
         function setupPresence(user) {
             const presenceRef = doc(db, 'artifacts', appId, 'public', 'presence', user.uid);
             setDoc(presenceRef, { uid: user.uid, lastSeen: serverTimestamp() }, { merge: true });
             
-            // Listen to total online count
             const q = query(collection(db, 'artifacts', appId, 'public', 'presence'));
             const unsubPresence = onSnapshot(q, (snapshot) => {
                 if (el('online-count')) {
                     el('online-count').textContent = `${snapshot.size} Players Online`;
                 }
-            }, (err) => console.warn("Presence listener error:", err));
+            });
 
             window.addEventListener('beforeunload', () => deleteDoc(presenceRef));
             return unsubPresence;
         }
 
-        // 2. Auth Flow
         el('toggle-auth').addEventListener('click', () => {
             isSignUp = !isSignUp;
             el('auth-title').textContent = isSignUp ? 'Create Account' : 'Welcome Back';
@@ -181,7 +174,6 @@
                     await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                console.error("Auth error:", err);
                 errorDiv.textContent = err.code ? `Error: ${err.code}` : err.message;
                 errorDiv.classList.remove('hidden');
             }
@@ -191,18 +183,16 @@
             try {
                 await signInAnonymously(auth);
             } catch (err) {
-                el('auth-error').textContent = "Guest login failed. Check Firebase Auth settings.";
+                el('auth-error').textContent = "Guest login failed.";
                 el('auth-error').classList.remove('hidden');
             }
         });
         
         el('logout-btn').addEventListener('click', () => signOut(auth));
 
-        // 3. Chat Logic
         let unsubMessages = null;
         function subscribeToMessages() {
             if (unsubMessages) unsubMessages();
-            
             const q = query(
                 collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
                 orderBy('timestamp', 'asc'),
@@ -212,22 +202,16 @@
             unsubMessages = onSnapshot(q, (snapshot) => {
                 const list = el('messages-list');
                 list.innerHTML = '';
-                
                 snapshot.docs.forEach(doc => {
                     const data = doc.data();
                     const username = data.email ? data.email.split('@')[0] : (data.username || 'Guest');
-                    
                     const messageEl = document.createElement('div');
                     messageEl.className = "flex gap-2 py-0.5 text-sm message-in";
-                    
-                    messageEl.innerHTML = `
-                        <span class="font-bold text-indigo-400 whitespace-nowrap">${username}:</span>
-                        <span class="text-slate-300 break-words">${data.text}</span>
-                    `;
+                    messageEl.innerHTML = `<span class="font-bold text-indigo-400 whitespace-nowrap">${username}:</span><span class="text-slate-300 break-words">${data.text}</span>`;
                     list.appendChild(messageEl);
                 });
                 list.scrollTop = list.scrollHeight;
-            }, (err) => console.error("Message subscription error:", err));
+            });
         }
 
         el('chat-form').addEventListener('submit', async (e) => {
@@ -245,7 +229,7 @@
                     username: auth.currentUser.isAnonymous ? 'Guest' : auth.currentUser.email.split('@')[0],
                     timestamp: serverTimestamp()
                 });
-            } catch (err) { console.error("Message send failed:", err); }
+            } catch (err) {}
         });
 
         onAuthStateChanged(auth, (user) => {
