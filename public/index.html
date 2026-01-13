@@ -79,32 +79,70 @@
                     </div>
                 </div>
             </div>
-            <button id="logout-btn" class="p-2 hover:bg-slate-800 text-slate-400 hover:text-red-400 rounded-lg transition-all">
-                <i data-lucide="log-out" class="w-5 h-5"></i>
-            </button>
+            
+            <div class="flex items-center gap-3">
+                <!-- Wallet Button -->
+                <div id="wallet-display" class="hidden md:flex items-center gap-3 bg-slate-800/50 border border-slate-700 px-4 py-1.5 rounded-full text-sm font-medium">
+                    <div class="flex items-center gap-1.5 text-amber-400">
+                        <i data-lucide="coins" class="w-4 h-4"></i>
+                        <span id="coin-balance">1,000</span>
+                    </div>
+                    <div class="w-px h-4 bg-slate-700"></div>
+                    <div class="flex items-center gap-1.5 text-rose-400">
+                        <i data-lucide="gem" class="w-4 h-4"></i>
+                        <span id="ruby-balance">10</span>
+                    </div>
+                </div>
+
+                <button id="logout-btn" class="p-2 hover:bg-slate-800 text-slate-400 hover:text-red-400 rounded-lg transition-all">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
         </header>
 
-        <!-- Messages Area -->
-        <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-1 custom-scrollbar">
-            <!-- Messages appear as a text log here -->
-        </div>
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar -->
+            <aside class="w-64 border-r border-slate-800 bg-slate-900/30 hidden lg:flex flex-col">
+                <div class="p-4 border-b border-slate-800">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Players Online</h3>
+                    <div id="players-list" class="space-y-2 overflow-y-auto custom-scrollbar pr-2">
+                        <!-- Players show here -->
+                        <div class="animate-pulse flex items-center gap-3 py-2">
+                            <div class="w-8 h-8 bg-slate-800 rounded-full"></div>
+                            <div class="h-3 w-24 bg-slate-800 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-auto p-4 border-t border-slate-800 text-[10px] text-slate-600 text-center uppercase tracking-widest">
+                    SimpleChat v1.2
+                </div>
+            </aside>
 
-        <!-- Input Area -->
-        <div class="p-4 border-t border-slate-800 bg-slate-900">
-            <form id="chat-form" class="max-w-5xl mx-auto flex gap-3" onsubmit="return false;">
-                <input type="text" id="chat-input" placeholder="Message Global Chat..." autocomplete="off"
-                    class="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-500">
-                <button type="submit" id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-xl transition-all flex items-center justify-center font-bold">
-                    <i data-lucide="send" class="w-5 h-5 mr-2"></i> Send
-                </button>
-            </form>
+            <!-- Chat Main Area -->
+            <main class="flex-1 flex flex-col min-w-0">
+                <!-- Messages Area -->
+                <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-1 custom-scrollbar">
+                    <!-- Messages appear as a text log here -->
+                </div>
+
+                <!-- Input Area -->
+                <div class="p-4 border-t border-slate-800 bg-slate-900">
+                    <form id="chat-form" class="max-w-5xl mx-auto flex gap-3" onsubmit="return false;">
+                        <input type="text" id="chat-input" placeholder="Message Global Chat..." autocomplete="off"
+                            class="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-500">
+                        <button type="submit" id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-xl transition-all flex items-center justify-center font-bold">
+                            <i data-lucide="send" class="w-5 h-5 mr-2"></i> Send
+                        </button>
+                    </form>
+                </div>
+            </main>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
@@ -137,19 +175,68 @@
         const el = (id) => document.getElementById(id);
         const refreshIcons = () => lucide.createIcons();
 
+        async function initUserData(user) {
+            const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+            const snap = await getDoc(userRef);
+            
+            // If new user, set initial balance
+            if (!snap.exists()) {
+                await setDoc(userRef, {
+                    coins: 1000,
+                    rubies: 10,
+                    username: user.isAnonymous ? 'Guest' : (user.email ? user.email.split('@')[0] : 'User'),
+                    lastLogin: serverTimestamp()
+                });
+            } else {
+                await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+            }
+
+            // Listen for wallet changes
+            onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    el('coin-balance').textContent = data.coins.toLocaleString();
+                    el('ruby-balance').textContent = data.rubies.toLocaleString();
+                    el('wallet-display').classList.remove('hidden');
+                }
+            });
+        }
+
         function setupPresence(user) {
-            // Updated Path: artifacts/{appId}/public/data/presence/{userId}
+            const username = user.isAnonymous ? 'Guest' : (user.email ? user.email.split('@')[0] : 'User');
             const presenceRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid);
-            setDoc(presenceRef, { uid: user.uid, lastSeen: serverTimestamp() }, { merge: true });
+            
+            setDoc(presenceRef, { 
+                uid: user.uid, 
+                username: username,
+                lastSeen: serverTimestamp() 
+            }, { merge: true });
             
             const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'presence'));
             const unsubPresence = onSnapshot(q, (snapshot) => {
-                if (el('online-count')) {
-                    el('online-count').textContent = `${snapshot.size} Players Online`;
+                const playersList = el('players-list');
+                const onlineCount = el('online-count');
+                
+                if (onlineCount) onlineCount.textContent = `${snapshot.size} Players Online`;
+                if (playersList) {
+                    playersList.innerHTML = '';
+                    snapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        const item = document.createElement('div');
+                        item.className = "flex items-center gap-3 py-1.5 px-2 hover:bg-slate-800/50 rounded-lg transition-all group";
+                        item.innerHTML = `
+                            <div class="relative">
+                                <div class="w-8 h-8 bg-indigo-900/50 border border-indigo-500/30 rounded-full flex items-center justify-center text-xs font-bold text-indigo-300">
+                                    ${(data.username || 'G').charAt(0).toUpperCase()}
+                                </div>
+                                <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-900 rounded-full"></div>
+                            </div>
+                            <span class="text-xs font-medium text-slate-300 group-hover:text-white truncate">${data.username || 'Guest'}</span>
+                        `;
+                        playersList.appendChild(item);
+                    });
                 }
-            }, (error) => {
-                console.error("Presence snapshot error:", error);
-            });
+            }, (error) => console.error("Presence error:", error));
 
             window.addEventListener('beforeunload', () => deleteDoc(presenceRef));
             return unsubPresence;
@@ -207,16 +294,14 @@
                 list.innerHTML = '';
                 snapshot.docs.forEach(doc => {
                     const data = doc.data();
-                    const username = data.email ? data.email.split('@')[0] : (data.username || 'Guest');
+                    const username = data.username || 'Guest';
                     const messageEl = document.createElement('div');
                     messageEl.className = "flex gap-2 py-0.5 text-sm message-in";
                     messageEl.innerHTML = `<span class="font-bold text-indigo-400 whitespace-nowrap">${username}:</span><span class="text-slate-300 break-words">${data.text}</span>`;
                     list.appendChild(messageEl);
                 });
                 list.scrollTop = list.scrollHeight;
-            }, (error) => {
-                console.error("Messages snapshot error:", error);
-            });
+            }, (error) => console.error("Messages error:", error));
         }
 
         el('chat-form').addEventListener('submit', async (e) => {
@@ -227,11 +312,11 @@
 
             input.value = '';
             try {
+                const username = auth.currentUser.isAnonymous ? 'Guest' : (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'User');
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                     text,
                     uid: auth.currentUser.uid,
-                    email: auth.currentUser.email,
-                    username: auth.currentUser.isAnonymous ? 'Guest' : auth.currentUser.email.split('@')[0],
+                    username: username,
                     timestamp: serverTimestamp()
                 });
             } catch (err) {}
@@ -241,11 +326,13 @@
             if (user) {
                 el('auth-screen').classList.add('hidden');
                 el('chat-screen').classList.remove('hidden');
+                initUserData(user);
                 setupPresence(user);
                 subscribeToMessages();
             } else {
                 el('auth-screen').classList.remove('hidden');
                 el('chat-screen').classList.add('hidden');
+                el('wallet-display').classList.add('hidden');
                 if (unsubMessages) unsubMessages();
             }
             refreshIcons();
