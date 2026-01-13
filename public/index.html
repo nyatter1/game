@@ -9,7 +9,7 @@
     <!-- Lucide Icons via CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700&family=Roboto+Mono&family=Playfair+Display&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
@@ -41,9 +41,31 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
         .animate-msg {
             animation: fadeIn 0.3s ease forwards;
         }
+
+        .user-anim-pulse { animation: pulse-glow 2s infinite; }
+        .user-anim-float { animation: float 3s ease-in-out infinite; }
+        .user-anim-bounce { animation: bounce 2s infinite; }
+
+        /* Font classes */
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Roboto Mono', monospace; }
+        .font-cyber { font-family: 'Orbitron', sans-serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
     </style>
 </head>
 <body class="h-screen overflow-hidden">
@@ -57,8 +79,8 @@
     </div>
 
     <!-- Auth View -->
-    <div id="auth-view" class="hidden min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden">
+    <div id="auth-view" class="hidden min-h-screen flex items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-lg bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden my-8">
             <div class="p-8">
                 <div class="flex justify-center mb-6">
                     <div class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-500/20">
@@ -69,6 +91,55 @@
                 <p id="auth-subtitle" class="text-center text-slate-400 mb-8">Enter your details to access Chatlaxy Pro</p>
 
                 <form id="auth-form" class="space-y-4">
+                    <!-- Signup Extra Fields -->
+                    <div id="signup-fields" class="hidden space-y-4 mb-4 pt-4 border-t border-slate-700/50">
+                        <div class="flex flex-col items-center gap-4 py-4">
+                            <div class="relative group">
+                                <div id="pfp-preview-container" class="w-24 h-24 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden border-4 border-slate-600">
+                                    <i data-lucide="camera" class="w-8 h-8 text-slate-400"></i>
+                                </div>
+                                <label class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
+                                    <span class="text-xs font-bold text-white">UPLOAD</span>
+                                    <input type="file" id="pfp-input" accept="image/*" class="hidden">
+                                </label>
+                            </div>
+                            <p class="text-xs text-slate-500">Choose a Profile Picture</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-400 mb-1">Display Username</label>
+                            <input type="text" id="username" placeholder="GalaxyTraveler"
+                                class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-400 mb-1">Theme Color</label>
+                                <input type="color" id="pfp-color" value="#3b82f6" class="w-full h-10 bg-[#0f172a] border border-slate-700 rounded-lg p-1 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-400 mb-1">Animation</label>
+                                <select id="user-animation" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-2 h-10 focus:outline-none text-white text-sm">
+                                    <option value="none">None</option>
+                                    <option value="user-anim-pulse">Pulse Glow</option>
+                                    <option value="user-anim-float">Floating</option>
+                                    <option value="user-anim-bounce">Bouncing</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-400 mb-1">Chat Font Style</label>
+                            <select id="user-font" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-2 h-10 focus:outline-none text-white text-sm">
+                                <option value="font-sans">Default Sans</option>
+                                <option value="font-mono">Retro Mono</option>
+                                <option value="font-cyber">Cyber Orbitron</option>
+                                <option value="font-serif">Elegant Serif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Core Auth Fields -->
                     <div>
                         <label class="block text-sm font-medium text-slate-400 mb-1">Email Address</label>
                         <input type="email" id="email" required placeholder="name@example.com"
@@ -78,6 +149,11 @@
                         <label class="block text-sm font-medium text-slate-400 mb-1">Password</label>
                         <input type="password" id="password" required placeholder="••••••••"
                             class="w-full bg-[#0f172a] border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white">
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="remember-me" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500">
+                        <label for="remember-me" class="text-sm text-slate-400 cursor-pointer">Remember me</label>
                     </div>
 
                     <div id="auth-error" class="hidden text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20"></div>
@@ -106,8 +182,8 @@
     <!-- Main Chat View -->
     <div id="chat-view" class="hidden h-screen flex flex-col md:flex-row overflow-hidden galaxy-bg">
         
-        <!-- Sidebar - Fixed layout classes -->
-        <aside class="flex flex-col w-72 bg-[#1e293b] border-r border-slate-700/50 h-full">
+        <!-- Sidebar -->
+        <aside class="flex flex-col w-72 bg-[#1e293b] border-r border-slate-700/50 h-full z-10">
             <div class="p-6 flex items-center gap-3 border-b border-slate-700/50">
                 <div class="bg-blue-600 p-2 rounded-lg">
                     <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
@@ -127,8 +203,9 @@
 
             <div class="p-4 border-t border-slate-700/50 bg-slate-800/30">
                 <div class="flex items-center gap-3 mb-4 px-2">
-                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden">
-                        <img src="public/default.png" alt="Profile" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=User&background=2563eb&color=fff'">
+                    <div id="my-pfp-container" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden border-2 border-transparent">
+                        <img id="my-pfp-img" src="" alt="Profile" class="w-full h-full object-cover hidden">
+                        <span id="my-pfp-initial" class="text-white font-bold">U</span>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p id="user-display-email" class="text-sm font-bold text-white truncate">Anonymous</p>
@@ -144,8 +221,7 @@
 
         <!-- Chat Area -->
         <main class="flex-1 flex flex-col relative">
-            <!-- Mobile Header (Hidden on MD up where sidebar is visible) -->
-            <header class="md:hidden p-4 bg-[#1e293b] border-b border-slate-700 flex justify-between items-center">
+            <header class="md:hidden p-4 bg-[#1e293b] border-b border-slate-700 flex justify-between items-center z-10">
                 <h1 class="text-lg font-bold text-white">Chatlaxy Pro</h1>
                 <button id="mobile-logout"><i data-lucide="log-out" class="w-5 h-5 text-red-400"></i></button>
             </header>
@@ -156,7 +232,7 @@
             </div>
 
             <!-- Input Bar -->
-            <div class="p-4 md:p-6 bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent">
+            <div class="p-4 md:p-6 bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent z-10">
                 <form id="message-form" class="max-w-4xl mx-auto flex items-center gap-3 bg-[#1e293b] p-2 rounded-2xl border border-slate-700 shadow-xl">
                     <input type="text" id="message-input" autocomplete="off"
                         class="flex-1 bg-transparent border-none focus:ring-0 text-slate-200 px-4 py-2 outline-none"
@@ -182,7 +258,10 @@
             onAuthStateChanged, 
             signOut, 
             createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword 
+            signInWithEmailAndPassword,
+            setPersistence,
+            browserLocalPersistence,
+            browserSessionPersistence
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { 
             getFirestore, 
@@ -192,215 +271,234 @@
             onSnapshot, 
             serverTimestamp, 
             doc, 
-            setDoc 
+            setDoc,
+            getDoc,
+            getDocs,
+            where
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // --- SAFE INITIALIZATION ---
-        window.onload = async function() {
-            
-            // Set the manual API key provided by the user
-            const manualApiKey = "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo";
-            
-            let firebaseConfig;
-            try {
-                if (typeof __firebase_config !== 'undefined') {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                    firebaseConfig.apiKey = manualApiKey;
-                } else {
-                    firebaseConfig = { 
-                        apiKey: manualApiKey, 
-                        authDomain: "chatlaxy-pro.firebaseapp.com", 
-                        projectId: "chatlaxy-pro",
-                        storageBucket: "chatlaxy-pro.appspot.com",
-                        messagingSenderId: "123456789",
-                        appId: "1:123456789:web:abcdef"
-                    };
-                }
-            } catch (e) {
-                console.error("Config parse error:", e);
-                document.body.innerHTML = '<div class="h-screen flex items-center justify-center text-red-500 p-8 text-center">Failed to load configuration. Please refresh the page.</div>';
-                return;
+        // --- CONFIGURATION ---
+        const manualApiKey = "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo";
+        let firebaseConfig = { 
+            apiKey: manualApiKey, 
+            authDomain: "chatlaxy-pro.firebaseapp.com", 
+            projectId: "chatlaxy-pro",
+            storageBucket: "chatlaxy-pro.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+        
+        if (typeof __firebase_config !== 'undefined') {
+            const remoteConfig = JSON.parse(__firebase_config);
+            firebaseConfig = { ...firebaseConfig, ...remoteConfig };
+            firebaseConfig.apiKey = manualApiKey;
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v2';
+
+        // --- UI ELEMENTS ---
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const authView = document.getElementById('auth-view');
+        const chatView = document.getElementById('chat-view');
+        const authForm = document.getElementById('auth-form');
+        const authTitle = document.getElementById('auth-title');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const toggleViewBtn = document.getElementById('toggle-view');
+        const authError = document.getElementById('auth-error');
+        const signupFields = document.getElementById('signup-fields');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const rememberMeInput = document.getElementById('remember-me');
+        const usernameInput = document.getElementById('username');
+        const pfpInput = document.getElementById('pfp-input');
+        const pfpPreviewContainer = document.getElementById('pfp-preview-container');
+        const colorInput = document.getElementById('pfp-color');
+        const animInput = document.getElementById('user-animation');
+        const fontInput = document.getElementById('user-font');
+        
+        const messagesContainer = document.getElementById('messages-container');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const userListContainer = document.getElementById('user-list');
+        const onlineCountLabel = document.getElementById('online-count-label');
+        const userDisplayEmail = document.getElementById('user-display-email');
+        const sendBtn = document.getElementById('send-btn');
+        const myPfpContainer = document.getElementById('my-pfp-container');
+        const myPfpImg = document.getElementById('my-pfp-img');
+        const myPfpInitial = document.getElementById('my-pfp-initial');
+
+        let currentUser = null;
+        let userData = null;
+        let currentView = 'login';
+        let base64Pfp = null;
+
+        const renderIcons = () => lucide.createIcons();
+
+        // --- IMAGE HANDLING ---
+        pfpInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    base64Pfp = event.target.result;
+                    pfpPreviewContainer.innerHTML = `<img src="${base64Pfp}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
             }
+        });
 
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v2';
-
-            const loadingOverlay = document.getElementById('loading-overlay');
-            const authView = document.getElementById('auth-view');
-            const chatView = document.getElementById('chat-view');
-            const authForm = document.getElementById('auth-form');
-            const authTitle = document.getElementById('auth-title');
-            const authSubtitle = document.getElementById('auth-subtitle');
-            const authSubmitBtn = document.getElementById('auth-submit-btn');
-            const toggleViewBtn = document.getElementById('toggle-view');
-            const authError = document.getElementById('auth-error');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const messagesContainer = document.getElementById('messages-container');
-            const messageForm = document.getElementById('message-form');
-            const messageInput = document.getElementById('message-input');
-            const userListContainer = document.getElementById('user-list');
-            const onlineCountLabel = document.getElementById('online-count-label');
-            const userDisplayEmail = document.getElementById('user-display-email');
-            const sendBtn = document.getElementById('send-btn');
-
-            let currentUser = null;
-            let currentView = 'login';
-
-            const renderIcons = () => lucide.createIcons();
-
-            onAuthStateChanged(auth, (user) => {
-                currentUser = user;
-                loadingOverlay.classList.add('hidden');
-                
-                if (user) {
-                    authView.classList.add('hidden');
-                    chatView.classList.remove('hidden');
-                    chatView.style.display = 'flex'; // Ensure display is flex
-                    userDisplayEmail.textContent = user.email || 'Anonymous';
-                    updatePresence(user);
-                    startSubscriptions(user);
-                } else {
-                    authView.classList.remove('hidden');
-                    chatView.classList.add('hidden');
-                    chatView.style.display = 'none';
-                }
-                renderIcons();
-            });
-
-            const initAuth = async () => {
-                try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    }
-                } catch (err) {
-                    console.error("Auth init error:", err);
-                }
-            };
-
-            const updatePresence = async (user) => {
-                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                await setDoc(userRef, {
-                    uid: user.uid,
-                    email: user.email || 'Anonymous',
-                    lastSeen: serverTimestamp(),
-                    online: true
-                }, { merge: true });
-            };
-
-            const startSubscriptions = (user) => {
-                const messagesQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
-                onSnapshot(messagesQuery, (snapshot) => {
-                    const messages = snapshot.docs
-                        .map(doc => ({ id: doc.id, ...doc.data() }))
-                        .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-                    renderMessages(messages, user);
-                }, (err) => console.error("Firestore error:", err));
-
-                const usersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-                onSnapshot(usersQuery, (snapshot) => {
-                    const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderUsers(users);
-                }, (err) => console.error("User list error:", err));
-            };
-
-            const renderMessages = (messages, user) => {
-                if (messages.length === 0) {
-                    messagesContainer.innerHTML = `
-                        <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
-                            <i data-lucide="message-square" class="w-12 h-12 opacity-20"></i>
-                            <p class="text-sm">No messages yet. Start the conversation!</p>
-                        </div>`;
-                    renderIcons();
-                    return;
-                }
-
-                messagesContainer.innerHTML = messages.map(msg => {
-                    const isOwn = msg.uid === user.uid;
-                    const time = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                    const emailLabel = msg.email ? msg.email.split('@')[0] : 'Anonymous';
-                    return `
-                        <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} animate-msg">
-                            <div class="max-w-[85%] md:max-w-[70%] group">
-                                <div class="flex items-center gap-2 mb-1 px-1 ${isOwn ? 'flex-row-reverse' : ''}">
-                                    <span class="text-xs font-semibold text-slate-500">${emailLabel}</span>
-                                    <span class="text-[10px] text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">${time}</span>
-                                </div>
-                                <div class="px-4 py-2 rounded-2xl shadow-sm text-sm ${isOwn ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[#1e293b] text-slate-200 border border-slate-700 rounded-tl-none'}">
-                                    ${msg.text}
-                                </div>
-                            </div>
-                        </div>`;
-                }).join('');
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            };
-
-            const renderUsers = (users) => {
-                onlineCountLabel.textContent = `Online Players (${users.length})`;
-                userListContainer.innerHTML = users.map(u => {
-                    const name = u.email ? u.email.split('@')[0] : 'Anonymous';
-                    return `
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/50 transition-colors group">
-                            <div class="relative">
-                                <div class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center overflow-hidden">
-                                    <img src="public/default.png" alt="${name}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${name}&background=random&color=fff'">
-                                </div>
-                                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#1e293b] rounded-full"></div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-slate-300 truncate">${name}</p>
-                            </div>
-                        </div>`;
-                }).join('');
-            };
-
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                authError.classList.add('hidden');
-                try {
-                    if (currentView === 'login') {
-                        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-                    } else {
-                        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-                    }
-                } catch (err) {
-                    authError.textContent = err.message.replace('Firebase:', '').trim();
-                    authError.classList.remove('hidden');
-                }
-            });
-
-            toggleViewBtn.addEventListener('click', () => {
-                currentView = currentView === 'login' ? 'signup' : 'login';
-                authTitle.textContent = currentView === 'login' ? 'Welcome Back' : 'Create Account';
-                authSubmitBtn.textContent = currentView === 'login' ? 'Sign In' : 'Create Pro Account';
-                toggleViewBtn.textContent = currentView === 'login' ? "Don't have an account? Sign Up" : "Already a member? Login";
-            });
-
-            document.getElementById('guest-access').addEventListener('click', () => signInAnonymously(auth));
+        // --- AUTH LOGIC ---
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            loadingOverlay.classList.add('hidden');
             
-            const logout = () => signOut(auth);
-            document.getElementById('logout-btn').addEventListener('click', logout);
-            document.getElementById('mobile-logout').addEventListener('click', logout);
+            if (user) {
+                authView.classList.add('hidden');
+                chatView.classList.remove('hidden');
+                chatView.style.display = 'flex';
+                
+                // Fetch/Setup User Data
+                const userDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid));
+                userData = userDoc.exists() ? userDoc.data() : null;
+                
+                const displayName = userData?.username || user.email || 'Anonymous';
+                userDisplayEmail.textContent = displayName;
+                
+                // Set Profile UI
+                if (userData?.pfp) {
+                    myPfpImg.src = userData.pfp;
+                    myPfpImg.classList.remove('hidden');
+                    myPfpInitial.classList.add('hidden');
+                } else {
+                    myPfpImg.classList.add('hidden');
+                    myPfpInitial.classList.remove('hidden');
+                    myPfpInitial.textContent = displayName.charAt(0).toUpperCase();
+                }
+                myPfpContainer.style.borderColor = userData?.color || '#3b82f6';
+                if (userData?.animation) {
+                    myPfpContainer.classList.add(userData.animation);
+                }
 
-            messageInput.addEventListener('input', () => { sendBtn.disabled = !messageInput.value.trim(); });
-            messageForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const text = messageInput.value.trim();
-                if (!text || !currentUser) return;
-                messageInput.value = '';
-                sendBtn.disabled = true;
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                    text,
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    timestamp: serverTimestamp()
+                updatePresence(user);
+                startSubscriptions(user);
+            } else {
+                authView.classList.remove('hidden');
+                chatView.classList.add('hidden');
+                chatView.style.display = 'none';
+            }
+            renderIcons();
+        });
+
+        const updatePresence = async (user) => {
+            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
+            const data = {
+                uid: user.uid,
+                email: user.email || 'Anonymous',
+                lastSeen: serverTimestamp(),
+                online: true
+            };
+            if (userData) {
+                Object.assign(data, userData);
+            }
+            await setDoc(userRef, data, { merge: true });
+        };
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authError.classList.add('hidden');
+            
+            try {
+                // Set Persistence
+                const persistence = rememberMeInput.checked ? browserLocalPersistence : browserSessionPersistence;
+                await setPersistence(auth, persistence);
+
+                if (currentView === 'login') {
+                    // Check if they used a username instead of email
+                    let loginEmail = emailInput.value;
+                    if (!loginEmail.includes('@')) {
+                        // Attempt to find user by username
+                        const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'), where("username", "==", loginEmail));
+                        const snap = await getDocs(q);
+                        if (!snap.empty) {
+                            loginEmail = snap.docs[0].data().email;
+                        }
+                    }
+                    await signInWithEmailAndPassword(auth, loginEmail, passwordInput.value);
+                } else {
+                    // Signup
+                    const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+                    const newUserData = {
+                        uid: cred.user.uid,
+                        username: usernameInput.value || emailInput.value.split('@')[0],
+                        email: emailInput.value,
+                        pfp: base64Pfp,
+                        color: colorInput.value,
+                        animation: animInput.value,
+                        font: fontInput.value,
+                        online: true,
+                        lastSeen: serverTimestamp()
+                    };
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), newUserData);
+                    userData = newUserData;
+                }
+            } catch (err) {
+                authError.textContent = err.message.replace('Firebase:', '').trim();
+                authError.classList.remove('hidden');
+            }
+        });
+
+        toggleViewBtn.addEventListener('click', () => {
+            currentView = currentView === 'login' ? 'signup' : 'login';
+            authTitle.textContent = currentView === 'login' ? 'Welcome Back' : 'Create Account';
+            authSubmitBtn.textContent = currentView === 'login' ? 'Sign In' : 'Create Pro Account';
+            toggleViewBtn.textContent = currentView === 'login' ? "Don't have an account? Sign Up" : "Already a member? Login";
+            signupFields.classList.toggle('hidden', currentView === 'login');
+            emailInput.placeholder = currentView === 'login' ? "Email or Username" : "name@example.com";
+        });
+
+        // --- SUBSCRIPTIONS ---
+        const startSubscriptions = (user) => {
+            const messagesQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
+            onSnapshot(messagesQuery, (snapshot) => {
+                const messages = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+                
+                // Get all active users to match styles
+                const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+                getDocs(usersRef).then(userSnap => {
+                    const userMap = {};
+                    userSnap.forEach(d => { userMap[d.id] = d.data(); });
+                    renderMessages(messages, user, userMap);
                 });
             });
 
-            await initAuth();
+            const usersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+            onSnapshot(usersQuery, (snapshot) => {
+                const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUsers(users);
+            });
         };
-    </script>
-</body>
-</html>
+
+        const renderMessages = (messages, user, userMap) => {
+            messagesContainer.innerHTML = messages.map(msg => {
+                const isOwn = msg.uid === user.uid;
+                const sender = userMap[msg.uid] || {};
+                const time = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
+                const name = sender.username || msg.email?.split('@')[0] || 'Anonymous';
+                
+                const bubbleStyle = `border-color: ${sender.color || '#334155'}; background-color: ${isOwn ? (sender.color || '#2563eb') : '#1e293b'}`;
+                const textStyle = isOwn ? 'color: white' : 'color: #e2e8f0';
+                
+                return `
+                    <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} animate-msg ${sender.font || 'font-sans'}">
+                        <div class="max-w-[85%] md:max-w-[70%] group flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full border overflow-hidden ${sender.animation || ''}" style="border-color: ${sender.color || '#334155'}">
+                                ${sender.pfp ? `<img src="${sender.pfp}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-slate-700 flex items-center justify-center text-[10px] font-bold text-white">${name.charAt(0)}</div>`}
+                            </div>
+                            <div>
+                                <div
