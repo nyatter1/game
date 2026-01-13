@@ -196,15 +196,28 @@
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         // --- SAFE INITIALIZATION ---
-        // We use window.onload to ensure environment variables provided by the container are available
         window.onload = async function() {
             
-            // Handle missing firebase config gracefully
+            // Set the manual API key provided by the user
+            const manualApiKey = "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo";
+            
             let firebaseConfig;
             try {
-                firebaseConfig = typeof __firebase_config !== 'undefined' 
-                    ? JSON.parse(__firebase_config) 
-                    : { apiKey: "mock-key", authDomain: "mock-domain", projectId: "mock-id" }; // Fallback for local dev
+                if (typeof __firebase_config !== 'undefined') {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                    // Ensure the manual key is used even if config is provided
+                    firebaseConfig.apiKey = manualApiKey;
+                } else {
+                    // Fallback configuration if the environment variable is missing
+                    firebaseConfig = { 
+                        apiKey: manualApiKey, 
+                        authDomain: "chatlaxy-pro.firebaseapp.com", 
+                        projectId: "chatlaxy-pro",
+                        storageBucket: "chatlaxy-pro.appspot.com",
+                        messagingSenderId: "123456789",
+                        appId: "1:123456789:web:abcdef"
+                    };
+                }
             } catch (e) {
                 console.error("Config parse error:", e);
                 document.body.innerHTML = '<div class="h-screen flex items-center justify-center text-red-500 p-8 text-center">Failed to load configuration. Please refresh the page.</div>';
