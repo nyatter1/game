@@ -3,475 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatlaxy Pro | Terminal v4.0</title>
+    <title>SimpleChat | Connect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap');
-
-        :root {
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.5);
-            --bg-deep: #020617;
-            --panel-glass: rgba(15, 23, 42, 0.8);
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-deep);
-            color: #f8fafc;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
+        .message-in {
+            animation: slideUp 0.2s ease-out;
         }
-
-        /* --- Cyberpunk UI Elements --- */
-        .crt-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 3px, 3px 100%;
-            pointer-events: none;
-            z-index: 99;
-            opacity: 0.4;
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .glass-panel {
-            background: var(--panel-glass);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-        }
-
-        .btn-cyber {
-            position: relative;
-            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-transform: uppercase;
-            font-weight: 800;
-            letter-spacing: 0.1em;
-        }
-
-        .btn-cyber:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.2);
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-
-        /* --- Advanced Backgrounds --- */
-        .bg-nebula { background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #020617 100%); }
-        .bg-matrix { background: linear-gradient(180deg, #020617 0%, #064e3b 100%); }
-        .bg-blood { background: radial-gradient(circle at top, #450a0a 0%, #020617 100%); }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-        @keyframes msg-slide {
-            from { opacity: 0; transform: translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .msg-anim { animation: msg-slide 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
-        .fx-glitch { animation: glitch 1s linear infinite; }
-        @keyframes glitch {
-            2%, 64% { transform: translate(2px,0) skew(0deg); }
-            4%, 60% { transform: translate(-2px,0) skew(0deg); }
-            62% { transform: translate(0,0) skew(5deg); }
-        }
-
-        .fx-rainbow {
-            background: linear-gradient(to right, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: rainbow 3s linear infinite;
-        }
-        @keyframes rainbow { to { background-position: 200% center; } }
-
-        .fx-neon { text-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent); }
-
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .font-grotesk { font-family: 'Space Grotesk', sans-serif; }
-
-        .hidden { display: none !important; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        body { background-color: #f8fafc; }
     </style>
 </head>
-<body class="bg-nebula" id="app-root">
-    <div class="crt-overlay"></div>
+<body class="h-screen flex items-center justify-center font-sans">
 
-    <!-- Initialization / Syncing -->
-    <div id="loader" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center text-center px-6">
-        <div class="relative w-32 h-32">
-            <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-t-blue-500 rounded-full animate-spin"></div>
-            <div class="absolute inset-4 border-2 border-slate-800 rounded-full flex items-center justify-center">
-                <i data-lucide="shield-check" class="w-8 h-8 text-blue-500 animate-pulse"></i>
+    <!-- Auth Container -->
+    <div id="auth-screen" class="w-full max-w-md p-8 bg-white shadow-2xl rounded-2xl mx-4">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
+                <i data-lucide="message-square" class="text-white w-8 h-8"></i>
             </div>
+            <h1 id="auth-title" class="text-2xl font-bold text-gray-900">Welcome Back</h1>
+            <p id="auth-subtitle" class="text-gray-500 text-sm mt-1">Login to start chatting</p>
         </div>
-        <p class="mt-8 font-orbitron text-[10px] tracking-[0.5em] text-blue-500 animate-pulse uppercase">Handshaking Protocols...</p>
-        <div id="loader-error" class="mt-6 max-w-md hidden">
-            <p class="text-red-500 font-mono text-xs mb-2">CRITICAL_SYSTEM_ERROR</p>
-            <p id="error-text" class="text-slate-400 font-mono text-[10px] bg-red-500/5 p-4 border border-red-500/20 rounded"></p>
-            <button onclick="window.location.reload()" class="mt-4 text-blue-500 text-[10px] font-bold uppercase tracking-widest hover:underline">Retry Connection</button>
+
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email Address</label>
+                <input type="email" id="email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Password</label>
+                <input type="password" id="password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+            </div>
+            
+            <div id="auth-error" class="hidden text-red-500 text-xs p-3 bg-red-50 border border-red-100 rounded-lg"></div>
+
+            <button type="submit" id="submit-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-100">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-6 flex flex-col gap-3">
+            <button id="toggle-auth" class="text-sm text-blue-600 font-medium hover:underline">
+                Need an account? Sign up
+            </button>
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400">Or</span></div>
+            </div>
+            <button id="guest-btn" class="w-full py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all">
+                Enter as Guest
+            </button>
         </div>
     </div>
 
-    <!-- Auth View -->
-    <div id="auth-view" class="hidden min-h-screen flex items-center justify-center p-4 relative">
-        <div class="w-full max-w-4xl glass-panel relative z-10 grid md:grid-cols-2 overflow-hidden border-t-4 border-blue-600">
-            <div class="p-10 space-y-8">
+    <!-- Chat App (Hidden by default) -->
+    <div id="chat-screen" class="hidden fixed inset-0 flex flex-col bg-white">
+        <!-- Header -->
+        <header class="h-16 border-b flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i data-lucide="message-circle" class="text-white w-4 h-4"></i>
+                </div>
                 <div>
-                    <h1 class="font-orbitron text-4xl font-black text-white italic tracking-tighter">CHATLAXY<span class="text-blue-500">PRO</span></h1>
-                    <p class="text-[10px] font-mono text-slate-500 mt-2 uppercase tracking-widest">Global Encryption Node v4.0.2</p>
-                </div>
-
-                <div id="auth-tabs" class="flex border-b border-slate-800">
-                    <button id="btn-tab-login" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest text-blue-500 border-b-2 border-blue-500">Login</button>
-                    <button id="btn-tab-signup" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Register</button>
-                </div>
-
-                <form id="auth-form" class="space-y-4">
-                    <div id="signup-extra" class="hidden space-y-4">
-                        <div class="group relative">
-                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1 block">Operator Alias</label>
-                            <input type="text" id="reg-username" placeholder="NEO_ARCHITECT" class="w-full bg-slate-900/50 border border-slate-800 px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1 block">Comm ID (Email)</label>
-                            <input type="email" id="auth-email" required placeholder="name@terminal.net" class="w-full bg-slate-900/50 border border-slate-800 px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all">
-                        </div>
-                        <div>
-                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1 block">Access Key (Password)</label>
-                            <input type="password" id="auth-pass" required placeholder="••••••••" class="w-full bg-slate-900/50 border border-slate-800 px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <div id="auth-error" class="hidden text-red-500 text-[10px] bg-red-500/10 p-3 border-l-2 border-red-500 font-mono"></div>
-
-                    <button type="submit" class="w-full btn-cyber bg-blue-600 py-4 text-xs">Establish Link</button>
-                </form>
-
-                <div class="flex items-center gap-4 py-2">
-                    <div class="h-[1px] flex-1 bg-slate-800"></div>
-                    <span class="text-[8px] font-bold text-slate-600 uppercase">OR</span>
-                    <div class="h-[1px] flex-1 bg-slate-800"></div>
-                </div>
-
-                <button id="guest-btn" class="w-full border border-slate-800 py-3 text-[10px] uppercase font-bold text-slate-400 hover:bg-slate-800/30 transition-all tracking-widest">
-                    Temporary Guest Pass
-                </button>
-            </div>
-
-            <!-- Customization Side -->
-            <div class="bg-black/60 p-10 hidden md:flex flex-col justify-between border-l border-slate-800">
-                <div class="space-y-8">
-                    <p class="text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">Identity Config</p>
-                    <div class="flex flex-col items-center gap-4">
-                        <div class="relative group">
-                            <div id="preview-pfp-container" class="w-24 h-24 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden bg-slate-900">
-                                <i data-lucide="user-plus" class="w-8 h-8 text-slate-700"></i>
-                            </div>
-                            <input type="file" id="pfp-upload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
-                        </div>
-                        <div class="text-center">
-                            <span id="preview-name" class="font-orbitron text-xl font-bold uppercase tracking-tight text-white">OPERATOR_X</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-blue-600/5 p-4 border border-blue-500/10 rounded">
-                    <p class="text-[9px] text-blue-400/60 leading-relaxed font-mono italic">"The interface is an extension of your digital consciousness."</p>
+                    <h2 class="font-bold text-gray-800 text-sm">Public Lounge</h2>
+                    <p class="text-[10px] text-green-500 font-bold uppercase tracking-wider">Live Connection</p>
                 </div>
             </div>
+            <button id="logout-btn" class="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-all">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+        </header>
+
+        <!-- Messages Area -->
+        <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/50">
+            <!-- Messages will appear here -->
         </div>
-    </div>
 
-    <!-- Main App View -->
-    <div id="main-view" class="hidden h-screen flex flex-col md:flex-row overflow-hidden relative">
-        <aside class="w-full md:w-80 glass-panel border-r border-slate-800/50 flex flex-col relative z-20">
-            <div class="p-6 border-b border-slate-800/50 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
-                    <span class="font-orbitron text-xs font-bold tracking-[0.2em] text-white">TERMINAL_NODES</span>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                <div class="mb-6">
-                    <h3 class="text-[8px] font-black text-blue-500 uppercase tracking-[0.3em] px-2 mb-3">Online Operatives</h3>
-                    <div id="user-list-online" class="space-y-1"></div>
-                </div>
-            </div>
-
-            <div class="p-4 bg-black/40 border-t border-slate-800/50">
-                <div class="flex items-center gap-3">
-                    <div id="me-avatar" class="w-10 h-10 rounded-full border-2 border-slate-800 overflow-hidden bg-slate-900"></div>
-                    <div class="flex-1 min-w-0">
-                        <p id="me-name" class="text-xs font-black text-white uppercase truncate font-orbitron">Guest</p>
-                        <p id="me-status" class="text-[8px] text-blue-500 font-bold uppercase">Online</p>
-                    </div>
-                    <button id="logout-btn" class="p-2 text-slate-500 hover:text-red-500 transition-colors">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-        </aside>
-
-        <main class="flex-1 flex flex-col relative z-10">
-            <header class="h-16 glass-panel border-b border-slate-800/50 flex items-center justify-between px-6">
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-blue-500 tracking-[0.2em] uppercase">Global Channel</span>
-                </div>
-            </header>
-
-            <div id="message-container" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"></div>
-
-            <div class="p-6 relative">
-                <div class="max-w-4xl mx-auto glass-panel p-1 border border-slate-700/50 rounded-lg group focus-within:border-blue-500/50 transition-all">
-                    <form id="chat-form" class="flex items-center gap-2">
-                        <input type="text" id="chat-input" placeholder="Transmit data string..." autocomplete="off"
-                            class="flex-1 bg-transparent border-none outline-none py-3 px-2 text-sm text-white font-grotesk">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-md btn-cyber flex items-center gap-2">
-                            <span class="text-[10px]">SEND</span>
-                            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </main>
+        <!-- Input Area -->
+        <div class="p-4 border-t bg-white">
+            <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
+                <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off"
+                    class="flex-1 px-4 py-3 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl transition-all flex items-center justify-center">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, getDoc, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Environment Safety Checks - Fix for undefined __firebase_config
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v4';
+        // Environment Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "demo" };
         
-        let firebaseConfig;
-        try {
-            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        } catch (e) {
-            console.error("Failed to parse config", e);
-        }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "fake-key") {
-            window.onload = () => {
-                document.getElementById('error-text').textContent = "FIREBASE_CONFIG_MISSING: Environment variables not detected. Please verify system deployment.";
-                document.getElementById('loader-error').classList.remove('hidden');
-            };
-        }
+        let isSignUp = false;
 
-        const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
-        const auth = app ? getAuth(app) : null;
-        const db = app ? getFirestore(app) : null;
-
-        let userState = { profile: null, auth: null, mode: 'login' };
-
+        // UI Helpers
         const el = (id) => document.getElementById(id);
         const refreshIcons = () => lucide.createIcons();
 
-        // 1. Authentication Handshake (RULE 3)
-        const initHandshake = async () => {
-            if (!auth) return;
+        // 1. Auth Flow Logic
+        el('toggle-auth').addEventListener('click', () => {
+            isSignUp = !isSignUp;
+            el('auth-title').textContent = isSignUp ? 'Create Account' : 'Welcome Back';
+            el('auth-subtitle').textContent = isSignUp ? 'Join the community today' : 'Login to start chatting';
+            el('submit-btn').textContent = isSignUp ? 'Create Account' : 'Sign In';
+            el('toggle-auth').textContent = isSignUp ? 'Have an account? Login' : 'Need an account? Sign up';
+        });
+
+        el('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = el('email').value;
+            const password = el('password').value;
+            const errorDiv = el('auth-error');
+            
+            errorDiv.classList.add('hidden');
+            
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                if (isSignUp) {
+                    await createUserWithEmailAndPassword(auth, email, password);
                 } else {
-                    // Logic allows Auth View to take over if no token
-                    console.log("System idle. Awaiting user verification.");
+                    await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                console.error("Handshake rejected:", err);
-                el('error-text').textContent = `PROTOCOL_REJECTED: ${err.message}`;
-                el('loader-error').classList.remove('hidden');
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('hidden');
             }
-        };
+        });
 
-        // 2. Auth State Listener
-        if (auth) {
-            onAuthStateChanged(auth, async (user) => {
-                userState.auth = user;
-                if (user) {
-                    // RULE 1: Strict Paths
-                    const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                    let snap;
-                    try {
-                        snap = await getDoc(userDocRef);
-                    } catch(e) {
-                        console.error("User profile fetch failed", e);
-                    }
-                    
-                    if (snap && snap.exists()) {
-                        userState.profile = snap.data();
-                    } else {
-                        userState.profile = {
-                            uid: user.uid,
-                            username: user.displayName || `OPERATOR_${user.uid.slice(0, 4)}`,
-                            color: '#3b82f6',
-                            online: true,
-                            lastSeen: serverTimestamp()
-                        };
-                        await setDoc(userDocRef, userState.profile, { merge: true });
-                    }
+        el('guest-btn').addEventListener('click', () => signInAnonymously(auth));
+        el('logout-btn').addEventListener('click', () => signOut(auth));
 
-                    await updateDoc(userDocRef, { online: true, lastSeen: serverTimestamp() });
+        // 2. Chat Logic (Subscription)
+        function subscribeToMessages() {
+            // RULE 1 & 2: Use strict paths and simple queries
+            const q = query(
+                collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
+                orderBy('timestamp', 'asc'),
+                limit(100)
+            );
+
+            onSnapshot(q, (snapshot) => {
+                const list = el('messages-list');
+                list.innerHTML = '';
+                
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const isMe = data.uid === auth.currentUser.uid;
+                    const messageEl = document.createElement('div');
+                    messageEl.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} message-in`;
                     
-                    el('loader').classList.add('hidden');
-                    el('auth-view').classList.add('hidden');
-                    el('main-view').classList.remove('hidden');
-                    
-                    initAppUI();
-                    startDataSubscriptions();
-                } else {
-                    el('loader').classList.add('hidden');
-                    el('auth-view').classList.remove('hidden');
-                    el('main-view').classList.add('hidden');
-                }
-                refreshIcons();
+                    messageEl.innerHTML = `
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-bold text-gray-400">${isMe ? 'You' : data.email.split('@')[0]}</span>
+                        </div>
+                        <div class="max-w-[75%] p-3 rounded-2xl text-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border rounded-tl-none text-gray-800'} shadow-sm">
+                            ${data.text}
+                        </div>
+                    `;
+                    list.appendChild(messageEl);
+                });
+                
+                list.scrollTop = list.scrollHeight;
+            }, (err) => {
+                console.error("Firestore stream error:", err);
             });
         }
 
-        function initAppUI() {
-            const p = userState.profile;
-            el('me-name').textContent = p.username;
-            el('me-avatar').innerHTML = `<div class="w-full h-full flex items-center justify-center text-slate-500 font-bold bg-slate-900">${p.username[0]}</div>`;
-        }
-
-        function startDataSubscriptions() {
-            if (!userState.auth || !db) return;
-
-            // RULE 2: Simple queries only
-            const msgQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), limit(50));
-            onSnapshot(msgQuery, (snap) => {
-                const messages = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-                renderMessages(messages);
-            }, (err) => console.error("Msg stream error:", err));
-
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
-                const users = snap.docs.map(d => d.data());
-                renderUserList(users);
-            }, (err) => console.error("User stream error:", err));
-        }
-
-        function renderMessages(messages) {
-            const container = el('message-container');
-            container.innerHTML = messages.map(m => `
-                <div class="flex ${m.uid === userState.auth.uid ? 'justify-end' : 'justify-start'} msg-anim">
-                    <div class="max-w-[80%] glass-panel p-3 rounded-xl border-l-4" style="border-color: ${m.color || '#3b82f6'}">
-                        <p class="text-[9px] font-bold uppercase mb-1" style="color: ${m.color}">${m.username}</p>
-                        <p class="text-sm">${m.text}</p>
-                    </div>
-                </div>
-            `).join('');
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function renderUserList(users) {
-            el('user-list-online').innerHTML = users.filter(u => u.online).map(u => `
-                <div class="flex items-center gap-2 p-2 group hover:bg-slate-800/20 rounded cursor-default transition-all">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                    <span class="text-[10px] uppercase font-bold text-slate-300">${u.username}</span>
-                </div>
-            `).join('');
-        }
-
-        // --- AUTH UI LOGIC ---
-        el('btn-tab-login').addEventListener('click', () => {
-            userState.mode = 'login';
-            el('signup-extra').classList.add('hidden');
-            el('btn-tab-login').classList.add('text-blue-500', 'border-blue-500');
-            el('btn-tab-signup').classList.remove('text-blue-500', 'border-blue-500');
-            el('btn-tab-signup').classList.add('text-slate-500');
-        });
-
-        el('btn-tab-signup').addEventListener('click', () => {
-            userState.mode = 'signup';
-            el('signup-extra').classList.remove('hidden');
-            el('btn-tab-signup').classList.add('text-blue-500', 'border-blue-500');
-            el('btn-tab-login').classList.remove('text-blue-500', 'border-blue-500');
-            el('btn-tab-login').classList.add('text-slate-500');
-        });
-
-        // Form Events
-        el('auth-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!auth) return;
-            const email = el('auth-email').value;
-            const pass = el('auth-pass').value;
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            
-            try {
-                submitBtn.disabled = true;
-                submitBtn.textContent = "SYNCHRONIZING...";
-                
-                if (userState.mode === 'signup') {
-                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                    const username = el('reg-username').value.trim() || 'OPERATOR_X';
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), {
-                        uid: cred.user.uid,
-                        username: username,
-                        color: '#3b82f6',
-                        online: true,
-                        lastSeen: serverTimestamp()
-                    });
-                } else {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                }
-            } catch (err) {
-                el('auth-error').textContent = `ACCESS_DENIED: ${err.message}`;
-                el('auth-error').classList.remove('hidden');
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Establish Link";
-            }
-        });
-
+        // 3. Message Sending
         el('chat-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const text = el('chat-input').value.trim();
-            if(!text || !userState.auth || !db) return;
-            el('chat-input').value = '';
+            const input = el('chat-input');
+            const text = input.value.trim();
+            if (!text || !auth.currentUser) return;
+
+            input.value = '';
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                     text,
-                    uid: userState.auth.uid,
-                    username: userState.profile.username,
-                    color: userState.profile.color,
+                    uid: auth.currentUser.uid,
+                    email: auth.currentUser.email || 'Guest',
                     timestamp: serverTimestamp()
                 });
             } catch (err) {
-                console.error("Transmission failed", err);
+                console.error("Send failed:", err);
             }
         });
 
-        el('guest-btn').addEventListener('click', async () => {
-            if (!auth) return;
-            try {
-                await signInAnonymously(auth);
-            } catch (err) {
-                el('auth-error').textContent = `GUEST_LINK_FAILED: ${err.message}`;
-                el('auth-error').classList.remove('hidden');
+        // 4. Initial State Observer
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                el('auth-screen').classList.add('hidden');
+                el('chat-screen').classList.remove('hidden');
+                subscribeToMessages();
+            } else {
+                el('auth-screen').classList.remove('hidden');
+                el('chat-screen').classList.add('hidden');
+                el('messages-list').innerHTML = '';
             }
+            refreshIcons();
         });
 
-        el('logout-btn').addEventListener('click', async () => {
-            if (!auth) return;
-            if (userState.auth) {
-                try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userState.auth.uid), { online: false });
-                } catch(e) {}
-            }
-            await signOut(auth);
-        });
-
-        // Start Handshake
-        initHandshake();
+        refreshIcons();
     </script>
 </body>
 </html>
