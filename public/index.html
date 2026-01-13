@@ -138,17 +138,19 @@
         const refreshIcons = () => lucide.createIcons();
 
         function setupPresence(user) {
-            const presenceRef = doc(db, 'artifacts', appId, 'public', 'presence', user.uid);
+            // Updated Path: artifacts/{appId}/public/data/presence/{userId}
+            const presenceRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid);
             setDoc(presenceRef, { uid: user.uid, lastSeen: serverTimestamp() }, { merge: true });
             
-            const q = query(collection(db, 'artifacts', appId, 'public', 'presence'));
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'presence'));
             const unsubPresence = onSnapshot(q, (snapshot) => {
                 if (el('online-count')) {
                     el('online-count').textContent = `${snapshot.size} Players Online`;
                 }
+            }, (error) => {
+                console.error("Presence snapshot error:", error);
             });
 
-            // Cleanup when leaving
             window.addEventListener('beforeunload', () => deleteDoc(presenceRef));
             return unsubPresence;
         }
@@ -212,6 +214,8 @@
                     list.appendChild(messageEl);
                 });
                 list.scrollTop = list.scrollHeight;
+            }, (error) => {
+                console.error("Messages snapshot error:", error);
             });
         }
 
