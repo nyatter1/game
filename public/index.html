@@ -106,8 +106,8 @@
     <!-- Main Chat View -->
     <div id="chat-view" class="hidden h-screen flex flex-col md:flex-row overflow-hidden galaxy-bg">
         
-        <!-- Sidebar -->
-        <aside class="hidden md:flex flex-col w-72 bg-[#1e293b] border-r border-slate-700/50">
+        <!-- Sidebar - Fixed layout classes -->
+        <aside class="flex flex-col w-72 bg-[#1e293b] border-r border-slate-700/50 h-full">
             <div class="p-6 flex items-center gap-3 border-b border-slate-700/50">
                 <div class="bg-blue-600 p-2 rounded-lg">
                     <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
@@ -144,7 +144,7 @@
 
         <!-- Chat Area -->
         <main class="flex-1 flex flex-col relative">
-            <!-- Mobile Header -->
+            <!-- Mobile Header (Hidden on MD up where sidebar is visible) -->
             <header class="md:hidden p-4 bg-[#1e293b] border-b border-slate-700 flex justify-between items-center">
                 <h1 class="text-lg font-bold text-white">Chatlaxy Pro</h1>
                 <button id="mobile-logout"><i data-lucide="log-out" class="w-5 h-5 text-red-400"></i></button>
@@ -205,10 +205,8 @@
             try {
                 if (typeof __firebase_config !== 'undefined') {
                     firebaseConfig = JSON.parse(__firebase_config);
-                    // Ensure the manual key is used even if config is provided
                     firebaseConfig.apiKey = manualApiKey;
                 } else {
-                    // Fallback configuration if the environment variable is missing
                     firebaseConfig = { 
                         apiKey: manualApiKey, 
                         authDomain: "chatlaxy-pro.firebaseapp.com", 
@@ -229,7 +227,6 @@
             const db = getFirestore(app);
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v2';
 
-            // --- DOM Selectors ---
             const loadingOverlay = document.getElementById('loading-overlay');
             const authView = document.getElementById('auth-view');
             const chatView = document.getElementById('chat-view');
@@ -254,7 +251,6 @@
 
             const renderIcons = () => lucide.createIcons();
 
-            // --- Auth Logic ---
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
                 loadingOverlay.classList.add('hidden');
@@ -262,12 +258,14 @@
                 if (user) {
                     authView.classList.add('hidden');
                     chatView.classList.remove('hidden');
+                    chatView.style.display = 'flex'; // Ensure display is flex
                     userDisplayEmail.textContent = user.email || 'Anonymous';
                     updatePresence(user);
                     startSubscriptions(user);
                 } else {
                     authView.classList.remove('hidden');
                     chatView.classList.add('hidden');
+                    chatView.style.display = 'none';
                 }
                 renderIcons();
             });
@@ -293,7 +291,6 @@
             };
 
             const startSubscriptions = (user) => {
-                // Messages
                 const messagesQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
                 onSnapshot(messagesQuery, (snapshot) => {
                     const messages = snapshot.docs
@@ -302,7 +299,6 @@
                     renderMessages(messages, user);
                 }, (err) => console.error("Firestore error:", err));
 
-                // Users
                 const usersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
                 onSnapshot(usersQuery, (snapshot) => {
                     const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -360,7 +356,6 @@
                 }).join('');
             };
 
-            // --- Form Handlers ---
             authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 authError.classList.add('hidden');
