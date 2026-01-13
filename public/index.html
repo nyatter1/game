@@ -107,18 +107,21 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Firebase Configuration using your provided API Key
+        // Hardcoded Configuration with your API Key
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
-            authDomain: "simple-chat-app.firebaseapp.com", // Fallback domain
-            projectId: "simple-chat-app", // Fallback ID
+            authDomain: "simple-chat-app.firebaseapp.com",
+            projectId: "simple-chat-app",
             storageBucket: "simple-chat-app.appspot.com",
             messagingSenderId: "123456789",
             appId: "1:123456789:web:abcdef123456"
         };
         
-        // Environment override if available
-        const actualConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
+        // Ensure we prioritize the manual config to avoid 'demo' key issues
+        const actualConfig = (typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).apiKey !== 'demo') 
+            ? JSON.parse(__firebase_config) 
+            : firebaseConfig;
+            
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-app';
 
         const app = initializeApp(actualConfig);
