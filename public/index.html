@@ -16,13 +16,11 @@
             --text-muted: #555555;
             --glow-intensity: 0.8;
         }
-        
-        * {
+                * {
             box-sizing: border-box;
             font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
-
         body {
             margin: 0;
             min-height: 100vh;
@@ -34,7 +32,6 @@
             overflow: hidden;
             padding: 20px;
         }
-
         .app-wrapper {
             display: grid;
             grid-template-columns: 380px 440px 1fr;
@@ -45,13 +42,11 @@
             align-items: stretch;
             transition: all 0.7s cubic-bezier(0.19, 1, 0.22, 1);
         }
-
         .app-wrapper.auth-mode {
             grid-template-columns: 0px 1fr 0px;
             max-width: 500px;
             gap: 0;
         }
-
         .glass-panel {
             background: linear-gradient(180deg, rgba(13, 13, 13, 0.9) 0%, rgba(5, 5, 5, 0.95) 100%);
             border: 1px solid var(--border);
@@ -64,25 +59,21 @@
             transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
             position: relative;
         }
-
         .app-wrapper.auth-mode .glass-panel:first-child {
             opacity: 0;
             pointer-events: none;
             transform: translateX(-80px) scale(0.9);
-        }
-        .app-wrapper.auth-mode .glass-panel:last-child {
+        }        .app-wrapper.auth-mode .glass-panel:last-child {
             opacity: 0;
             pointer-events: none;
             transform: translateX(80px) scale(0.9);
         }
-
         .auth-transition-wrapper {
             position: relative;
             flex: 1;
             width: 100%;
             height: 100%;
         }
-
         .view-frame {
             position: absolute;
             inset: 0;
@@ -93,10 +84,7 @@
             opacity: 1;
             transform: scale(1);
         }
-
-        .view-frame.exit { opacity: 0; transform: scale(0.92) translateY(20px); pointer-events: none; }
-        .view-frame.enter { opacity: 0; transform: scale(1.08) translateY(-20px); pointer-events: none; }
-
+        .view-frame.exit { opacity: 0; transform: scale(0.92) translateY(20px); pointer-events: none; }        .view-frame.enter { opacity: 0; transform: scale(1.08) translateY(-20px); pointer-events: none; }
         .panel-content {
             padding: 24px;
             overflow-y: auto;
@@ -104,22 +92,15 @@
             display: flex;
             flex-direction: column;
         }
-
-        h1 { font-size: 26px; font-weight: 900; margin: 0 0 8px; letter-spacing: -0.04em; }
-        .subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 24px; font-weight: 500; }
-        label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin: 20px 0 10px; letter-spacing: 0.12em; }
-
+        h1 { font-size: 26px; font-weight: 900; margin: 0 0 8px; letter-spacing: -0.04em; }        .subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 24px; font-weight: 500; }        label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin: 20px 0 10px; letter-spacing: 0.12em; }
         input, select, textarea {
             width: 100%; height: 48px; background: var(--bg-input); border: 1px solid #1a1a1a; border-radius: 14px;
             color: #fff; padding: 0 16px; font-size: 14px; outline: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        input:focus, select:focus, textarea:focus { 
-            border-color: var(--accent); 
-            background: #181818; 
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-        }
-        textarea { height: 100px; padding: 14px; resize: none; line-height: 1.6; }
-
+        }        input:focus, select:focus, textarea:focus { 
+             border-color: var(--accent); 
+             background: #181818; 
+             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }        textarea { height: 100px; padding: 14px; resize: none; line-height: 1.6; }
         .preview-container {
             position: relative;
             flex: 1;
@@ -127,7 +108,6 @@
             align-items: flex-start;
             padding-top: 10px;
         }
-
         .fade-element {
             transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: absolute;
@@ -135,266 +115,73 @@
             left: 0;
             top: 0;
         }
-
         .fade-element.hidden-v { opacity: 0; pointer-events: none; transform: translateY(20px); }
-
         .profile-card {
             width: 100%; background: #080808; border-radius: 20px; overflow: hidden;
             border: 1px solid var(--border);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-        .banner-view { height: 100px; background: linear-gradient(45deg, #222, #111); background-size: cover; background-position: center; transition: 0.5s; }
-        .pfp-pos { margin-top: -36px; padding: 0 20px; display: flex; align-items: flex-end; gap: 14px; }
-        .pfp-circ { 
-            width: 72px; height: 72px; border-radius: 50%; border: 5px solid #080808; 
-            background: #1a1a1a; background-size: cover; background-position: center;
+        }        .banner-view { height: 100px; background: linear-gradient(45deg, #222, #111); background-size: cover; background-position: center; transition: 0.5s; }        .pfp-pos { margin-top: -36px; padding: 0 20px; display: flex; align-items: flex-end; gap: 14px; }        .pfp-circ { 
+             width: 72px; height: 72px; border-radius: 50%; border: 5px solid #080808; 
+             background: #1a1a1a; background-size: cover; background-position: center;
             display: flex; align-items: center; justify-content: center;
             transition: transform 0.3s ease;
-        }
-        .pfp-circ:hover { transform: scale(1.05); }
-        .profile-content { padding: 16px 20px 24px; }
-        .display-name { font-size: 20px; font-weight: 800; transition: all 0.3s; }
-        .display-meta { font-size: 11px; color: #444; margin-top: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .display-bio { font-size: 13px; color: #777; margin-top: 12px; line-height: 1.6; }
-
+        }        .pfp-circ:hover { transform: scale(1.05); }        .profile-content { padding: 16px 20px 24px; }        .display-name { font-size: 20px; font-weight: 800; transition: all 0.3s; }        .display-meta { font-size: 11px; color: #444; margin-top: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }        .display-bio { font-size: 13px; color: #777; margin-top: 12px; line-height: 1.6; }
         .chat-box { 
-            padding: 20px; background: rgba(255,255,255,0.015); border-radius: 20px; 
-            display: flex; gap: 16px; border: 1px solid var(--border); margin-top: 12px;
+             padding: 20px; background: rgba(255,255,255,0.015); border-radius: 20px; 
+             display: flex; gap: 16px; border: 1px solid var(--border); margin-top: 12px;
             align-items: flex-start; transition: 0.3s;
-        }
-        .chat-pfp {
+        }        .chat-pfp {
             width: 42px; height: 42px; border-radius: 14px; background: #1a1a1a;
             flex-shrink: 0; background-size: cover; background-position: center;
             display: flex; align-items: center; justify-content: center;
             border: 1px solid rgba(255,255,255,0.05);
-        }
-        .chat-msg-container { flex: 1; }
-        .chat-msg { 
-            font-size: 14px; line-height: 1.6; margin-top: 8px; 
-            background: rgba(255,255,255,0.03); padding: 12px 16px;
+        }        .chat-msg-container { flex: 1; }        .chat-msg { 
+             font-size: 14px; line-height: 1.6; margin-top: 8px; 
+             background: rgba(255,255,255,0.03); padding: 12px 16px;
             border-radius: 4px 16px 16px 16px; display: inline-block;
             max-width: 100%; word-wrap: break-word;
         }
-
-        .tabs-header { display: flex; background: #050505; padding: 5px; border-radius: 14px; margin-bottom: 20px; border: 1px solid var(--border); }
-        .tab-btn { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 10px; color: #555; transition: 0.2s; }
-        .tab-btn.active { background: #161616; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-
-        .type-switcher { display: flex; gap: 8px; margin-bottom: 16px; }
-        .type-btn { flex: 1; padding: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; border-radius: 10px; background: #111; color: #444; border: 1px solid transparent; cursor: pointer; transition: 0.2s; }
-        .type-btn.active { background: #1a1a1a; color: #fff; border-color: #333; }
-
-        .grid-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 12px; padding: 4px; }
-        .swatch { 
-            aspect-ratio: 1; border-radius: 12px; cursor: pointer; 
-            border: 2px solid rgba(255,255,255,0.05); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        .swatch:hover { transform: scale(1.2) rotate(5deg); border-color: #fff; z-index: 2; }
-        .swatch.neon { box-shadow: 0 0 15px var(--glow); }
-
+        .tabs-header { display: flex; background: #050505; padding: 5px; border-radius: 14px; margin-bottom: 20px; border: 1px solid var(--border); }        .tab-btn { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 10px; color: #555; transition: 0.2s; }        .tab-btn.active { background: #161616; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .type-switcher { display: flex; gap: 8px; margin-bottom: 16px; }        .type-btn { flex: 1; padding: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; border-radius: 10px; background: #111; color: #444; border: 1px solid transparent; cursor: pointer; transition: 0.2s; }        .type-btn.active { background: #1a1a1a; color: #fff; border-color: #333; }
+        .grid-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 12px; padding: 4px; }        .swatch { 
+             aspect-ratio: 1; border-radius: 12px; cursor: pointer; 
+             border: 2px solid rgba(255,255,255,0.05); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+         }        .swatch:hover { transform: scale(1.2) rotate(5deg); border-color: #fff; z-index: 2; }        .swatch.neon { box-shadow: 0 0 15px var(--glow); }
         .btn {
             width: 100%; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);
             font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.3s;
             display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-        .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
-        .btn-secondary { background: #121212; color: #888; margin-top: 10px; }
-        .btn:hover { transform: translateY(-3px); filter: brightness(1.1); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        @keyframes rainbow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
-        .anim-rainbow { animation: rainbow 4s linear infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        .anim-bounce { animation: bounce 1.5s ease-in-out infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.98); } }
-        .anim-pulse { animation: pulse 2s ease-in-out infinite; }
-
-        .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-        .default-icon { fill: #333; width: 28px; height: 28px; }
-
-        /* Notification Toast */
-        #toast {
+        }        .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }        .btn-secondary { background: #121212; color: #888; margin-top: 10px; }        .btn:hover { transform: translateY(-3px); filter: brightness(1.1); }        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        @keyframes rainbow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }        .anim-rainbow { animation: rainbow 4s linear infinite; }        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }        .anim-bounce { animation: bounce 1.5s ease-in-out infinite; }        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.98); } }        .anim-pulse { animation: pulse 2s ease-in-out infinite; }
+        .hidden { display: none !important; }        ::-webkit-scrollbar { width: 5px; }        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }        .default-icon { fill: #333; width: 28px; height: 28px; }
+        /* Notification Toast */        #toast {
             position: fixed; bottom: 20px; right: 20px; background: #1a1a1a; padding: 12px 24px;
             border-radius: 12px; border: 1px solid var(--accent); color: #fff; font-size: 14px;
             transform: translateY(100px); transition: 0.3s; z-index: 1000;
-        }
-        #toast.show { transform: translateY(0); }
+        }        #toast.show { transform: translateY(0); }
     </style>
 </head>
 <body>
-
     <div id="toast">Message goes here</div>
+    <div class="app-wrapper" id="main-layout">        <!-- COLUMN 1: LIVE PREVIEWS -->        <div class="glass-panel" id="preview-panel">            <div class="panel-content">                <label id="preview-label">Profile Visualization</label>                                <div class="preview-container">                    <div id="pv-profile-wrap" class="fade-element">                        <div class="profile-card">                            <div class="banner-view" id="pv-banner"></div>                            <div class="pfp-pos">                                <div class="pfp-circ" id="pv-pfp">                                    <svg class="default-icon" id="def-pfp-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>                                </div>                            </div>                            <div class="profile-content">                                <div class="display-name" id="dn-user">Neo_Explorer</div>                                <div class="display-meta" id="dn-meta">MALE • 24</div>                                <div class="display-bio" id="dn-bio">Ready to redefine the digital landscape with premium designs and high-octane chats.</div>                            </div>                        </div>                    </div>
+                    <div id="pv-message-wrap" class="fade-element hidden-v">                        <div class="chat-box">                            <div class="chat-pfp" id="pv-chat-pfp">                                <svg class="default-icon" style="width:20px; height:20px;" id="def-chat-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>                            </div>                            <div class="chat-msg-container">                                <div class="display-name" id="dn-chat-user" style="font-size:13px;">Neo_Explorer</div>                                <div class="chat-msg" id="dn-chat-text">This is a premium workspace preview. Your style reflects your personality in every message you send.</div>                            </div>                        </div>                    </div>                </div>
+                <div style="padding:16px; background: rgba(255,255,255,0.02); border-radius:16px; border: 1px dashed #222; margin-top: auto; display: flex; align-items: center; gap: 12px;">                    <div style="width:8px; height:8px; border-radius:50%; background: var(--accent); box-shadow: 0 0 10px var(--accent);"></div>                    <p style="font-size:11px; color:#555; margin:0; line-height:1.4; font-weight: 600;">Real-time sync active. Every change reflects instantly.</p>                </div>            </div>        </div>
+        <!-- COLUMN 2: IDENTITY (MIDDLE) -->        <div class="glass-panel" id="auth-panel">            <div class="auth-transition-wrapper">                <!-- LOGIN FRAME -->                <div id="login-view" class="view-frame enter hidden">                    <h1>Welcome Back</h1>                    <p class="subtitle">Enter your credentials to access the workspace.</p>                    <form id="login-form">                        <label>Identity</label>                        <input type="text" id="login-user" placeholder="Username or email address" required>                        <label>Security Key</label>                        <input type="password" id="login-pass" placeholder="Your secret password" required>                        <button type="submit" class="btn btn-primary" style="margin-top:24px;">Unlock Dashboard</button>                        <button type="button" class="btn btn-secondary" onclick="toggleAuth(false)">Create New Identity</button>                    </form>                </div>
+                <!-- REGISTER FRAME -->                <div id="register-view" class="view-frame">                    <h1>Create Identity</h1>                    <p class="subtitle">Define your digital presence on ChatHub.</p>                    <form id="signup-form">                        <div class="input-group">                            <label>Username</label>                            <input type="text" id="in-user" placeholder="neo_explorer" maxlength="20" required>                        </div>                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">                            <div class="input-group">                                <label>Gender</label>                                <select id="in-gender">                                    <option>Male</option>                                    <option>Female</option>                                    <option>Non-Binary</option>                                    <option>Prefer not to say</option>                                </select>                            </div>                            <div class="input-group">                                <label>Age</label>                                <input type="number" id="in-age" placeholder="24" min="13" max="99" required>                            </div>                        </div>                        <div class="input-group">                            <label>Bio & Status</label>                            <textarea id="in-bio" placeholder="What's your story?"></textarea>                        </div>                        <button type="submit" id="btn-signup" class="btn btn-primary" style="margin-top:16px;">Initialize Account</button>                        <button type="button" class="btn btn-secondary" onclick="toggleAuth(true)">Existing Identity? Login</button>                    </form>                </div>            </div>        </div>
+        <!-- COLUMN 3: CUSTOMIZATION (RIGHT) -->        <div class="glass-panel" id="custom-panel">            <div class="panel-content">                <div class="tabs-header">                    <div class="tab-btn active" id="t-user" onclick="switchMainTab('user')">Identity Style</div>                    <div class="tab-btn" id="t-text" onclick="switchMainTab('text')">Message FX</div>                </div>
+                <div id="sec-user">                    <label>Visual Assets</label>                    <div style="display:flex; gap:12px; margin-bottom:12px;">                        <button class="btn btn-secondary" style="margin:0; flex:1;" onclick="upload('pfp')">Change PFP</button>                        <button class="btn btn-secondary" style="margin:0; flex:1;" onclick="upload('banner')">Change Banner</button>                    </div>                                        <label>Identity Color Engine</label>                    <div class="type-switcher">                        <button class="type-btn active" id="ub-solid" onclick="switchColorType('user', 'solid')">Solid</button>                        <button class="type-btn" id="ub-neon" onclick="switchColorType('user', 'neon')">Neon</button>                        <button class="type-btn" id="ub-grad" onclick="switchColorType('user', 'grad')">Grad</button>                    </div>                    <div id="user-solid-grid" class="grid-options"></div>                    <div id="user-neon-grid" class="grid-options hidden"></div>                    <div id="user-grad-grid" class="grid-options hidden"></div>                                        <label>Typographic & Motion</label>                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">                        <select id="sel-font" onchange="apply()"></select>                        <select id="sel-anim" onchange="apply()"></select>                    </div>                </div>
+                <div id="sec-text" class="hidden">                    <label>Text Saturation</label>                    <div class="type-switcher">                        <button class="type-btn active" id="tb-solid" onclick="switchColorType('text', 'solid')">Solid</button>                        <button class="type-btn" id="tb-neon" onclick="switchColorType('text', 'neon')">Neon</button>                        <button class="type-btn" id="tb-grad" onclick="switchColorType('text', 'grad')">Grad</button>                    </div>                    <div id="text-solid-grid" class="grid-options"></div>                    <div id="text-neon-grid" class="grid-options hidden"></div>                    <div id="text-grad-grid" class="grid-options hidden"></div>                                        <label>Message Typography</label>                    <select id="sel-text-font" onchange="apply()"></select>                                        <label>Interface Intensity</label>                    <input type="range" min="10" max="100" value="80" style="height:4px; padding:0; background:#222; margin-bottom:10px;" oninput="document.documentElement.style.setProperty('--glow-intensity', this.value/100)">                </div>            </div>        </div>    </div>
 
-    <div class="app-wrapper" id="main-layout">
-        <!-- COLUMN 1: LIVE PREVIEWS -->
-        <div class="glass-panel" id="preview-panel">
-            <div class="panel-content">
-                <label id="preview-label">Profile Visualization</label>
-                
-                <div class="preview-container">
-                    <div id="pv-profile-wrap" class="fade-element">
-                        <div class="profile-card">
-                            <div class="banner-view" id="pv-banner"></div>
-                            <div class="pfp-pos">
-                                <div class="pfp-circ" id="pv-pfp">
-                                    <svg class="default-icon" id="def-pfp-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                                </div>
-                            </div>
-                            <div class="profile-content">
-                                <div class="display-name" id="dn-user">Neo_Explorer</div>
-                                <div class="display-meta" id="dn-meta">MALE • 24</div>
-                                <div class="display-bio" id="dn-bio">Ready to redefine the digital landscape with premium designs and high-octane chats.</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="pv-message-wrap" class="fade-element hidden-v">
-                        <div class="chat-box">
-                            <div class="chat-pfp" id="pv-chat-pfp">
-                                <svg class="default-icon" style="width:20px; height:20px;" id="def-chat-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                            </div>
-                            <div class="chat-msg-container">
-                                <div class="display-name" id="dn-chat-user" style="font-size:13px;">Neo_Explorer</div>
-                                <div class="chat-msg" id="dn-chat-text">This is a premium workspace preview. Your style reflects your personality in every message you send.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="padding:16px; background: rgba(255,255,255,0.02); border-radius:16px; border: 1px dashed #222; margin-top: auto; display: flex; align-items: center; gap: 12px;">
-                    <div style="width:8px; height:8px; border-radius:50%; background: var(--accent); box-shadow: 0 0 10px var(--accent);"></div>
-                    <p style="font-size:11px; color:#555; margin:0; line-height:1.4; font-weight: 600;">Real-time sync active. Every change reflects instantly.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- COLUMN 2: IDENTITY (MIDDLE) -->
-        <div class="glass-panel" id="auth-panel">
-            <div class="auth-transition-wrapper">
-                <!-- LOGIN FRAME -->
-                <div id="login-view" class="view-frame enter hidden">
-                    <h1>Welcome Back</h1>
-                    <p class="subtitle">Enter your credentials to access the workspace.</p>
-                    <form id="login-form">
-                        <label>Identity</label>
-                        <input type="text" id="login-user" placeholder="Username or email address" required>
-                        <label>Security Key</label>
-                        <input type="password" id="login-pass" placeholder="Your secret password" required>
-                        <button type="submit" class="btn btn-primary" style="margin-top:24px;">Unlock Dashboard</button>
-                        <button type="button" class="btn btn-secondary" onclick="toggleAuth(false)">Create New Identity</button>
-                    </form>
-                </div>
-
-                <!-- REGISTER FRAME -->
-                <div id="register-view" class="view-frame">
-                    <h1>Create Identity</h1>
-                    <p class="subtitle">Define your digital presence on ChatHub.</p>
-                    <form id="signup-form">
-                        <div class="input-group">
-                            <label>Username</label>
-                            <input type="text" id="in-user" placeholder="neo_explorer" maxlength="20" required>
-                        </div>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-                            <div class="input-group">
-                                <label>Gender</label>
-                                <select id="in-gender">
-                                    <option>Male</option>
-                                    <option>Female</option>
-                                    <option>Non-Binary</option>
-                                    <option>Prefer not to say</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Age</label>
-                                <input type="number" id="in-age" placeholder="24" min="13" max="99" required>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label>Bio & Status</label>
-                            <textarea id="in-bio" placeholder="What's your story?"></textarea>
-                        </div>
-                        <button type="submit" id="btn-signup" class="btn btn-primary" style="margin-top:16px;">Initialize Account</button>
-                        <button type="button" class="btn btn-secondary" onclick="toggleAuth(true)">Existing Identity? Login</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- COLUMN 3: CUSTOMIZATION (RIGHT) -->
-        <div class="glass-panel" id="custom-panel">
-            <div class="panel-content">
-                <div class="tabs-header">
-                    <div class="tab-btn active" id="t-user" onclick="switchMainTab('user')">Identity Style</div>
-                    <div class="tab-btn" id="t-text" onclick="switchMainTab('text')">Message FX</div>
-                </div>
-
-                <div id="sec-user">
-                    <label>Visual Assets</label>
-                    <div style="display:flex; gap:12px; margin-bottom:12px;">
-                        <button class="btn btn-secondary" style="margin:0; flex:1;" onclick="upload('pfp')">Change PFP</button>
-                        <button class="btn btn-secondary" style="margin:0; flex:1;" onclick="upload('banner')">Change Banner</button>
-                    </div>
-                    
-                    <label>Identity Color Engine</label>
-                    <div class="type-switcher">
-                        <button class="type-btn active" id="ub-solid" onclick="switchColorType('user', 'solid')">Solid</button>
-                        <button class="type-btn" id="ub-neon" onclick="switchColorType('user', 'neon')">Neon</button>
-                        <button class="type-btn" id="ub-grad" onclick="switchColorType('user', 'grad')">Grad</button>
-                    </div>
-                    <div id="user-solid-grid" class="grid-options"></div>
-                    <div id="user-neon-grid" class="grid-options hidden"></div>
-                    <div id="user-grad-grid" class="grid-options hidden"></div>
-                    
-                    <label>Typographic & Motion</label>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                        <select id="sel-font" onchange="apply()"></select>
-                        <select id="sel-anim" onchange="apply()"></select>
-                    </div>
-                </div>
-
-                <div id="sec-text" class="hidden">
-                    <label>Text Saturation</label>
-                    <div class="type-switcher">
-                        <button class="type-btn active" id="tb-solid" onclick="switchColorType('text', 'solid')">Solid</button>
-                        <button class="type-btn" id="tb-neon" onclick="switchColorType('text', 'neon')">Neon</button>
-                        <button class="type-btn" id="tb-grad" onclick="switchColorType('text', 'grad')">Grad</button>
-                    </div>
-                    <div id="text-solid-grid" class="grid-options"></div>
-                    <div id="text-neon-grid" class="grid-options hidden"></div>
-                    <div id="text-grad-grid" class="grid-options hidden"></div>
-                    
-                    <label>Message Typography</label>
-                    <select id="sel-text-font" onchange="apply()"></select>
-                    
-                    <label>Interface Intensity</label>
-                    <input type="range" min="10" max="100" value="80" style="height:4px; padding:0; background:#222; margin-bottom:10px;" oninput="document.documentElement.style.setProperty('--glow-intensity', this.value/100)">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase Integration -->
-    <script type="module">
+    <!-- Firebase Integration -->    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
-            authDomain: "chatlaxy-pro.firebaseapp.com",
-            projectId: "chatlaxy-pro",
-            storageBucket: "chatlaxy-pro.firebasestorage.app",
-            messagingSenderId: "807800533954",
-            appId: "1:807800533954:web:4165776ac52b93e9cb9c5b",
-            measurementId: "G-XJ174Y690H"
-        };
-
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "chatlaxy-pro"; // Using your project ID as appId
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro';
 
         // Global State for UI
         const fonts = ['Plus Jakarta Sans', 'Inter', 'Geist', 'Outfit', 'Montserrat', 'Syne', 'Clash Display', 'Courier New', 'Bebas Neue', 'Playfair Display'];
@@ -513,7 +300,13 @@
             btn.innerText = "Initializing...";
 
             try {
-                const cred = await signInAnonymously(auth);
+                // RULE 3: Auth First
+                let cred;
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    cred = await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    cred = await signInAnonymously(auth);
+                }
                 const user = cred.user;
 
                 const profileData = {
@@ -525,13 +318,15 @@
                     updatedAt: new Date().toISOString()
                 };
 
-                // Follows path rule: /artifacts/{appId}/users/{userId}/{collectionName}
-                await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile'), profileData);
+                // FIXED PATH (6 Segments)
+                // artifacts (1) / {appId} (2) / users (3) / {uid} (4) / profile (5) / data (6)
+                await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data'), profileData);
                 
                 showToast("Identity Created! Synchronizing...");
                 setTimeout(() => window.location.href = "chat.html", 1500);
 
             } catch (err) {
+                console.error(err);
                 showToast("Initialization failed: " + err.message);
                 btn.disabled = false;
                 btn.innerText = "Initialize Account";
@@ -541,17 +336,19 @@
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
             showToast("Verifying identity...");
-            // In a real production app with Email/Pass, we'd use signInWithEmailAndPassword.
-            // For this workspace demo, we simulate the logic:
             try {
-                await signInAnonymously(auth);
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
                 setTimeout(() => window.location.href = "chat.html", 1000);
             } catch(err) {
                 showToast("Login error: " + err.message);
             }
         };
 
-        // Exposed global functions for HTML inline onclicks
+        // Exposed global functions
         window.toggleAuth = (showLogin) => {
             const loginView = document.getElementById('login-view');
             const registerView = document.getElementById('register-view');
