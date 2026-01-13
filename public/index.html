@@ -103,7 +103,7 @@
     <div class="crt-overlay"></div>
 
     <!-- Initialization / Syncing -->
-    <div id="loader" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center">
+    <div id="loader" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center text-center px-6">
         <div class="relative w-32 h-32">
             <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
             <div class="absolute inset-0 border-4 border-t-blue-500 rounded-full animate-spin"></div>
@@ -111,8 +111,12 @@
                 <i data-lucide="shield-check" class="w-8 h-8 text-blue-500 animate-pulse"></i>
             </div>
         </div>
-        <p class="mt-8 font-orbitron text-[10px] tracking-[0.5em] text-blue-500 animate-pulse">HANDSHAKING PROTOCOLS...</p>
-        <p id="loader-error" class="mt-4 text-red-500 font-mono text-[9px] hidden"></p>
+        <p class="mt-8 font-orbitron text-[10px] tracking-[0.5em] text-blue-500 animate-pulse uppercase">Handshaking Protocols...</p>
+        <div id="loader-error" class="mt-6 max-w-md hidden">
+            <p class="text-red-500 font-mono text-xs mb-2">CRITICAL_SYSTEM_ERROR</p>
+            <p id="error-text" class="text-slate-400 font-mono text-[10px] bg-red-500/5 p-4 border border-red-500/20 rounded"></p>
+            <button onclick="window.location.reload()" class="mt-4 text-blue-500 text-[10px] font-bold uppercase tracking-widest hover:underline">Retry Connection</button>
+        </div>
     </div>
 
     <!-- Auth View -->
@@ -247,98 +251,113 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, getDoc, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Environment Safety Checks
+        // Environment Safety Checks - Fix for undefined __firebase_config
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v4';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "fake-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project", storageBucket: "demo.appspot.com", messagingSenderId: "123", appId: "123" };
         
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        let firebaseConfig;
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        } catch (e) {
+            console.error("Failed to parse config", e);
+        }
 
-        let userState = { profile: null, auth: null };
+        if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "fake-key") {
+            window.onload = () => {
+                document.getElementById('error-text').textContent = "FIREBASE_CONFIG_MISSING: Environment variables not detected. Please verify system deployment.";
+                document.getElementById('loader-error').classList.remove('hidden');
+            };
+        }
+
+        const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
+        const auth = app ? getAuth(app) : null;
+        const db = app ? getFirestore(app) : null;
+
+        let userState = { profile: null, auth: null, mode: 'login' };
 
         const el = (id) => document.getElementById(id);
         const refreshIcons = () => lucide.createIcons();
 
         // 1. Authentication Handshake (RULE 3)
         const initHandshake = async () => {
+            if (!auth) return;
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    // Fallback will be handled by UI (Auth View) if anonymous isn't immediate
-                    console.log("Waiting for user authentication...");
+                    // Logic allows Auth View to take over if no token
+                    console.log("System idle. Awaiting user verification.");
                 }
             } catch (err) {
-                console.error("Handshake failed:", err);
-                el('loader-error').textContent = "PROTOCOLS REJECTED: " + err.message;
+                console.error("Handshake rejected:", err);
+                el('error-text').textContent = `PROTOCOL_REJECTED: ${err.message}`;
                 el('loader-error').classList.remove('hidden');
             }
         };
 
         // 2. Auth State Listener
-        onAuthStateChanged(auth, async (user) => {
-            userState.auth = user;
-            if (user) {
-                // RULE 1: Strict Paths
-                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                let snap;
-                try {
-                    snap = await getDoc(userDocRef);
-                } catch(e) {
-                    console.error("Doc fetch failed", e);
-                }
-                
-                if (snap && snap.exists()) {
-                    userState.profile = snap.data();
-                } else {
-                    userState.profile = {
-                        uid: user.uid,
-                        username: user.displayName || `OPERATOR_${user.uid.slice(0, 4)}`,
-                        color: '#3b82f6',
-                        fx: 'none',
-                        xp: 0,
-                        online: true
-                    };
-                    await setDoc(userDocRef, userState.profile, { merge: true });
-                }
+        if (auth) {
+            onAuthStateChanged(auth, async (user) => {
+                userState.auth = user;
+                if (user) {
+                    // RULE 1: Strict Paths
+                    const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
+                    let snap;
+                    try {
+                        snap = await getDoc(userDocRef);
+                    } catch(e) {
+                        console.error("User profile fetch failed", e);
+                    }
+                    
+                    if (snap && snap.exists()) {
+                        userState.profile = snap.data();
+                    } else {
+                        userState.profile = {
+                            uid: user.uid,
+                            username: user.displayName || `OPERATOR_${user.uid.slice(0, 4)}`,
+                            color: '#3b82f6',
+                            online: true,
+                            lastSeen: serverTimestamp()
+                        };
+                        await setDoc(userDocRef, userState.profile, { merge: true });
+                    }
 
-                await updateDoc(userDocRef, { online: true, lastSeen: serverTimestamp() });
-                
-                el('loader').classList.add('hidden');
-                el('auth-view').classList.add('hidden');
-                el('main-view').classList.remove('hidden');
-                
-                initAppUI();
-                startDataSubscriptions();
-            } else {
-                el('loader').classList.add('hidden');
-                el('auth-view').classList.remove('hidden');
-                el('main-view').classList.add('hidden');
-            }
-            refreshIcons();
-        });
+                    await updateDoc(userDocRef, { online: true, lastSeen: serverTimestamp() });
+                    
+                    el('loader').classList.add('hidden');
+                    el('auth-view').classList.add('hidden');
+                    el('main-view').classList.remove('hidden');
+                    
+                    initAppUI();
+                    startDataSubscriptions();
+                } else {
+                    el('loader').classList.add('hidden');
+                    el('auth-view').classList.remove('hidden');
+                    el('main-view').classList.add('hidden');
+                }
+                refreshIcons();
+            });
+        }
 
         function initAppUI() {
             const p = userState.profile;
             el('me-name').textContent = p.username;
-            el('me-avatar').innerHTML = `<div class="w-full h-full flex items-center justify-center text-slate-500 font-bold">${p.username[0]}</div>`;
+            el('me-avatar').innerHTML = `<div class="w-full h-full flex items-center justify-center text-slate-500 font-bold bg-slate-900">${p.username[0]}</div>`;
         }
 
         function startDataSubscriptions() {
-            if (!userState.auth) return;
+            if (!userState.auth || !db) return;
 
-            // RULE 2: No complex queries
+            // RULE 2: Simple queries only
             const msgQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), limit(50));
             onSnapshot(msgQuery, (snap) => {
                 const messages = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
                 renderMessages(messages);
-            }, (err) => console.error("Msg Stream Error:", err));
+            }, (err) => console.error("Msg stream error:", err));
 
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 const users = snap.docs.map(d => d.data());
                 renderUserList(users);
-            }, (err) => console.error("User Stream Error:", err));
+            }, (err) => console.error("User stream error:", err));
         }
 
         function renderMessages(messages) {
@@ -356,52 +375,100 @@
 
         function renderUserList(users) {
             el('user-list-online').innerHTML = users.filter(u => u.online).map(u => `
-                <div class="flex items-center gap-2 p-2">
-                    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div class="flex items-center gap-2 p-2 group hover:bg-slate-800/20 rounded cursor-default transition-all">
+                    <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
                     <span class="text-[10px] uppercase font-bold text-slate-300">${u.username}</span>
                 </div>
             `).join('');
         }
 
+        // --- AUTH UI LOGIC ---
+        el('btn-tab-login').addEventListener('click', () => {
+            userState.mode = 'login';
+            el('signup-extra').classList.add('hidden');
+            el('btn-tab-login').classList.add('text-blue-500', 'border-blue-500');
+            el('btn-tab-signup').classList.remove('text-blue-500', 'border-blue-500');
+            el('btn-tab-signup').classList.add('text-slate-500');
+        });
+
+        el('btn-tab-signup').addEventListener('click', () => {
+            userState.mode = 'signup';
+            el('signup-extra').classList.remove('hidden');
+            el('btn-tab-signup').classList.add('text-blue-500', 'border-blue-500');
+            el('btn-tab-login').classList.remove('text-blue-500', 'border-blue-500');
+            el('btn-tab-login').classList.add('text-slate-500');
+        });
+
         // Form Events
         el('auth-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!auth) return;
             const email = el('auth-email').value;
             const pass = el('auth-pass').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
             try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "SYNCHRONIZING...";
+                
                 if (userState.mode === 'signup') {
                     const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    const username = el('reg-username').value.trim() || 'OPERATOR_X';
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), {
                         uid: cred.user.uid,
-                        username: el('reg-username').value || 'OPERATOR_X',
+                        username: username,
                         color: '#3b82f6',
-                        online: true
+                        online: true,
+                        lastSeen: serverTimestamp()
                     });
                 } else {
                     await signInWithEmailAndPassword(auth, email, pass);
                 }
             } catch (err) {
-                el('auth-error').textContent = err.message;
+                el('auth-error').textContent = `ACCESS_DENIED: ${err.message}`;
                 el('auth-error').classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Establish Link";
             }
         });
 
         el('chat-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = el('chat-input').value.trim();
-            if(!text || !userState.auth) return;
+            if(!text || !userState.auth || !db) return;
             el('chat-input').value = '';
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                text,
-                uid: userState.auth.uid,
-                username: userState.profile.username,
-                color: userState.profile.color,
-                timestamp: serverTimestamp()
-            });
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                    text,
+                    uid: userState.auth.uid,
+                    username: userState.profile.username,
+                    color: userState.profile.color,
+                    timestamp: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("Transmission failed", err);
+            }
         });
 
-        el('guest-btn').addEventListener('click', () => signInAnonymously(auth));
-        el('logout-btn').addEventListener('click', () => signOut(auth));
+        el('guest-btn').addEventListener('click', async () => {
+            if (!auth) return;
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                el('auth-error').textContent = `GUEST_LINK_FAILED: ${err.message}`;
+                el('auth-error').classList.remove('hidden');
+            }
+        });
+
+        el('logout-btn').addEventListener('click', async () => {
+            if (!auth) return;
+            if (userState.auth) {
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userState.auth.uid), { online: false });
+                } catch(e) {}
+            }
+            await signOut(auth);
+        });
 
         // Start Handshake
         initHandshake();
