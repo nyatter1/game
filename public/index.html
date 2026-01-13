@@ -7,96 +7,95 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
         .message-in {
-            animation: slideUp 0.2s ease-out;
+            animation: fadeIn 0.15s ease-out;
         }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        body { background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        body { background-color: #0f172a; color: #f1f5f9; }
     </style>
 </head>
-<body class="h-screen flex items-center justify-center font-sans">
+<body class="h-screen flex items-center justify-center font-sans overflow-hidden">
 
     <!-- Auth Container -->
-    <div id="auth-screen" class="w-full max-w-md p-8 bg-white shadow-2xl rounded-2xl mx-4">
+    <div id="auth-screen" class="w-full max-w-md p-8 bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl mx-4">
         <div class="text-center mb-8">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
+            <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-900/20">
                 <i data-lucide="message-square" class="text-white w-8 h-8"></i>
             </div>
-            <h1 id="auth-title" class="text-2xl font-bold text-gray-900">Welcome Back</h1>
-            <p id="auth-subtitle" class="text-gray-500 text-sm mt-1">Login to start chatting</p>
+            <h1 id="auth-title" class="text-2xl font-bold text-white">Welcome Back</h1>
+            <p id="auth-subtitle" class="text-slate-400 text-sm mt-1">Login to start chatting</p>
         </div>
 
         <form id="auth-form" class="space-y-4">
             <div>
-                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email Address</label>
-                <input type="email" id="email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
+                <input type="email" id="email" required class="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
             </div>
             <div>
-                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Password</label>
-                <input type="password" id="password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Password</label>
+                <input type="password" id="password" required class="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
             </div>
             
-            <div id="auth-error" class="hidden text-red-500 text-xs p-3 bg-red-50 border border-red-100 rounded-lg"></div>
+            <div id="auth-error" class="hidden text-red-400 text-xs p-3 bg-red-950/30 border border-red-900/50 rounded-lg"></div>
 
-            <button type="submit" id="submit-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-100">
+            <button type="submit" id="submit-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg">
                 Sign In
             </button>
         </form>
 
         <div class="mt-6 flex flex-col gap-3">
-            <button id="toggle-auth" class="text-sm text-blue-600 font-medium hover:underline">
+            <button id="toggle-auth" class="text-sm text-indigo-400 font-medium hover:text-indigo-300">
                 Need an account? Sign up
             </button>
             <div class="relative py-2">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
-                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400">Or</span></div>
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-900 px-2 text-slate-500">Or</span></div>
             </div>
-            <button id="guest-btn" class="w-full py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all">
+            <button id="guest-btn" class="w-full py-3 bg-slate-800 border border-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-750 transition-all">
                 Enter as Guest
             </button>
         </div>
     </div>
 
     <!-- Chat App (Hidden by default) -->
-    <div id="chat-screen" class="hidden fixed inset-0 flex flex-col bg-white">
+    <div id="chat-screen" class="hidden fixed inset-0 flex flex-col bg-slate-950">
         <!-- Header -->
-        <header class="h-16 border-b flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-10">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <i data-lucide="message-circle" class="text-white w-4 h-4"></i>
+        <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <i data-lucide="globe" class="text-white w-4 h-4"></i>
                 </div>
                 <div>
-                    <h2 class="font-bold text-gray-800 text-sm">Public Lounge</h2>
-                    <p class="text-[10px] text-green-500 font-bold uppercase tracking-wider">Live Connection</p>
+                    <h2 class="font-bold text-white text-sm">Global Chat</h2>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span id="online-count" class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Connecting...</span>
+                    </div>
                 </div>
             </div>
-            <button id="logout-btn" class="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-all">
+            <button id="logout-btn" class="p-2 hover:bg-slate-800 text-slate-400 hover:text-red-400 rounded-lg transition-all">
                 <i data-lucide="log-out" class="w-5 h-5"></i>
             </button>
         </header>
 
         <!-- Messages Area -->
-        <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/50">
-            <!-- Messages will appear here -->
+        <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-1 custom-scrollbar">
+            <!-- Messages appear as a text log here -->
         </div>
 
         <!-- Input Area -->
-        <div class="p-4 border-t bg-white">
-            <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
-                <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off"
-                    class="flex-1 px-4 py-3 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl transition-all flex items-center justify-center">
-                    <i data-lucide="send" class="w-5 h-5"></i>
+        <div class="p-4 border-t border-slate-800 bg-slate-900">
+            <form id="chat-form" class="max-w-5xl mx-auto flex gap-3">
+                <input type="text" id="chat-input" placeholder="Message Global Chat..." autocomplete="off"
+                    class="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-500">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-xl transition-all flex items-center justify-center font-bold">
+                    <i data-lucide="send" class="w-5 h-5 mr-2"></i> Send
                 </button>
             </form>
         </div>
@@ -105,9 +104,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit, doc, setDoc, deleteDoc, onDisconnect } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Hardcoded Configuration with your API Key
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
             authDomain: "simple-chat-app.firebaseapp.com",
@@ -117,7 +115,6 @@
             appId: "1:123456789:web:abcdef123456"
         };
         
-        // Ensure we prioritize the manual config to avoid 'demo' key issues
         const actualConfig = (typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).apiKey !== 'demo') 
             ? JSON.parse(__firebase_config) 
             : firebaseConfig;
@@ -129,12 +126,24 @@
         const db = getFirestore(app);
 
         let isSignUp = false;
-
-        // UI Helpers
         const el = (id) => document.getElementById(id);
         const refreshIcons = () => lucide.createIcons();
 
-        // 1. Auth Flow Logic
+        // 1. Online Tracking
+        function setupPresence(user) {
+            const presenceRef = doc(db, 'artifacts', appId, 'public', 'presence', user.uid);
+            setDoc(presenceRef, { uid: user.uid, lastSeen: serverTimestamp() }, { merge: true });
+            
+            // Listen to total online count
+            const q = query(collection(db, 'artifacts', appId, 'public', 'presence'));
+            onSnapshot(q, (snapshot) => {
+                el('online-count').textContent = `${snapshot.size} Players Online`;
+            });
+
+            window.addEventListener('beforeunload', () => deleteDoc(presenceRef));
+        }
+
+        // 2. Auth Flow
         el('toggle-auth').addEventListener('click', () => {
             isSignUp = !isSignUp;
             el('auth-title').textContent = isSignUp ? 'Create Account' : 'Welcome Back';
@@ -148,7 +157,6 @@
             const email = el('email').value;
             const password = el('password').value;
             const errorDiv = el('auth-error');
-            
             errorDiv.classList.add('hidden');
             
             try {
@@ -166,7 +174,7 @@
         el('guest-btn').addEventListener('click', () => signInAnonymously(auth));
         el('logout-btn').addEventListener('click', () => signOut(auth));
 
-        // 2. Chat Logic (Subscription)
+        // 3. Chat Logic
         function subscribeToMessages() {
             const q = query(
                 collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
@@ -180,28 +188,22 @@
                 
                 snapshot.docs.forEach(doc => {
                     const data = doc.data();
-                    const isMe = data.uid === auth.currentUser.uid;
-                    const messageEl = document.createElement('div');
-                    messageEl.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} message-in`;
+                    const username = data.email ? data.email.split('@')[0] : (data.username || 'Guest');
                     
+                    const messageEl = document.createElement('div');
+                    messageEl.className = "flex gap-2 py-0.5 text-sm message-in";
+                    
+                    // Style the text log (No bubbles, all left)
                     messageEl.innerHTML = `
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] font-bold text-gray-400">${isMe ? 'You' : (data.email ? data.email.split('@')[0] : 'Guest')}</span>
-                        </div>
-                        <div class="max-w-[75%] p-3 rounded-2xl text-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border rounded-tl-none text-gray-800'} shadow-sm">
-                            ${data.text}
-                        </div>
+                        <span class="font-bold text-indigo-400 whitespace-nowrap">${username}:</span>
+                        <span class="text-slate-300 break-words">${data.text}</span>
                     `;
                     list.appendChild(messageEl);
                 });
-                
                 list.scrollTop = list.scrollHeight;
-            }, (err) => {
-                console.error("Firestore stream error:", err);
             });
         }
 
-        // 3. Message Sending
         el('chat-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const input = el('chat-input');
@@ -213,24 +215,22 @@
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                     text,
                     uid: auth.currentUser.uid,
-                    email: auth.currentUser.email || 'Guest',
+                    email: auth.currentUser.email,
+                    username: auth.currentUser.isAnonymous ? 'Guest' : auth.currentUser.email.split('@')[0],
                     timestamp: serverTimestamp()
                 });
-            } catch (err) {
-                console.error("Send failed:", err);
-            }
+            } catch (err) { console.error(err); }
         });
 
-        // 4. Initial State Observer
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 el('auth-screen').classList.add('hidden');
                 el('chat-screen').classList.remove('hidden');
+                setupPresence(user);
                 subscribeToMessages();
             } else {
                 el('auth-screen').classList.remove('hidden');
                 el('chat-screen').classList.add('hidden');
-                el('messages-list').innerHTML = '';
             }
             refreshIcons();
         });
