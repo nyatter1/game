@@ -127,8 +127,8 @@
 
             <div class="p-4 border-t border-slate-700/50 bg-slate-800/30">
                 <div class="flex items-center gap-3 mb-4 px-2">
-                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                        <i data-lucide="user" class="w-5 h-5 text-white"></i>
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden">
+                        <img src="public/default.png" alt="Profile" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=User&background=2563eb&color=fff'">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p id="user-display-email" class="text-sm font-bold text-white truncate">Anonymous</p>
@@ -344,15 +344,17 @@
             const renderUsers = (users) => {
                 onlineCountLabel.textContent = `Online Players (${users.length})`;
                 userListContainer.innerHTML = users.map(u => {
-                    const initial = (u.email || 'A')[0].toUpperCase();
+                    const name = u.email ? u.email.split('@')[0] : 'Anonymous';
                     return `
                         <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/50 transition-colors group">
                             <div class="relative">
-                                <div class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold uppercase">${initial}</div>
+                                <div class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center overflow-hidden">
+                                    <img src="public/default.png" alt="${name}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${name}&background=random&color=fff'">
+                                </div>
                                 <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#1e293b] rounded-full"></div>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-slate-300 truncate">${u.email.split('@')[0]}</p>
+                                <p class="text-sm font-medium text-slate-300 truncate">${name}</p>
                             </div>
                         </div>`;
                 }).join('');
