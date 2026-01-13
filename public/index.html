@@ -50,7 +50,10 @@
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 z-50 bg-[#0f172a] flex items-center justify-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <p class="text-slate-400 text-sm animate-pulse">Initializing Galaxy...</p>
+        </div>
     </div>
 
     <!-- Auth View -->
@@ -192,219 +195,202 @@
             setDoc 
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // --- Firebase Config & Setup ---
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v2';
-
-        // --- State Management ---
-        let currentUser = null;
-        let currentView = 'login'; // login, signup, chat
-
-        // --- DOM Selectors ---
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const authView = document.getElementById('auth-view');
-        const chatView = document.getElementById('chat-view');
-        const authForm = document.getElementById('auth-form');
-        const authTitle = document.getElementById('auth-title');
-        const authSubtitle = document.getElementById('auth-subtitle');
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-        const toggleViewBtn = document.getElementById('toggle-view');
-        const authError = document.getElementById('auth-error');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const messagesContainer = document.getElementById('messages-container');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-        const userListContainer = document.getElementById('user-list');
-        const onlineCountLabel = document.getElementById('online-count-label');
-        const userDisplayEmail = document.getElementById('user-display-email');
-        const sendBtn = document.getElementById('send-btn');
-
-        // Initialize Lucide Icons
-        const renderIcons = () => lucide.createIcons();
-
-        // --- Auth Initialization ---
-        const initAuth = async () => {
+        // --- SAFE INITIALIZATION ---
+        // We use window.onload to ensure environment variables provided by the container are available
+        window.onload = async function() {
+            
+            // Handle missing firebase config gracefully
+            let firebaseConfig;
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                }
-            } catch (err) {
-                console.error("Auth init error:", err);
-            } finally {
-                loadingOverlay.classList.add('hidden');
-                renderIcons();
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) {
-                authView.classList.add('hidden');
-                chatView.classList.remove('hidden');
-                userDisplayEmail.textContent = user.email || 'Anonymous';
-                updatePresence(user);
-                startSubscriptions(user);
-            } else {
-                authView.classList.remove('hidden');
-                chatView.classList.add('hidden');
-                emailInput.value = '';
-                passwordInput.value = '';
-            }
-            renderIcons();
-        });
-
-        // --- View Logic ---
-        toggleViewBtn.addEventListener('click', () => {
-            currentView = currentView === 'login' ? 'signup' : 'login';
-            authTitle.textContent = currentView === 'login' ? 'Welcome Back' : 'Create Account';
-            authSubtitle.textContent = currentView === 'login' ? 'Enter your details to access Chatlaxy Pro' : 'Join the elite galaxy of chatters today';
-            authSubmitBtn.textContent = currentView === 'login' ? 'Sign In' : 'Create Pro Account';
-            toggleViewBtn.textContent = currentView === 'login' ? "Don't have an account? Sign Up" : "Already a member? Login";
-            authError.classList.add('hidden');
-        });
-
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            authError.classList.add('hidden');
-            const email = emailInput.value;
-            const password = passwordInput.value;
-
-            try {
-                if (currentView === 'login') {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                }
-            } catch (err) {
-                authError.textContent = err.message.replace('Firebase:', '').trim();
-                authError.classList.remove('hidden');
-            }
-        });
-
-        document.getElementById('guest-access').addEventListener('click', () => signInAnonymously(auth));
-        
-        const logoutAction = () => signOut(auth);
-        document.getElementById('logout-btn').addEventListener('click', logoutAction);
-        document.getElementById('mobile-logout').addEventListener('click', logoutAction);
-
-        // --- Firestore Operations ---
-        const updatePresence = async (user) => {
-            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-            await setDoc(userRef, {
-                uid: user.uid,
-                email: user.email || 'Anonymous',
-                lastSeen: serverTimestamp(),
-                online: true
-            }, { merge: true });
-        };
-
-        const startSubscriptions = (user) => {
-            // Subscribe to Messages
-            const messagesQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
-            onSnapshot(messagesQuery, (snapshot) => {
-                const messages = snapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-                renderMessages(messages, user);
-            }, (err) => console.error("Message subscription error:", err));
-
-            // Subscribe to Users
-            const usersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-            onSnapshot(usersQuery, (snapshot) => {
-                const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderUsers(users);
-            }, (err) => console.error("User subscription error:", err));
-        };
-
-        // --- Rendering Logic ---
-        const renderMessages = (messages, user) => {
-            if (messages.length === 0) {
-                messagesContainer.innerHTML = `
-                    <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
-                        <i data-lucide="message-square" class="w-12 h-12 opacity-20"></i>
-                        <p class="text-sm">No messages yet. Start the conversation!</p>
-                    </div>
-                `;
-                renderIcons();
+                firebaseConfig = typeof __firebase_config !== 'undefined' 
+                    ? JSON.parse(__firebase_config) 
+                    : { apiKey: "mock-key", authDomain: "mock-domain", projectId: "mock-id" }; // Fallback for local dev
+            } catch (e) {
+                console.error("Config parse error:", e);
+                document.body.innerHTML = '<div class="h-screen flex items-center justify-center text-red-500 p-8 text-center">Failed to load configuration. Please refresh the page.</div>';
                 return;
             }
 
-            messagesContainer.innerHTML = messages.map(msg => {
-                const isOwn = msg.uid === user.uid;
-                const time = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                const emailLabel = msg.email ? msg.email.split('@')[0] : 'Anonymous';
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v2';
 
-                return `
-                    <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} animate-msg">
-                        <div class="max-w-[85%] md:max-w-[70%] group">
-                            <div class="flex items-center gap-2 mb-1 px-1 ${isOwn ? 'flex-row-reverse' : ''}">
-                                <span class="text-xs font-semibold text-slate-500">${emailLabel}</span>
-                                <span class="text-[10px] text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">${time}</span>
+            // --- DOM Selectors ---
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const authView = document.getElementById('auth-view');
+            const chatView = document.getElementById('chat-view');
+            const authForm = document.getElementById('auth-form');
+            const authTitle = document.getElementById('auth-title');
+            const authSubtitle = document.getElementById('auth-subtitle');
+            const authSubmitBtn = document.getElementById('auth-submit-btn');
+            const toggleViewBtn = document.getElementById('toggle-view');
+            const authError = document.getElementById('auth-error');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const messagesContainer = document.getElementById('messages-container');
+            const messageForm = document.getElementById('message-form');
+            const messageInput = document.getElementById('message-input');
+            const userListContainer = document.getElementById('user-list');
+            const onlineCountLabel = document.getElementById('online-count-label');
+            const userDisplayEmail = document.getElementById('user-display-email');
+            const sendBtn = document.getElementById('send-btn');
+
+            let currentUser = null;
+            let currentView = 'login';
+
+            const renderIcons = () => lucide.createIcons();
+
+            // --- Auth Logic ---
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                loadingOverlay.classList.add('hidden');
+                
+                if (user) {
+                    authView.classList.add('hidden');
+                    chatView.classList.remove('hidden');
+                    userDisplayEmail.textContent = user.email || 'Anonymous';
+                    updatePresence(user);
+                    startSubscriptions(user);
+                } else {
+                    authView.classList.remove('hidden');
+                    chatView.classList.add('hidden');
+                }
+                renderIcons();
+            });
+
+            const initAuth = async () => {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    }
+                } catch (err) {
+                    console.error("Auth init error:", err);
+                }
+            };
+
+            const updatePresence = async (user) => {
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
+                await setDoc(userRef, {
+                    uid: user.uid,
+                    email: user.email || 'Anonymous',
+                    lastSeen: serverTimestamp(),
+                    online: true
+                }, { merge: true });
+            };
+
+            const startSubscriptions = (user) => {
+                // Messages
+                const messagesQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
+                onSnapshot(messagesQuery, (snapshot) => {
+                    const messages = snapshot.docs
+                        .map(doc => ({ id: doc.id, ...doc.data() }))
+                        .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+                    renderMessages(messages, user);
+                }, (err) => console.error("Firestore error:", err));
+
+                // Users
+                const usersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+                onSnapshot(usersQuery, (snapshot) => {
+                    const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderUsers(users);
+                }, (err) => console.error("User list error:", err));
+            };
+
+            const renderMessages = (messages, user) => {
+                if (messages.length === 0) {
+                    messagesContainer.innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
+                            <i data-lucide="message-square" class="w-12 h-12 opacity-20"></i>
+                            <p class="text-sm">No messages yet. Start the conversation!</p>
+                        </div>`;
+                    renderIcons();
+                    return;
+                }
+
+                messagesContainer.innerHTML = messages.map(msg => {
+                    const isOwn = msg.uid === user.uid;
+                    const time = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                    const emailLabel = msg.email ? msg.email.split('@')[0] : 'Anonymous';
+                    return `
+                        <div class="flex ${isOwn ? 'justify-end' : 'justify-start'} animate-msg">
+                            <div class="max-w-[85%] md:max-w-[70%] group">
+                                <div class="flex items-center gap-2 mb-1 px-1 ${isOwn ? 'flex-row-reverse' : ''}">
+                                    <span class="text-xs font-semibold text-slate-500">${emailLabel}</span>
+                                    <span class="text-[10px] text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">${time}</span>
+                                </div>
+                                <div class="px-4 py-2 rounded-2xl shadow-sm text-sm ${isOwn ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[#1e293b] text-slate-200 border border-slate-700 rounded-tl-none'}">
+                                    ${msg.text}
+                                </div>
                             </div>
-                            <div class="px-4 py-2 rounded-2xl shadow-sm text-sm ${isOwn ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[#1e293b] text-slate-200 border border-slate-700 rounded-tl-none'}">
-                                ${msg.text}
+                        </div>`;
+                }).join('');
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            };
+
+            const renderUsers = (users) => {
+                onlineCountLabel.textContent = `Online Players (${users.length})`;
+                userListContainer.innerHTML = users.map(u => {
+                    const initial = (u.email || 'A')[0].toUpperCase();
+                    return `
+                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/50 transition-colors group">
+                            <div class="relative">
+                                <div class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold uppercase">${initial}</div>
+                                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#1e293b] rounded-full"></div>
                             </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        };
-
-        const renderUsers = (users) => {
-            onlineCountLabel.textContent = `Online Players (${users.length})`;
-            userListContainer.innerHTML = users.map(u => {
-                const initial = (u.email || 'A')[0].toUpperCase();
-                const displayName = u.email.split('@')[0];
-
-                return `
-                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/50 transition-colors group">
-                        <div class="relative">
-                            <div class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold uppercase">
-                                ${initial}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-slate-300 truncate">${u.email.split('@')[0]}</p>
                             </div>
-                            <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#1e293b] rounded-full"></div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-slate-300 truncate">${displayName}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        };
+                        </div>`;
+                }).join('');
+            };
 
-        // --- Interaction ---
-        messageInput.addEventListener('input', () => {
-            sendBtn.disabled = !messageInput.value.trim();
-        });
+            // --- Form Handlers ---
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                authError.classList.add('hidden');
+                try {
+                    if (currentView === 'login') {
+                        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+                    } else {
+                        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+                    }
+                } catch (err) {
+                    authError.textContent = err.message.replace('Firebase:', '').trim();
+                    authError.classList.remove('hidden');
+                }
+            });
 
-        messageForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = messageInput.value.trim();
-            if (!text || !currentUser) return;
+            toggleViewBtn.addEventListener('click', () => {
+                currentView = currentView === 'login' ? 'signup' : 'login';
+                authTitle.textContent = currentView === 'login' ? 'Welcome Back' : 'Create Account';
+                authSubmitBtn.textContent = currentView === 'login' ? 'Sign In' : 'Create Pro Account';
+                toggleViewBtn.textContent = currentView === 'login' ? "Don't have an account? Sign Up" : "Already a member? Login";
+            });
 
-            messageInput.value = '';
-            sendBtn.disabled = true;
+            document.getElementById('guest-access').addEventListener('click', () => signInAnonymously(auth));
+            
+            const logout = () => signOut(auth);
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('mobile-logout').addEventListener('click', logout);
 
-            try {
+            messageInput.addEventListener('input', () => { sendBtn.disabled = !messageInput.value.trim(); });
+            messageForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = messageInput.value.trim();
+                if (!text || !currentUser) return;
+                messageInput.value = '';
+                sendBtn.disabled = true;
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                     text,
                     uid: currentUser.uid,
                     email: currentUser.email,
                     timestamp: serverTimestamp()
                 });
-            } catch (err) {
-                console.error("Failed to send message:", err);
-            }
-        });
+            });
 
-        // Start Auth process
-        initAuth();
+            await initAuth();
+        };
     </script>
 </body>
 </html>
