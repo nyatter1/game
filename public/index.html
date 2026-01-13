@@ -106,18 +106,30 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, limit, doc, setDoc, deleteDoc, onDisconnect } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
+        // Updated configuration with your API key and matching project parameters
         const firebaseConfig = {
             apiKey: "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo",
-            authDomain: "simple-chat-app.firebaseapp.com",
-            projectId: "simple-chat-app",
-            storageBucket: "simple-chat-app.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456"
+            authDomain: "simple-chat-app-dnc.firebaseapp.com",
+            projectId: "simple-chat-app-dnc",
+            storageBucket: "simple-chat-app-dnc.appspot.com",
+            messagingSenderId: "10987654321",
+            appId: "1:10987654321:web:9876543210abcdef"
         };
         
-        const actualConfig = (typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).apiKey !== 'demo') 
-            ? JSON.parse(__firebase_config) 
-            : firebaseConfig;
+        // Environment override logic
+        const envConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        let actualConfig = firebaseConfig;
+        
+        if (envConfigStr) {
+            try {
+                const parsed = JSON.parse(envConfigStr);
+                if (parsed && parsed.apiKey && parsed.apiKey !== 'demo') {
+                    actualConfig = parsed;
+                }
+            } catch (e) {
+                console.warn("Could not parse environment config, using manual config.");
+            }
+        }
             
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-app';
 
@@ -136,11 +148,14 @@
             
             // Listen to total online count
             const q = query(collection(db, 'artifacts', appId, 'public', 'presence'));
-            onSnapshot(q, (snapshot) => {
-                el('online-count').textContent = `${snapshot.size} Players Online`;
-            });
+            const unsubPresence = onSnapshot(q, (snapshot) => {
+                if (el('online-count')) {
+                    el('online-count').textContent = `${snapshot.size} Players Online`;
+                }
+            }, (err) => console.warn("Presence listener error:", err));
 
             window.addEventListener('beforeunload', () => deleteDoc(presenceRef));
+            return unsubPresence;
         }
 
         // 2. Auth Flow
@@ -166,23 +181,35 @@
                     await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                errorDiv.textContent = err.message;
+                console.error("Auth error:", err);
+                errorDiv.textContent = err.code ? `Error: ${err.code}` : err.message;
                 errorDiv.classList.remove('hidden');
             }
         });
 
-        el('guest-btn').addEventListener('click', () => signInAnonymously(auth));
+        el('guest-btn').addEventListener('click', async () => {
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                el('auth-error').textContent = "Guest login failed. Check Firebase Auth settings.";
+                el('auth-error').classList.remove('hidden');
+            }
+        });
+        
         el('logout-btn').addEventListener('click', () => signOut(auth));
 
         // 3. Chat Logic
+        let unsubMessages = null;
         function subscribeToMessages() {
+            if (unsubMessages) unsubMessages();
+            
             const q = query(
                 collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
                 orderBy('timestamp', 'asc'),
                 limit(100)
             );
 
-            onSnapshot(q, (snapshot) => {
+            unsubMessages = onSnapshot(q, (snapshot) => {
                 const list = el('messages-list');
                 list.innerHTML = '';
                 
@@ -193,7 +220,6 @@
                     const messageEl = document.createElement('div');
                     messageEl.className = "flex gap-2 py-0.5 text-sm message-in";
                     
-                    // Style the text log (No bubbles, all left)
                     messageEl.innerHTML = `
                         <span class="font-bold text-indigo-400 whitespace-nowrap">${username}:</span>
                         <span class="text-slate-300 break-words">${data.text}</span>
@@ -201,7 +227,7 @@
                     list.appendChild(messageEl);
                 });
                 list.scrollTop = list.scrollHeight;
-            });
+            }, (err) => console.error("Message subscription error:", err));
         }
 
         el('chat-form').addEventListener('submit', async (e) => {
@@ -219,7 +245,7 @@
                     username: auth.currentUser.isAnonymous ? 'Guest' : auth.currentUser.email.split('@')[0],
                     timestamp: serverTimestamp()
                 });
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Message send failed:", err); }
         });
 
         onAuthStateChanged(auth, (user) => {
@@ -231,6 +257,7 @@
             } else {
                 el('auth-screen').classList.remove('hidden');
                 el('chat-screen').classList.add('hidden');
+                if (unsubMessages) unsubMessages();
             }
             refreshIcons();
         });
