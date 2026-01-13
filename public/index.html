@@ -3,891 +3,590 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatlaxy: Hyperdrive | Command Terminal</title>
+    <title>Chatlaxy Pro | Terminal v4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap');
 
         :root {
-            /* Default Theme: Cyber Blue */
-            --hue: 210;
-            --sat: 100%;
-            --primary: hsl(var(--hue), var(--sat), 50%);
-            --primary-dim: hsl(var(--hue), var(--sat), 20%);
-            --primary-glow: hsl(var(--hue), var(--sat), 60%);
-            --bg-deep: #030712;
-            --bg-panel: rgba(10, 15, 30, 0.75);
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --bg-deep: #020617;
+            --panel-glass: rgba(15, 23, 42, 0.8);
         }
 
-        /* Base Settings */
         body {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-deep);
-            color: var(--text-main);
-            overflow: hidden;
+            color: #f8fafc;
             margin: 0;
-            cursor: crosshair; /* Tactical cursor */
-        }
-
-        /* Typography overrides */
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--primary-dim); border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-        /* Animations & Effects */
-        .glass-panel {
-            background: var(--bg-panel);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .neon-border {
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 10px var(--primary-dim), inset 0 0 5px var(--primary-dim);
-        }
-
-        .neon-text {
-            text-shadow: 0 0 10px var(--primary);
-        }
-
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-        }
-        .scanline::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
-            animation: scanline 8s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        .cursor-blink { animation: blink 1s step-end infinite; }
-
-        @keyframes hologram {
-            0% { opacity: 0.8; transform: skewX(0deg); }
-            5% { opacity: 0.5; transform: skewX(-10deg); }
-            10% { opacity: 0.8; transform: skewX(0deg); }
-            100% { opacity: 0.8; transform: skewX(0deg); }
-        }
-        .hologram-effect { animation: hologram 5s infinite; }
-
-        /* CRT Screen Effect overlay */
-        .crt-overlay {
-            background: radial-gradient(circle, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 100%);
-            background-size: 3px 3px;
-            pointer-events: none;
-        }
-
-        /* Dynamic Theme Classes */
-        .text-theme { color: var(--primary); }
-        .bg-theme { background-color: var(--primary); }
-        .border-theme { border-color: var(--primary); }
-        .group-hover\:text-theme:hover { color: var(--primary); }
-        .focus\:border-theme:focus { border-color: var(--primary); }
-        
-        /* Loader */
-        .loader-bar {
-            width: 100%;
-            height: 2px;
-            background: #1e293b;
-            position: relative;
             overflow: hidden;
+            height: 100vh;
         }
-        .loader-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 30%;
-            background: var(--primary);
-            box-shadow: 0 0 15px var(--primary);
-            animation: load 1.5s ease-in-out infinite;
-        }
-        @keyframes load { 0% { left: -30%; } 100% { left: 100%; } }
 
-        /* Utility */
-        .hidden-force { display: none !important; }
+        /* --- Cyberpunk UI Elements --- */
+        .crt-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            z-index: 99;
+            opacity: 0.4;
+        }
+
+        .glass-panel {
+            background: var(--panel-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .btn-cyber {
+            position: relative;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+        }
+
+        .btn-cyber:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* --- Advanced Backgrounds --- */
+        .bg-nebula {
+            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #020617 100%);
+        }
+        .bg-matrix {
+            background: linear-gradient(180deg, #020617 0%, #064e3b 100%);
+        }
+        .bg-blood {
+            background: radial-gradient(circle at top, #450a0a 0%, #020617 100%);
+        }
+
+        /* --- Scrollbars --- */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* --- Message Animations --- */
+        @keyframes msg-slide {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .msg-anim { animation: msg-slide 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* --- User Visual FX --- */
+        .fx-glitch { animation: glitch 1s linear infinite; }
+        @keyframes glitch {
+            2%, 64% { transform: translate(2px,0) skew(0deg); }
+            4%, 60% { transform: translate(-2px,0) skew(0deg); }
+            62% { transform: translate(0,0) skew(5deg); }
+        }
+
+        .fx-rainbow {
+            background: linear-gradient(to right, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow 3s linear infinite;
+        }
+        @keyframes rainbow { to { background-position: 200% center; } }
+
+        .fx-neon { text-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent); }
+
+        /* Fonts */
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-grotesk { font-family: 'Space Grotesk', sans-serif; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col relative">
+<body class="bg-nebula" id="app-root">
+    <div class="crt-overlay"></div>
 
-    <!-- Canvas Background -->
-    <canvas id="starfield" class="fixed inset-0 z-0"></canvas>
-    <div class="fixed inset-0 z-[1] crt-overlay opacity-50 pointer-events-none"></div>
-
-    <!-- BOOT SEQUENCE SCREEN -->
-    <div id="boot-screen" class="fixed inset-0 z-[100] bg-black text-green-500 font-mono text-xs p-8 flex flex-col justify-end overflow-hidden">
-        <div id="boot-log" class="space-y-1 mb-4 opacity-80"></div>
-        <div class="loader-bar w-64 mb-4"></div>
-        <div class="text-white animate-pulse">SYSTEM INITIALIZATION /// PLEASE WAIT...</div>
+    <!-- Initialization / Syncing -->
+    <div id="loader" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center">
+        <div class="relative w-32 h-32">
+            <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-t-blue-500 rounded-full animate-spin"></div>
+            <div class="absolute inset-4 border-2 border-slate-800 rounded-full flex items-center justify-center">
+                <i data-lucide="shield-check" class="w-8 h-8 text-blue-500 animate-pulse"></i>
+            </div>
+        </div>
+        <p class="mt-8 font-orbitron text-[10px] tracking-[0.5em] text-blue-500 animate-pulse">HANDSHAKING PROTOCOLS...</p>
     </div>
 
-    <!-- AUTH INTERFACE -->
-    <div id="auth-view" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-5xl h-[600px] flex rounded-lg overflow-hidden relative shadow-2xl scanline neon-border">
-            
-            <!-- Auth: Left Panel (Interactive) -->
-            <div class="w-full md:w-1/2 p-10 flex flex-col justify-between bg-black/40 relative z-10">
+    <!-- Auth View -->
+    <div id="auth-view" class="hidden min-h-screen flex items-center justify-center p-4 relative">
+        <div class="w-full max-w-4xl glass-panel relative z-10 grid md:grid-cols-2 overflow-hidden border-t-4 border-blue-600">
+            <!-- Form Side -->
+            <div class="p-10 space-y-8">
                 <div>
-                    <h1 class="text-4xl font-orbitron font-black text-white mb-1 tracking-tighter">CHATLAXY <span class="text-theme text-sm align-top opacity-80">HYPERDRIVE</span></h1>
-                    <p class="text-dim text-xs tracking-[0.3em] uppercase">Secure Quantum Link</p>
+                    <h1 class="font-orbitron text-4xl font-black text-white italic tracking-tighter">CHATLAXY<span class="text-blue-500">PRO</span></h1>
+                    <p class="text-[10px] font-mono text-slate-500 mt-2 uppercase tracking-widest">Global Encryption Node v4.0.2</p>
                 </div>
 
-                <!-- Forms -->
-                <div class="flex-1 flex flex-col justify-center py-8">
-                    <!-- Tabs -->
-                    <div class="flex gap-6 mb-8 border-b border-white/10 pb-2">
-                        <button id="tab-login" class="text-sm font-bold uppercase tracking-widest text-theme border-b-2 border-theme pb-2 transition-all">Identify</button>
-                        <button id="tab-signup" class="text-sm font-bold uppercase tracking-widest text-dim hover:text-white transition-all">Enlist</button>
+                <div id="auth-tabs" class="flex border-b border-slate-800">
+                    <button id="btn-tab-login" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest text-blue-500 border-b-2 border-blue-500">Login</button>
+                    <button id="btn-tab-signup" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Register</button>
+                </div>
+
+                <form id="auth-form" class="space-y-4">
+                    <div id="signup-extra" class="hidden space-y-4">
+                        <div class="group relative">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1 block">Operator Alias</label>
+                            <input type="text" id="reg-username" placeholder="NEO_ARCHITECT" class="w-full bg-slate-900/50 border border-slate-800 px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all">
+                        </div>
                     </div>
 
-                    <!-- Login Form -->
-                    <form id="form-login" class="space-y-5">
-                        <div class="group">
-                            <label class="block text-[10px] uppercase tracking-widest text-dim mb-1 group-hover:text-theme transition-colors">Operator ID</label>
-                            <div class="relative">
-                                <i data-lucide="user" class="absolute left-3 top-3 w-4 h-4 text-dim"></i>
-                                <input type="text" id="login-email" class="w-full bg-white/5 border border-white/10 rounded-none px-10 py-2.5 text-sm text-white focus:outline-none focus:border-theme transition-all placeholder-white/20 font-mono" placeholder="Callsign or Email">
-                            </div>
-                        </div>
-                        <div class="group">
-                            <label class="block text-[10px] uppercase tracking-widest text-dim mb-1 group-hover:text-theme transition-colors">Access Key</label>
-                            <div class="relative">
-                                <i data-lucide="lock" class="absolute left-3 top-3 w-4 h-4 text-dim"></i>
-                                <input type="password" id="login-pass" class="w-full bg-white/5 border border-white/10 rounded-none px-10 py-2.5 text-sm text-white focus:outline-none focus:border-theme transition-all placeholder-white/20 font-mono" placeholder="••••••••">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full bg-theme/20 hover:bg-theme/40 border border-theme text-theme font-orbitron font-bold py-3 uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
-                            Initialize Uplink <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                        </button>
-                        <button type="button" id="btn-guest" class="w-full text-xs text-dim hover:text-white uppercase tracking-widest mt-2 underline decoration-dashed">
-                            Bypass Authentication (Guest)
-                        </button>
-                    </form>
-
-                    <!-- Signup Form -->
-                    <form id="form-signup" class="space-y-4 hidden">
-                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[10px] uppercase tracking-widest text-dim mb-1">Callsign</label>
-                                <input type="text" id="reg-name" class="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:border-theme outline-none font-mono" placeholder="Cmdr_Shepard">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] uppercase tracking-widest text-dim mb-1">Theme Color</label>
-                                <div class="flex h-[38px] bg-white/5 border border-white/10 p-1 gap-1">
-                                    <button type="button" data-hue="210" class="theme-picker flex-1 bg-blue-500 hover:opacity-80 transition-opacity"></button>
-                                    <button type="button" data-hue="320" class="theme-picker flex-1 bg-pink-500 hover:opacity-80 transition-opacity"></button>
-                                    <button type="button" data-hue="140" class="theme-picker flex-1 bg-green-500 hover:opacity-80 transition-opacity"></button>
-                                    <button type="button" data-hue="45" class="theme-picker flex-1 bg-yellow-500 hover:opacity-80 transition-opacity"></button>
-                                    <input type="hidden" id="reg-hue" value="210">
-                                </div>
-                            </div>
-                         </div>
-                         <div>
-                            <label class="block text-[10px] uppercase tracking-widest text-dim mb-1">Email</label>
-                            <input type="email" id="reg-email" class="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:border-theme outline-none font-mono">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1 block">Comm ID (Email)</label>
+                            <input type="email" id="auth-email" required placeholder="name@terminal.net" class="w-full bg-slate-900/50 border border-slate-800 px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all">
                         </div>
                         <div>
-                            <label class="block text-[10px] uppercase tracking-widest text-dim mb-1">Passcode</label>
-                            <input type="password" id="reg-pass" class="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:border-theme outline-none font-mono">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1 block">Access Key (Password)</label>
+                            <input type="password" id="auth-pass" required placeholder="••••••••" class="w-full bg-slate-900/50 border border-slate-800 px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all">
                         </div>
-                        <button type="submit" class="w-full bg-white hover:bg-gray-200 text-black font-orbitron font-bold py-3 uppercase tracking-widest transition-all">
-                            Register Identity
-                        </button>
-                    </form>
-                    <div id="auth-msg" class="text-red-400 text-xs font-mono mt-4 min-h-[1.5rem] text-center"></div>
+                    </div>
+
+                    <div id="auth-error" class="hidden text-red-500 text-[10px] bg-red-500/10 p-3 border-l-2 border-red-500 font-mono"></div>
+
+                    <button type="submit" class="w-full btn-cyber bg-blue-600 py-4 text-xs">Establish Link</button>
+                </form>
+
+                <div class="flex items-center gap-4 py-2">
+                    <div class="h-[1px] flex-1 bg-slate-800"></div>
+                    <span class="text-[8px] font-bold text-slate-600 uppercase">OR</span>
+                    <div class="h-[1px] flex-1 bg-slate-800"></div>
                 </div>
 
-                <div class="text-[10px] text-dim font-mono">
-                    System v4.2.0 // Node: Alpha-Centauri // Latency: 0.002ms
-                </div>
+                <button id="guest-btn" class="w-full border border-slate-800 py-3 text-[10px] uppercase font-bold text-slate-400 hover:bg-slate-800/30 transition-all tracking-widest">
+                    Temporary Guest Pass
+                </button>
             </div>
 
-            <!-- Auth: Right Panel (Visualizer) -->
-            <div class="hidden md:flex w-1/2 bg-theme/5 relative items-center justify-center overflow-hidden">
-                <!-- Decorative Elements -->
-                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-                <div class="absolute top-10 right-10 w-20 h-20 border-t-2 border-r-2 border-theme opacity-50"></div>
-                <div class="absolute bottom-10 left-10 w-20 h-20 border-b-2 border-l-2 border-theme opacity-50"></div>
-                
-                <!-- Rotating Planet/Sphere -->
-                <div class="w-64 h-64 rounded-full border border-theme/30 relative animate-[spin_20s_linear_infinite] flex items-center justify-center">
-                    <div class="absolute inset-0 rounded-full border border-theme/20 animate-[ping_3s_ease-in-out_infinite]"></div>
-                    <div class="w-48 h-48 rounded-full border border-white/10 bg-theme/5 backdrop-blur-sm flex items-center justify-center">
-                        <i data-lucide="globe" class="w-24 h-24 text-theme opacity-80 hologram-effect"></i>
+            <!-- Customization Side (Preview) -->
+            <div class="bg-black/60 p-10 hidden md:flex flex-col justify-between border-l border-slate-800">
+                <div class="space-y-8">
+                    <p class="text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">Identity Config</p>
+                    
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="relative group">
+                            <div id="preview-pfp-container" class="w-24 h-24 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden bg-slate-900">
+                                <i data-lucide="user-plus" class="w-8 h-8 text-slate-700"></i>
+                            </div>
+                            <input type="file" id="pfp-upload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                        </div>
+                        <div class="text-center">
+                            <span id="preview-name" class="font-orbitron text-xl font-bold uppercase tracking-tight text-white">OPERATOR_X</span>
+                            <div class="flex items-center justify-center gap-2 mt-1">
+                                <span class="px-2 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-bold border border-blue-500/20 uppercase">Level 1</span>
+                                <span class="px-2 py-0.5 bg-slate-800 text-slate-400 text-[8px] font-bold uppercase">Recruit</span>
+                            </div>
+                        </div>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-bold text-slate-500 uppercase">Aura Color</label>
+                            <input type="color" id="cfg-color" value="#3b82f6" class="w-full h-8 bg-transparent border-none cursor-pointer">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-bold text-slate-500 uppercase">Visual Mod</label>
+                            <select id="cfg-fx" class="w-full bg-slate-900 border border-slate-800 text-[9px] p-2 text-slate-300">
+                                <option value="none">Standard</option>
+                                <option value="fx-glitch">Glitch</option>
+                                <option value="fx-rainbow">Spectrum</option>
+                                <option value="fx-neon">Neon Glow</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-600/5 p-4 border border-blue-500/10 rounded">
+                    <p class="text-[9px] text-blue-400/60 leading-relaxed font-mono">
+                        "The interface is not just a tool; it's an extension of your digital consciousness. Choose your parameters wisely."
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MAIN INTERFACE -->
-    <div id="app-view" class="hidden relative z-20 w-full h-full flex flex-col md:flex-row backdrop-blur-sm">
-        
-        <!-- Sidebar: Nav -->
-        <aside class="w-full md:w-20 bg-black/80 border-r border-white/10 flex flex-row md:flex-col items-center py-4 gap-6 z-30">
-            <div class="w-12 h-12 rounded-full border-2 border-theme flex items-center justify-center text-theme shadow-[0_0_15px_var(--primary)] mb-0 md:mb-4">
-                <i data-lucide="zap" class="w-6 h-6"></i>
-            </div>
-
-            <div class="flex flex-row md:flex-col gap-4 flex-1 items-center justify-center md:justify-start">
-                <button class="nav-btn active group relative p-3 text-white bg-white/10 rounded-xl transition-all" data-target="channels">
-                    <i data-lucide="radio" class="w-6 h-6"></i>
-                    <div class="absolute left-full ml-4 bg-theme text-black text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden md:block">Channels</div>
-                </button>
-                <button class="nav-btn group relative p-3 text-dim hover:text-white hover:bg-white/5 rounded-xl transition-all" data-target="users">
-                    <i data-lucide="users" class="w-6 h-6"></i>
-                    <div class="absolute left-full ml-4 bg-theme text-black text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden md:block">Manifest</div>
-                </button>
-                <button class="nav-btn group relative p-3 text-dim hover:text-white hover:bg-white/5 rounded-xl transition-all" id="btn-theme-toggle">
-                    <i data-lucide="palette" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <div class="mt-auto">
-                <button id="btn-logout" class="p-3 text-red-400 hover:text-red-200 hover:bg-red-500/20 rounded-xl transition-all">
-                    <i data-lucide="power" class="w-6 h-6"></i>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Sidebar: Secondary (Channels/Users) -->
-        <aside class="w-full md:w-64 bg-black/60 border-r border-white/10 flex flex-col glass-panel hidden md:flex" id="secondary-sidebar">
-            <div class="p-4 border-b border-white/10 bg-black/20">
-                <h2 class="font-orbitron font-bold text-theme tracking-widest text-sm uppercase flex items-center gap-2">
-                    <i data-lucide="activity" class="w-4 h-4"></i> Frequency
-                </h2>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto p-2 space-y-1" id="channel-list">
-                <!-- Dynamically populated -->
-                <button class="channel-btn w-full text-left px-4 py-3 rounded hover:bg-white/5 text-sm font-mono text-dim hover:text-white transition-all border-l-2 border-transparent hover:border-theme flex items-center justify-between group active-channel" data-id="global">
-                    <span># GLOBAL_CMD</span>
-                    <span class="w-2 h-2 rounded-full bg-theme shadow-[0_0_10px_var(--primary)]"></span>
-                </button>
-                <button class="channel-btn w-full text-left px-4 py-3 rounded hover:bg-white/5 text-sm font-mono text-dim hover:text-white transition-all border-l-2 border-transparent hover:border-theme flex items-center justify-between group" data-id="trade">
-                    <span># TRADE_ROUTE</span>
-                </button>
-                <button class="channel-btn w-full text-left px-4 py-3 rounded hover:bg-white/5 text-sm font-mono text-dim hover:text-white transition-all border-l-2 border-transparent hover:border-theme flex items-center justify-between group" data-id="ops">
-                    <span># BLACK_OPS</span>
-                </button>
-                <button class="channel-btn w-full text-left px-4 py-3 rounded hover:bg-white/5 text-sm font-mono text-red-400 hover:text-red-200 transition-all border-l-2 border-transparent hover:border-red-500 flex items-center justify-between group" data-id="distress">
-                    <span>! DISTRESS_SIGNAL</span>
-                    <i data-lucide="alert-triangle" class="w-3 h-3 animate-pulse"></i>
-                </button>
-            </div>
-
-            <!-- Current User Mini Profile -->
-            <div class="p-4 border-t border-white/10 bg-black/40 backdrop-blur flex items-center gap-3">
-                <div class="w-10 h-10 rounded overflow-hidden border border-white/20 relative">
-                    <img id="mini-pfp" src="" class="w-full h-full object-cover hidden">
-                    <div id="mini-pfp-ph" class="w-full h-full bg-theme/20 flex items-center justify-center font-bold text-theme">OP</div>
-                    <div class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-black"></div>
+    <!-- Main App View -->
+    <div id="main-view" class="hidden h-screen flex flex-col md:flex-row overflow-hidden relative">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-80 glass-panel border-r border-slate-800/50 flex flex-col relative z-20">
+            <div class="p-6 border-b border-slate-800/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
+                    <span class="font-orbitron text-xs font-bold tracking-[0.2em] text-white">TERMINAL_NODES</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <div id="mini-name" class="text-sm font-bold text-white truncate font-orbitron">Operator</div>
-                    <div class="text-[10px] text-theme font-mono animate-pulse">ONLINE // SYNCED</div>
+                <button id="settings-toggle" class="p-2 hover:bg-slate-800 rounded transition-colors">
+                    <i data-lucide="settings-2" class="w-4 h-4 text-slate-500"></i>
+                </button>
+            </div>
+
+            <!-- Stats/XP Bar -->
+            <div class="px-6 py-4 bg-black/20 border-b border-slate-800/30">
+                <div class="flex justify-between text-[8px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                    <span>Experience / Rank</span>
+                    <span id="rank-display">Lvl 1</span>
+                </div>
+                <div class="h-1 bg-slate-800 w-full overflow-hidden">
+                    <div id="xp-progress" class="h-full bg-blue-500" style="width: 30%"></div>
                 </div>
             </div>
-        </aside>
 
-        <!-- Main Chat Area -->
-        <main class="flex-1 flex flex-col min-w-0 bg-black/20 relative">
-            
-            <!-- Chat Header -->
-            <header class="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-black/40 backdrop-blur z-20">
+            <!-- User Lists -->
+            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div class="mb-6">
+                    <h3 class="text-[8px] font-black text-blue-500 uppercase tracking-[0.3em] px-2 mb-3">Online Operatives</h3>
+                    <div id="user-list-online" class="space-y-1"></div>
+                </div>
+                <div>
+                    <h3 class="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] px-2 mb-3">Disconnected</h3>
+                    <div id="user-list-offline" class="space-y-1 opacity-50"></div>
+                </div>
+            </div>
+
+            <!-- Current User Profile -->
+            <div class="p-4 bg-black/40 border-t border-slate-800/50">
                 <div class="flex items-center gap-3">
-                    <i data-lucide="hash" class="text-dim w-5 h-5"></i>
-                    <div>
-                        <h3 id="chat-title" class="font-orbitron font-bold text-white tracking-wider">GLOBAL_CMD</h3>
-                        <p class="text-[10px] text-dim font-mono tracking-widest uppercase">Sector 7G // Public Uplink</p>
+                    <div id="me-avatar" class="w-10 h-10 rounded-full border-2 border-slate-800 overflow-hidden bg-slate-900"></div>
+                    <div class="flex-1 min-w-0">
+                        <p id="me-name" class="text-xs font-black text-white uppercase truncate font-orbitron">Guest</p>
+                        <p id="me-status" class="text-[8px] text-blue-500 font-bold uppercase">Online</p>
                     </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="flex -space-x-2" id="header-avatars">
-                        <!-- Filled by JS -->
-                    </div>
-                    <button class="p-2 text-dim hover:text-white transition-colors md:hidden" id="mobile-menu-toggle">
-                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    <button id="logout-btn" class="p-2 text-slate-500 hover:text-red-500 transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
                     </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Chat Container -->
+        <main class="flex-1 flex flex-col relative z-10">
+            <!-- Header -->
+            <header class="h-16 glass-panel border-b border-slate-800/50 flex items-center justify-between px-6">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-blue-500 tracking-[0.2em] uppercase">Global Channel</span>
+                    <span class="text-[8px] font-mono text-slate-500">SECURE_TUNNEL_ESTABLISHED: AES-256</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="theme-nebula" class="w-4 h-4 rounded-full bg-indigo-900 border border-slate-700"></button>
+                    <button id="theme-matrix" class="w-4 h-4 rounded-full bg-emerald-900 border border-slate-700"></button>
+                    <button id="theme-blood" class="w-4 h-4 rounded-full bg-rose-950 border border-slate-700"></button>
                 </div>
             </header>
 
             <!-- Messages Area -->
-            <div id="messages-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar relative">
-                <!-- Welcome Message -->
-                <div class="flex flex-col items-center justify-center py-10 opacity-50">
-                    <i data-lucide="satellite" class="w-16 h-16 text-theme mb-4"></i>
-                    <p class="font-mono text-sm text-center">Uplink Established.<br>Beginning Encryption...</p>
-                </div>
-                <!-- Messages injected here -->
+            <div id="message-container" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                <!-- Messages render here -->
             </div>
 
             <!-- Input Area -->
-            <div class="p-4 md:p-6 pb-6 bg-gradient-to-t from-black/80 to-transparent">
-                <div class="bg-black/60 border border-white/10 backdrop-blur rounded-lg flex flex-col shadow-lg transition-all focus-within:border-theme/50 focus-within:shadow-[0_0_20px_rgba(59,130,246,0.1)]">
-                    <!-- Toolbar -->
-                    <div class="flex items-center gap-2 p-2 border-b border-white/5">
-                         <label class="p-2 text-dim hover:text-theme cursor-pointer transition-colors" title="Upload Holo-Image">
-                             <i data-lucide="image" class="w-4 h-4"></i>
-                             <input type="file" id="img-input" accept="image/*" class="hidden">
-                         </label>
-                         <button class="p-2 text-dim hover:text-theme transition-colors" id="btn-emoji">
-                             <i data-lucide="smile" class="w-4 h-4"></i>
-                         </button>
-                         <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
-                         <div id="upload-preview" class="hidden px-2 flex items-center gap-2 text-xs text-theme bg-theme/10 rounded">
-                            <span class="truncate max-w-[100px]" id="upload-name">image.png</span>
-                            <button id="clear-upload" class="hover:text-white"><i data-lucide="x" class="w-3 h-3"></i></button>
-                         </div>
-                    </div>
-                    
-                    <form id="msg-form" class="flex items-end gap-2 p-2">
-                        <textarea id="msg-input" rows="1" class="flex-1 bg-transparent border-none text-white px-4 py-3 text-sm focus:ring-0 resize-none font-mono placeholder-white/20 custom-scrollbar" placeholder="Transmit data packet..."></textarea>
-                        <button type="submit" class="p-3 bg-theme text-black font-bold rounded hover:opacity-90 transition-all flex-shrink-0 mb-1">
-                            <i data-lucide="send" class="w-4 h-4"></i>
+            <div class="p-6 relative">
+                <div class="max-w-4xl mx-auto glass-panel p-1 border border-slate-700/50 rounded-lg group focus-within:border-blue-500/50 transition-all">
+                    <form id="chat-form" class="flex items-center gap-2">
+                        <button type="button" id="emoji-trigger" class="p-3 text-slate-500 hover:text-blue-500">
+                            <i data-lucide="smile" class="w-5 h-5"></i>
+                        </button>
+                        <input type="text" id="chat-input" placeholder="Transmit data string..." autocomplete="off"
+                            class="flex-1 bg-transparent border-none outline-none py-3 px-2 text-sm text-white font-grotesk placeholder:text-slate-600">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-md btn-cyber flex items-center gap-2">
+                            <span class="text-[10px]">SEND</span>
+                            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                         </button>
                     </form>
                 </div>
-                <div class="text-[10px] text-white/20 font-mono mt-2 text-right">Encrypted via RSA-4096 // Sector Safe</div>
+                
+                <!-- Emoji Panel (Hidden) -->
+                <div id="emoji-panel" class="hidden absolute bottom-24 left-6 p-4 glass-panel border border-slate-700 w-64 grid grid-cols-4 gap-2">
+                    <button class="emoji-btn hover:scale-125 transition-transform">🔥</button>
+                    <button class="emoji-btn hover:scale-125 transition-transform">🚀</button>
+                    <button class="emoji-btn hover:scale-125 transition-transform">💎</button>
+                    <button class="emoji-btn hover:scale-125 transition-transform">💀</button>
+                    <button class="emoji-btn hover:scale-125 transition-transform">🌌</button>
+                    <button class="emoji-btn hover:scale-125 transition-transform">👾</button>
+                    <button class="emoji-btn hover:scale-125 transition-transform">🔋</button>
+                    <button class="emoji-btn hover:scale-125 transition-transform">🦾</button>
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, getDoc, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, getDoc, getDocs, where, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // --- AUDIO ENGINE ---
-        class SoundEngine {
-            constructor() {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                this.masterGain = this.ctx.createGain();
-                this.masterGain.gain.value = 0.3; // Volume
-                this.masterGain.connect(this.ctx.destination);
-            }
-
-            playTone(freq, type, duration) {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(this.masterGain);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
-            }
-
-            playType() { this.playTone(800 + Math.random()*200, 'square', 0.05); }
-            playSend() { this.playTone(1200, 'sine', 0.1); setTimeout(() => this.playTone(2000, 'sine', 0.2), 100); }
-            playReceive() { this.playTone(600, 'sine', 0.1); setTimeout(() => this.playTone(800, 'sine', 0.2), 100); }
-            playHover() { this.playTone(200, 'triangle', 0.05); }
-            playError() { this.playTone(150, 'sawtooth', 0.3); }
-        }
-        const sfx = new SoundEngine();
-
-        // --- STARFIELD VISUALIZER ---
-        const initStarfield = () => {
-            const canvas = document.getElementById('starfield');
-            const ctx = canvas.getContext('2d');
-            let width, height;
-            let stars = [];
-            let speed = 0.1;
-            let targetSpeed = 0.1;
-
-            const resize = () => {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            };
-            window.addEventListener('resize', resize);
-            resize();
-
-            class Star {
-                constructor() {
-                    this.x = Math.random() * width - width/2;
-                    this.y = Math.random() * height - height/2;
-                    this.z = Math.random() * width;
-                    this.pz = this.z;
-                }
-                update() {
-                    this.z = this.z - speed * 10;
-                    if (this.z < 1) {
-                        this.z = width;
-                        this.x = Math.random() * width - width/2;
-                        this.y = Math.random() * height - height/2;
-                        this.pz = this.z;
-                    }
-                }
-                draw() {
-                    const sx = (this.x / this.z) * width + width/2;
-                    const sy = (this.y / this.z) * height + height/2;
-                    const r = (1 - this.z / width) * 4; // Size based on distance
-
-                    // Trail effect at high speeds
-                    if (speed > 1) {
-                        const px = (this.x / this.pz) * width + width/2;
-                        const py = (this.y / this.pz) * height + height/2;
-                        ctx.beginPath();
-                        ctx.moveTo(px, py);
-                        ctx.lineTo(sx, sy);
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${r/4})`;
-                        ctx.stroke();
-                    }
-
-                    ctx.fillStyle = "white";
-                    ctx.beginPath();
-                    ctx.arc(sx, sy, speed > 1 ? r/2 : r, 0, Math.PI * 2);
-                    ctx.fill();
-                    this.pz = this.z;
-                }
-            }
-
-            for(let i=0; i<800; i++) stars.push(new Star());
-
-            const animate = () => {
-                // Smooth speed transition
-                speed += (targetSpeed - speed) * 0.05;
-
-                ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, width, height);
-                ctx.translate(width/2, height/2); // Center origin
-                
-                stars.forEach(s => {
-                    s.update();
-                    // Don't draw if outside canvas bounds (simple check)
-                    // (Logic simplified for performance)
-                });
-                
-                // Clear transform for next frame drawing relative to center
-                ctx.translate(-width/2, -height/2);
-                
-                stars.forEach(s => s.draw());
-
-                requestAnimationFrame(animate);
-            };
-            animate();
-
-            return {
-                setWarp: (active) => { targetSpeed = active ? 40 : 0.1; }
-            };
-        };
-        const starfield = initStarfield();
-
-        // --- FIREBASE SETUP ---
-        const manualApiKey = "AIzaSyDncManQICLPVT8WuMVO5kB-Am32VI12wo";
-        let firebaseConfig = { apiKey: manualApiKey, authDomain: "chatlaxy-pro.firebaseapp.com", projectId: "chatlaxy-pro" };
-        if (typeof __firebase_config !== 'undefined') {
-            const remoteConfig = JSON.parse(__firebase_config);
-            firebaseConfig = { ...firebaseConfig, ...remoteConfig, apiKey: manualApiKey };
-        }
+        // Global State
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-pro-v4';
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chatlaxy-hyper-v1';
-        
-        let currentUser = null;
-        let currentChannel = 'global';
-        let currentThemeHue = 210;
-        let unsubscribeMsg = null;
-        let userProfileCache = {};
 
-        // --- DOM ELEMENTS ---
+        let userState = {
+            profile: null,
+            auth: null,
+            mode: 'login',
+            theme: 'bg-nebula'
+        };
+
         const el = (id) => document.getElementById(id);
-        
-        // --- BOOT SEQUENCE ---
-        const runBootSequence = async () => {
-            const logs = [
-                "BIOS CHECK... OK",
-                "LOADING KERNEL... OK",
-                "MOUNTING VOLUMES... OK",
-                "INITIALIZING NETWORK STACK... OK",
-                "ESTABLISHING SECURE UPLINK...",
-                "HANDSHAKE COMPLETE."
-            ];
-            const logContainer = el('boot-log');
-            
-            for (const line of logs) {
-                await new Promise(r => setTimeout(r, 400));
-                const div = document.createElement('div');
-                div.textContent = `> ${line}`;
-                logContainer.appendChild(div);
-                sfx.playType();
-            }
-            
-            await new Promise(r => setTimeout(r, 800));
-            el('boot-screen').classList.add('hidden-force');
-            el('auth-view').classList.remove('hidden');
+        const refreshIcons = () => lucide.createIcons();
+
+        // --- Audio System ---
+        const playSfx = (type) => {
+            const sounds = {
+                'click': 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
+                'msg': 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+                'login': 'https://assets.mixkit.co/active_storage/sfx/136/136-preview.mp3'
+            };
+            const audio = new Audio(sounds[type]);
+            audio.volume = 0.2;
+            audio.play().catch(() => {});
         };
 
-        // --- THEME ENGINE ---
-        const setTheme = (hue) => {
-            currentThemeHue = hue;
-            document.documentElement.style.setProperty('--hue', hue);
-            localStorage.setItem('chatlaxy_hue', hue);
-        };
-        
-        // --- HELPER FUNCTIONS ---
-        const escapeHtml = (unsafe) => {
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        };
-
-        const formatTime = (timestamp) => {
-            if (!timestamp) return '...';
-            const date = timestamp.toDate();
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        };
-
-        const compressImage = (file) => {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 500;
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * scaleSize;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to 70% quality JPG
-                    };
-                };
-            });
-        };
-
-        // --- AUTH LOGIC ---
+        // --- Auth & Data Listeners ---
         onAuthStateChanged(auth, async (user) => {
+            userState.auth = user;
             if (user) {
-                // Logged In
-                currentUser = user;
-                el('auth-view').classList.add('hidden-force');
-                el('app-view').classList.remove('hidden');
-                
-                starfield.setWarp(true); // WARP EFFECT ON LOGIN
-                setTimeout(() => starfield.setWarp(false), 2000);
-                
-                sfx.playReceive();
-                
-                // Fetch/Create Profile
-                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                const snap = await getDoc(userRef);
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
+                const snap = await getDoc(docRef);
                 
                 if (snap.exists()) {
-                    const data = snap.data();
-                    if(data.hue) setTheme(data.hue);
-                    updateProfileUI(data);
+                    userState.profile = snap.data();
                 } else {
-                    // Create default profile if anon
-                    await setDoc(userRef, {
-                        uid: user.uid,
-                        username: user.displayName || 'Guest_Cmdr',
-                        hue: 210,
-                        status: 'online',
-                        lastSeen: serverTimestamp()
-                    });
+                    // Fallback for guest or new auth
+                    userState.profile = {
+                        username: user.displayName || `OPERATOR_${Math.floor(Math.random()*9000 + 1000)}`,
+                        color: '#3b82f6',
+                        fx: 'none',
+                        xp: 0,
+                        pfp: null
+                    };
+                    await setDoc(docRef, { ...userState.profile, online: true }, { merge: true });
                 }
 
-                // Update Presence
-                await setDoc(userRef, { status: 'online', lastSeen: serverTimestamp() }, { merge: true });
-
-                loadMessages('global');
-                lucide.createIcons();
+                await updateDoc(docRef, { online: true, lastSeen: serverTimestamp() });
+                
+                el('loader').classList.add('hidden');
+                el('auth-view').classList.add('hidden');
+                el('main-view').classList.remove('hidden');
+                initAppUI();
+                startDataSubscriptions();
+                playSfx('login');
             } else {
-                // Logged Out
-                el('app-view').classList.add('hidden');
+                el('loader').classList.add('hidden');
                 el('auth-view').classList.remove('hidden');
-                el('auth-view').style.display = 'flex';
-                currentUser = null;
+                el('main-view').classList.add('hidden');
             }
+            refreshIcons();
         });
 
-        // Form Handlers
-        el('form-login').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = el('login-email').value;
-            const pass = el('login-pass').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) {
-                el('auth-msg').textContent = "ACCESS DENIED: " + err.message;
-                sfx.playError();
-            }
-        });
-
-        el('btn-guest').addEventListener('click', async () => {
-            try { await signInAnonymously(auth); } catch(e) { console.error(e); }
-        });
-
-        el('form-signup').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = el('reg-email').value;
-            const pass = el('reg-pass').value;
-            const name = el('reg-name').value;
-            const hue = el('reg-hue').value;
+        // --- UI Initialization ---
+        function initAppUI() {
+            const p = userState.profile;
+            el('me-name').textContent = p.username;
+            el('me-name').style.color = p.color;
+            el('me-avatar').innerHTML = p.pfp ? `<img src="${p.pfp}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-500 font-bold">${p.username[0]}</div>`;
+            el('me-avatar').style.borderColor = p.color;
             
-            try {
-                const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                await updateProfile(cred.user, { displayName: name });
-                // Create custom profile doc
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), {
-                    uid: cred.user.uid,
-                    username: name,
-                    email: email,
-                    hue: hue,
-                    status: 'online',
-                    createdAt: serverTimestamp()
-                });
-            } catch (err) {
-                el('auth-msg').textContent = "REGISTRATION FAILED: " + err.message;
-                sfx.playError();
-            }
-        });
+            // Stats
+            const level = Math.floor(Math.sqrt(p.xp / 100)) + 1;
+            el('rank-display').textContent = `Lvl ${level}`;
+            el('xp-progress').style.width = `${(p.xp % 100)}%`;
+        }
 
-        // Auth Tabs
-        el('tab-login').addEventListener('click', () => {
-            el('form-login').classList.remove('hidden');
-            el('form-signup').classList.add('hidden');
-            el('tab-login').classList.add('text-theme', 'border-theme');
-            el('tab-login').classList.remove('text-dim');
-            el('tab-signup').classList.remove('text-theme', 'border-theme');
-            el('tab-signup').classList.add('text-dim');
-        });
-        el('tab-signup').addEventListener('click', () => {
-            el('form-signup').classList.remove('hidden');
-            el('form-login').classList.add('hidden');
-            el('tab-signup').classList.add('text-theme', 'border-theme');
-            el('tab-signup').classList.remove('text-dim');
-            el('tab-login').classList.remove('text-theme', 'border-theme');
-            el('tab-login').classList.add('text-dim');
-        });
+        function startDataSubscriptions() {
+            // Messages
+            const msgQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), limit(50));
+            onSnapshot(msgQuery, (snap) => {
+                const messages = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+                renderMessages(messages);
+            }, (err) => console.error(err));
 
-        // Theme Pickers
-        document.querySelectorAll('.theme-picker').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const hue = e.target.dataset.hue;
-                el('reg-hue').value = hue;
-                setTheme(hue);
-                sfx.playHover();
+            // Users
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
+                const users = snap.docs.map(d => d.data());
+                renderUserList(users);
             });
-        });
+        }
 
-        // --- CHAT LOGIC ---
-
-        const updateProfileUI = (data) => {
-            el('mini-name').textContent = data.username || 'Operator';
-            if(data.pfp) {
-                el('mini-pfp').src = data.pfp;
-                el('mini-pfp').classList.remove('hidden');
-                el('mini-pfp-ph').classList.add('hidden');
-            }
-        };
-
-        const loadMessages = (channelId) => {
-            currentChannel = channelId;
-            el('chat-title').textContent = channelId.toUpperCase().replace('_', ' ');
-            el('messages-container').innerHTML = ''; // Clear
-
-            if (unsubscribeMsg) unsubscribeMsg();
-
-            const q = query(
-                collection(db, 'artifacts', appId, 'public', 'data', 'messages'),
-                where('channel', '==', channelId),
-                orderBy('timestamp', 'desc'),
-                limit(50)
-            );
-
-            unsubscribeMsg = onSnapshot(q, async (snap) => {
-                const msgs = snap.docs.map(d => ({id: d.id, ...d.data()})).reverse();
+        // --- Rendering ---
+        function renderMessages(messages) {
+            const container = el('message-container');
+            container.innerHTML = messages.map((m, i) => {
+                const isMe = m.uid === userState.auth.uid;
+                const time = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...';
                 
-                // Fetch authors if needed
-                const uids = [...new Set(msgs.map(m => m.uid))];
-                for(const uid of uids) {
-                    if(!userProfileCache[uid]) {
-                        const uDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid));
-                        if(uDoc.exists()) userProfileCache[uid] = uDoc.data();
-                    }
-                }
-
-                renderMessages(msgs);
-                if(msgs.length > 0 && msgs[msgs.length-1].uid !== currentUser.uid) sfx.playReceive();
-            });
-
-            // Update Active Channel UI
-            document.querySelectorAll('.channel-btn').forEach(b => {
-                if(b.dataset.id === channelId) {
-                    b.classList.add('bg-white/10', 'border-theme', 'text-white');
-                    b.classList.remove('border-transparent', 'text-dim');
-                } else {
-                    b.classList.remove('bg-white/10', 'border-theme', 'text-white');
-                    b.classList.add('border-transparent', 'text-dim');
-                }
-            });
-        };
-
-        const renderMessages = (msgs) => {
-            const container = el('messages-container');
-            const html = msgs.map(msg => {
-                const isMe = msg.uid === currentUser.uid;
-                const author = userProfileCache[msg.uid] || { username: 'Unknown', hue: 0 };
-                const time = formatTime(msg.timestamp);
-                
-                // Content Processing (Basic Markdown)
-                let content = escapeHtml(msg.text || '');
-                content = content.replace(/\`\`\`(.+?)\`\`\`/g, '<div class="bg-black/50 p-2 rounded font-mono text-xs my-1 border border-white/10">$1</div>');
-                content = content.replace(/\`(.+?)\`/g, '<code class="bg-white/10 px-1 rounded font-mono text-theme">$1</code>');
-                content = content.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
-                content = content.replace(/\*(.+?)\*/g, '<em class="text-dim">$1</em>');
-
-                const imageHtml = msg.image ? `<div class="mt-2 mb-1 rounded-lg overflow-hidden border border-white/10 max-w-[300px]"><img src="${msg.image}" class="w-full h-auto cursor-pointer hover:opacity-90" onclick="window.open(this.src)"></div>` : '';
-
                 return `
-                <div class="flex gap-4 group ${isMe ? 'flex-row-reverse' : ''} animate-[fadeIn_0.3s_ease-out]">
-                    <!-- Avatar -->
-                    <div class="flex-shrink-0 mt-1">
-                        <div class="w-10 h-10 rounded shadow-lg border border-white/10 bg-black flex items-center justify-center font-bold text-lg" style="color: hsl(${author.hue || 210}, 100%, 70%)">
-                            ${author.pfp ? `<img src="${author.pfp}" class="w-full h-full object-cover rounded">` : author.username[0].toUpperCase()}
+                <div class="flex ${isMe ? 'justify-end' : 'justify-start'} msg-anim" style="animation-delay: ${i * 0.05}s">
+                    <div class="flex gap-4 max-w-[80%] ${isMe ? 'flex-row-reverse' : ''}">
+                        <div class="w-10 h-10 rounded-full flex-shrink-0 border-2 bg-slate-900 overflow-hidden ${m.fx || ''}" style="border-color: ${m.color || '#334155'}">
+                            ${m.pfp ? `<img src="${m.pfp}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[10px] text-slate-500 font-bold">${m.username[0]}</div>`}
                         </div>
-                    </div>
-                    
-                    <!-- Bubble -->
-                    <div class="flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}">
-                        <div class="flex items-baseline gap-2 mb-1">
-                            <span class="text-xs font-bold uppercase tracking-wider text-white hover:underline cursor-pointer" style="color: hsl(${author.hue || 210}, 100%, 70%)">${author.username}</span>
-                            <span class="text-[10px] text-dim font-mono">${time}</span>
-                        </div>
-                        <div class="relative px-4 py-3 rounded-lg text-sm leading-relaxed shadow-md ${isMe ? 'bg-theme text-black font-medium' : 'bg-[#1e293b] text-slate-200 border border-white/5'}">
-                            ${content}
-                            ${imageHtml}
-                            <div class="absolute -bottom-2 ${isMe ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                <!-- Reactions Placeholder -->
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[9px] font-black uppercase tracking-widest ${m.fx || ''}" style="color: ${m.color || '#64748b'}">${m.username}</span>
+                                <span class="text-[8px] text-slate-600 font-mono">${time}</span>
+                            </div>
+                            <div class="px-5 py-3 rounded-2xl glass-panel text-sm font-grotesk leading-relaxed ${isMe ? 'rounded-tr-none' : 'rounded-tl-none'} border border-slate-700/50" 
+                                 style="border-left: 4px solid ${m.color || '#3b82f6'};">
+                                ${m.text}
                             </div>
                         </div>
                     </div>
-                </div>
-                `;
+                </div>`;
             }).join('');
-            
-            container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
-        };
+            if(messages.length > 0) playSfx('msg');
+        }
 
-        // --- MESSAGE SENDING ---
-        let pendingImage = null;
+        function renderUserList(users) {
+            const online = users.filter(u => u.online);
+            const offline = users.filter(u => !u.online);
 
-        el('img-input').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                if(file.size > 2000000) { alert("File too large (Max 2MB)"); return; }
-                el('upload-name').textContent = file.name;
-                el('upload-preview').classList.remove('hidden');
-                pendingImage = await compressImage(file);
-            }
-        });
-        
-        el('clear-upload').addEventListener('click', (e) => {
-            e.preventDefault();
-            pendingImage = null;
-            el('img-input').value = '';
-            el('upload-preview').classList.add('hidden');
-        });
+            const tpl = (u) => `
+                <div class="flex items-center gap-3 p-2 hover:bg-white/5 transition-all rounded-lg group cursor-pointer">
+                    <div class="w-8 h-8 rounded-full border-2 bg-slate-900 overflow-hidden ${u.fx || ''}" style="border-color: ${u.color || '#1e293b'}">
+                        ${u.pfp ? `<img src="${u.pfp}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[8px] text-slate-500">${u.username[0]}</div>`}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-bold uppercase truncate tracking-tighter ${u.fx || ''}" style="color: ${u.color || '#64748b'}">${u.username}</p>
+                        <p class="text-[8px] text-slate-500 font-mono">ID: ${u.uid.slice(0,6)}</p>
+                    </div>
+                    ${u.online ? '<div class="w-1 h-1 rounded-full bg-blue-500 shadow-[0_0_5px_#3b82f6]"></div>' : ''}
+                </div>`;
 
-        el('msg-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = el('msg-input');
-            const text = input.value.trim();
+            el('user-list-online').innerHTML = online.map(tpl).join('');
+            el('user-list-offline').innerHTML = offline.map(tpl).join('');
+        }
+
+        // --- Interaction Handlers ---
+        el('auth-tabs').addEventListener('click', (e) => {
+            const isSignup = e.target.id === 'btn-tab-signup';
+            userState.mode = isSignup ? 'signup' : 'login';
             
-            if (!text && !pendingImage) return;
-            if (!currentUser) return;
+            el('signup-extra').classList.toggle('hidden', !isSignup);
+            el('btn-tab-signup').classList.toggle('text-blue-500', isSignup);
+            el('btn-tab-signup').classList.toggle('border-blue-500', isSignup);
+            el('btn-tab-login').classList.toggle('text-blue-500', !isSignup);
+            el('btn-tab-login').classList.toggle('border-blue-500', !isSignup);
+            el('btn-tab-login').classList.toggle('text-slate-500', isSignup);
+            el('btn-tab-signup').classList.toggle('text-slate-500', !isSignup);
+            playSfx('click');
+        });
 
-            sfx.playSend();
-            input.value = '';
-            const imgToSend = pendingImage;
-            
-            // Clear upload UI
-            pendingImage = null;
-            el('img-input').value = '';
-            el('upload-preview').classList.add('hidden');
+        el('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = el('auth-email').value;
+            const pass = el('auth-pass').value;
+            el('auth-error').classList.add('hidden');
 
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                    text: text,
-                    image: imgToSend,
-                    uid: currentUser.uid,
-                    channel: currentChannel,
-                    timestamp: serverTimestamp()
-                });
+                if (userState.mode === 'signup') {
+                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    const profile = {
+                        uid: cred.user.uid,
+                        username: el('reg-username').value || 'OPERATOR_X',
+                        color: el('cfg-color').value,
+                        fx: el('cfg-fx').value,
+                        xp: 10,
+                        pfp: userState.profile?.pfp || null,
+                        online: true,
+                        lastSeen: serverTimestamp()
+                    };
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', cred.user.uid), profile);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                }
             } catch (err) {
-                console.error("Transmission failed", err);
-                sfx.playError();
+                el('auth-error').textContent = err.message;
+                el('auth-error').classList.remove('hidden');
             }
         });
 
-        // Enter key to send
-        el('msg-input').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                el('msg-form').dispatchEvent(new Event('submit'));
+        el('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = el('chat-input').value.trim();
+            if(!text || !userState.auth) return;
+            
+            el('chat-input').value = '';
+            
+            const msg = {
+                text,
+                uid: userState.auth.uid,
+                username: userState.profile.username,
+                color: userState.profile.color,
+                fx: userState.profile.fx,
+                pfp: userState.profile.pfp,
+                timestamp: serverTimestamp()
+            };
+
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), msg);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userState.auth.uid), { xp: increment(2) });
+        });
+
+        // Preview Logic
+        el('reg-username').addEventListener('input', (e) => el('preview-name').textContent = e.target.value || 'OPERATOR_X');
+        el('cfg-color').addEventListener('input', (e) => {
+            el('preview-name').style.color = e.target.value;
+            document.documentElement.style.setProperty('--accent', e.target.value);
+        });
+        el('cfg-fx').addEventListener('change', (e) => el('preview-name').className = `font-orbitron text-xl font-bold uppercase tracking-tight text-white ${e.target.value}`);
+
+        el('pfp-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const data = ev.target.result;
+                    if(!userState.profile) userState.profile = {};
+                    userState.profile.pfp = data;
+                    el('preview-pfp-container').innerHTML = `<img src="${data}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
             }
         });
 
-        // Channel Switching
-        document.querySelectorAll('.channel-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                sfx.playHover();
-                loadMessages(btn.dataset.id);
+        // Themes
+        ['nebula', 'matrix', 'blood'].forEach(t => {
+            el(`theme-${t}`).addEventListener('click', () => {
+                const root = el('app-root');
+                root.classList.remove('bg-nebula', 'bg-matrix', 'bg-blood');
+                root.classList.add(`bg-${t}`);
+                playSfx('click');
             });
         });
 
-        // Theme Toggle Button (In-App)
-        el('btn-theme-toggle').addEventListener('click', () => {
-            let h = parseInt(currentThemeHue);
-            h = (h + 90) % 360;
-            setTheme(h);
-            // Update user pref in DB
-            if(currentUser) {
-                 setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), { hue: h }, { merge: true });
-            }
-        });
-
-        el('btn-logout').addEventListener('click', () => {
+        el('guest-btn').addEventListener('click', () => signInAnonymously(auth));
+        el('logout-btn').addEventListener('click', () => {
+            if(userState.auth) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userState.auth.uid), { online: false });
             signOut(auth);
-            window.location.reload();
+        });
+        
+        el('emoji-trigger').addEventListener('click', () => el('emoji-panel').classList.toggle('hidden'));
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                el('chat-input').value += btn.textContent;
+                el('emoji-panel').classList.add('hidden');
+                el('chat-input').focus();
+            });
         });
 
-        // Init
-        runBootSequence();
-        
-        // --- KEYBOARD SOUNDS ---
-        document.addEventListener('keydown', () => sfx.playType());
-
+        refreshIcons();
     </script>
 </body>
 </html>
